@@ -1,4 +1,4 @@
-# XUAMO — MVP Design (Tracking Spine)
+# SHUAMO — MVP Design (Tracking Spine)
 
 **Date:** 2026-08-28
 **Status:** Approved for planning
@@ -8,12 +8,12 @@
 
 ## 1. Product summary
 
-XUAMO is a B2B creator-performance platform for the Georgian market. Brands publish a product
+SHUAMO is a B2B creator-performance platform for the Georgian market. Brands publish a product
 catalog; creators partner with a brand and receive one tracking link per product; buyers click
-through to the brand's own online store and purchase there. XUAMO measures which creator drove which
+through to the brand's own online store and purchase there. SHUAMO measures which creator drove which
 sale and what commission is owed.
 
-The buyer never transacts on XUAMO. XUAMO holds no cart, no checkout, and no buyer account.
+The buyer never transacts on SHUAMO. SHUAMO holds no cart, no checkout, and no buyer account.
 
 The whole model is four nouns:
 
@@ -31,12 +31,12 @@ attribution is wrong, no amount of invoicing, payouts, or dashboards built on to
 anything — which is why the calculator in §6.3 is the only part of this document that is not
 simplified.
 
-Two product decisions survive the cut because they define what XUAMO *is*:
+Two product decisions survive the cut because they define what SHUAMO *is*:
 
 | Decision                                                                                | Why it stays                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Commission is split equally among up to 3 creators whose creditable clicks fall in the window | Explicit product decision. Last-click-wins would be simpler and is a different product. This is the single largest source of remaining complexity, and it is deliberate. |
-| A XUAMO-hosted "offer ended" page for disabled links                                    | A dead link has to explain itself to the buyer and to the creator who posted it. Active links still 302 straight through, so a working link never shows a XUAMO page.    |
+| A SHUAMO-hosted "offer ended" page for disabled links                                    | A dead link has to explain itself to the buyer and to the creator who posted it. Active links still 302 straight through, so a working link never shows a SHUAMO page.    |
 
 ### 1.2 Accepted risks
 
@@ -123,7 +123,7 @@ only because the MVP targets a pilot of 1–2 brands.
 | Decision             | Value                                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Conversion reporting | Server-to-server postback only. No pixel, no platform plugin                                                     |
-| Visitor identity     | First-party cookie `xu_vid` on the XUAMO redirect domain, 30 days                                                |
+| Visitor identity     | First-party cookie `xu_vid` on the SHUAMO redirect domain, 30 days                                                |
 | Attribution model    | Equal split among up to 3 creators whose creditable clicks on **the same brand** fall in the window              |
 | Window               | 30 days before the order                                                                                         |
 | Rounding             | Line commission rounded to 0.01 GEL, then floored per share; leftover tetri handed out one each in recency order |
@@ -149,14 +149,14 @@ only because the MVP targets a pilot of 1–2 brands.
 | Partnership model       | Creator applies to a brand or is invited. Approval grants a link for every active product   |
 | Link minting            | Automatic on approval, and for any product the brand adds afterwards                        |
 | Disable scopes          | Single link · partnership · product · brand                                                 |
-| Disabled link behaviour | XUAMO "offer ended" page                                                                    |
+| Disabled link behaviour | SHUAMO "offer ended" page                                                                    |
 | In-flight clicks        | Clicks recorded before a disable stay creditable through their full 30-day window           |
 
 ### 3.3 Commercial
 
 | Decision       | Value                                                                                          |
 | -------------- | ------------------------------------------------------------------------------------------------ |
-| Money          | XUAMO moves none of it in the MVP. Brand and creator settle off-platform against the CSV (§7.4) |
+| Money          | SHUAMO moves none of it in the MVP. Brand and creator settle off-platform against the CSV (§7.4) |
 | Currency       | GEL only                                                                                       |
 | VAT            | Line VAT is supplied by the brand, or derived at 18% if the brand is VAT-registered            |
 | Confirmation   | Manual by brand, whole order. No auto-approve                                                  |
@@ -444,7 +444,7 @@ and gating earnings on that match would mean a genuine sale paying nobody. The v
 inflated beat creators who go unpaid.
 
 If step 5 fails, the redirect still 302s to `backlinkUrl` *without* `?xu=`. The buyer's journey is
-never held hostage to XUAMO's database, and losing one click's attribution beats losing the sale.
+never held hostage to SHUAMO's database, and losing one click's attribution beats losing the sale.
 
 Query handling: `?xu=` is appended to `backlinkUrl`; existing query parameters and any fragment are
 preserved.
@@ -496,7 +496,7 @@ Budget: p95 under 200ms.
 | 401  | Unknown key, or a browser `Origin` header   | Check the key, and check it is server-side |
 | 409  | This `orderId` exists with different data   | Do not retry. Post a new order             |
 | 422  | Timestamp skew or shape                     | Fix and resend                             |
-| 5xx  | XUAMO problem                               | Retry, backing off                         |
+| 5xx  | SHUAMO problem                               | Retry, backing off                         |
 
 ### 6.3 Attribution calculator
 
@@ -681,7 +681,7 @@ Rows are bucketed by **confirmation timestamp** in Asia/Tbilisi, not order date.
 brand-supplied and a brand may confirm months late, so bucketing by order date would keep
 re-populating periods whose CSV has already been sent. Only `CONFIRMED` conversions appear.
 
-The brand pays creators directly against it. XUAMO moves no money.
+The brand pays creators directly against it. SHUAMO moves no money.
 
 ---
 
@@ -841,10 +841,10 @@ point building an invoicing engine on numbers that might be wrong.
 4. Decide who writes and reviews both launch locales
 5. Confirm the commercial terms the CSV settles against, since there is no contract mechanism in the
    product
-6. Naming: repository is `SHUAMO`, product is `XUAMO`. Reconcile or accept
+6. Naming: repository is `SHUAMO`, product is `SHUAMO`. Reconcile or accept
 
 The fund-handling licensing question that dominated the earlier draft does not arise in the MVP:
-XUAMO never receives money. It returns with R2 and must be answered before that release, not this one.
+SHUAMO never receives money. It returns with R2 and must be answered before that release, not this one.
 
 ---
 

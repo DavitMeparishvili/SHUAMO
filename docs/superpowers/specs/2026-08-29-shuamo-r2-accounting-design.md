@@ -1,8 +1,8 @@
-# XUAMO R2 — Accounting, Invoicing and Payouts
+# SHUAMO R2 — Accounting, Invoicing and Payouts
 
 **Date:** 2026-08-29
 **Status:** Approved for planning
-**Depends on:** `2026-08-28-xuamo-r1-design.md` (the tracking spine). Section references bare of a
+**Depends on:** `2026-08-28-shuamo-r1-design.md` (the tracking spine). Section references bare of a
 prefix — §6.3, §7.2 — point into that document. References into this one are written R2 §n.
 **Scope:** The money stack only. Campaigns, domain verification, brand teams, the pixel path, key
 rotation and rate history are also R2 in the R1 sequencing table and are not in this spec.
@@ -14,20 +14,20 @@ rotation and rate history are also R2 in the R1 sequencing table and are not in 
 R1 measures. R2 settles.
 
 In R1 the platform computes what is owed and hands both parties a CSV; the brand pays each creator
-directly and XUAMO never touches the money. R2 puts XUAMO in the middle:
+directly and SHUAMO never touches the money. R2 puts SHUAMO in the middle:
 
 ```
-Brand ──invoiced fortnightly──▶ XUAMO ──pays out fortnightly──▶ Creator
+Brand ──invoiced fortnightly──▶ SHUAMO ──pays out fortnightly──▶ Creator
 ```
 
 The brand receives one invoice per fortnight covering every commission its orders generated, plus
-XUAMO's platform fee. XUAMO collects that money and pays each creator. A creator now has a balance
-with XUAMO rather than a claim against a brand.
+SHUAMO's platform fee. SHUAMO collects that money and pays each creator. A creator now has a balance
+with SHUAMO rather than a claim against a brand.
 
 ### 1.1 What this has to prove
 
 That every lari can be traced, in both directions, from the click that earned it to the bank
-transfer that settled it — and that the total XUAMO owes creators never exceeds what it has
+transfer that settled it — and that the total SHUAMO owes creators never exceeds what it has
 collected. R1's calculator decides *how much*. R2 decides *whose it is now, and where it is*.
 
 ### 1.2 What R2 reverses in R1
@@ -37,22 +37,22 @@ that document should be read as superseded on these five points once R2 ships.
 
 | R1 said | R2 |
 | --- | --- |
-| §3.3, §8 — "XUAMO moves none of it. Brand and creator settle off-platform against the CSV" | XUAMO invoices, collects, and pays out |
+| §3.3, §8 — "SHUAMO moves none of it. Brand and creator settle off-platform against the CSV" | SHUAMO invoices, collects, and pays out |
 | §13.6 — the fund-handling licensing question "returns with R2 and must be answered before that release" | This is that release. It is now a blocking gate (R2 §10.1) |
-| §13.3 — Georgian tax treatment of creator payouts, needed "even though the MVP moves no money" | Now determines whether XUAMO withholds. Also blocking (R2 §10.2) |
+| §13.3 — Georgian tax treatment of creator payouts, needed "even though the MVP moves no money" | Now determines whether SHUAMO withholds. Also blocking (R2 §10.2) |
 | §2 — "Approvals happen by seed script and direct database access. There is no admin UI" | Period close, invoice review and payment recording need real screens (R2 §7.3) |
 | §7.4 — the monthly CSV is the settlement handoff | The CSV demotes to an export. Invoices and payment orders are the settlement record |
 
 ### 1.3 Accepted risks
 
-1. **XUAMO holds third-party money.** Everything in R2 §10.1 must be answered before a single lari
+1. **SHUAMO holds third-party money.** Everything in R2 §10.1 must be answered before a single lari
    is collected. This is a legal precondition, not a launch task.
 2. **Settlement truth is operator-entered.** No bank API (§8, permanently out of scope). An operator
    reads a bank statement and records that money arrived or left. A mistyped entry moves a creator's
    balance and nothing in the system can contradict it. The mitigations are the audit trail and the
    R2 §8 reconciliation checks, both of which detect a wrong entry after the fact — neither prevents
    one.
-3. **A brand that never pays freezes its creators' money indefinitely.** By design: XUAMO never
+3. **A brand that never pays freezes its creators' money indefinitely.** By design: SHUAMO never
    promises money it has not collected. Creators can see exactly which brand is holding things up,
    and that is the whole mitigation. There is no dunning, no collections, no
    suspension-for-non-payment.
@@ -106,21 +106,21 @@ that document should be read as superseded on these five points once R2 ships.
 
 | Decision | Value |
 | --- | --- |
-| Model | XUAMO invoices the full commission pool, collects it, and pays creators |
+| Model | SHUAMO invoices the full commission pool, collects it, and pays creators |
 | Fee | Markup on top. The creator receives 100% of `Attribution.commissionAmount` |
 | Fee basis | `round(commissionTotal × Brand.platformFeeRate, 0.01)`, rate snapshotted at issue |
-| Fee VAT | Platform-level 18% on the fee line when XUAMO is VAT-registered. Never on the commission pool (R2 §10.2) |
+| Fee VAT | Platform-level 18% on the fee line when SHUAMO is VAT-registered. Never on the commission pool (R2 §10.2) |
 | Currency | GEL only |
 | Balance model | Append-only signed ledger, two buckets. Never updated, never deleted |
 | Payable trigger | `ACCRUED` on brand confirmation → `AVAILABLE` on receipt of the brand's payment |
-| Credit risk | XUAMO carries none. No creator is paid from money that has not arrived |
+| Credit risk | SHUAMO carries none. No creator is paid from money that has not arrived |
 | Period | Semi-monthly: 1–15 and 16–end of month, Asia/Tbilisi |
 | Period assignment | The period **open when the entry was written**, not `confirmedAt` (R2 §4.3) |
 | Invoice | One per `(brand, period)`. Totals stored, not derived |
 | Invoice numbering | Gapless `XU-YYYY-NNNNNN` from a locked counter row (R2 §5.2) |
 | Payment recording | Manual. One `PaymentOrder`, `direction INBOUND` or `OUTBOUND` |
 | Payout drafting | Automatic at period close, above a configurable minimum. Released by an admin |
-| Payout execution | By hand, at a bank. XUAMO records the reference |
+| Payout execution | By hand, at a bank. SHUAMO records the reference |
 | Partial payment | Not represented |
 
 ### 3.2 What is derived and what is stored
@@ -182,8 +182,8 @@ Creator  + taxId:text?
 ```
 
 `Brand.vatRegistered` is unchanged and keeps its R1 meaning — it derives *line* VAT inside the
-attribution calculator (§6.3). XUAMO's own VAT status is platform configuration, not a brand column,
-because it is the same for every invoice XUAMO issues.
+attribution calculator (§6.3). SHUAMO's own VAT status is platform configuration, not a brand column,
+because it is the same for every invoice SHUAMO issues.
 
 ### 4.3 The ledger, in detail
 
@@ -192,7 +192,7 @@ Every creator has exactly two buckets. A balance is `SUM(amount)` filtered by bu
 | Bucket | Means | May go negative |
 | --- | --- | --- |
 | `ACCRUED` | Brand confirmed the order. Earned, awaiting the brand's money | No |
-| `AVAILABLE` | The brand's invoice was paid. XUAMO owes this now | Open — R2 §10.3 |
+| `AVAILABLE` | The brand's invoice was paid. SHUAMO owes this now | Open — R2 §10.3 |
 
 Moving money writes two rows rather than editing one, so no amount is ever destroyed:
 
@@ -492,7 +492,7 @@ query that returns zero rows in a healthy system; any row is an alert.
 | Bucket conservation | Per creator: `Σ ACCRUED + Σ AVAILABLE` equals `Σ (ACCRUAL + REVERSAL + ADJUSTMENT + PAYOUT + PAYOUT_REVERSAL)` — which holds only if every `RELEASE` pairing does |
 | Payout agreement | Per creator: `−Σ (PAYOUT + PAYOUT_REVERSAL)` equals `Σ PaymentOrder.amount` for `OUTBOUND` orders in `SENT` or `PAID`. The ledger and the payment orders must tell the same story |
 | Trial balance | Platform-wide: `Σ ACCRUED` equals the commission portion of all `ISSUED` unpaid invoices |
-| Solvency | `Σ AVAILABLE` never exceeds cash collected less cash paid out. XUAMO never owes more than it holds |
+| Solvency | `Σ AVAILABLE` never exceeds cash collected less cash paid out. SHUAMO never owes more than it holds |
 | Invoice and orphan integrity | Each invoice's `commissionTotal` still equals the sum of its period's entries and `totalDue` still equals its three components; no entry lacks a cause; no entry references a closed period |
 
 Conservation is split into three checks rather than stated as one equation, because the single
@@ -537,14 +537,14 @@ detects the failure that ends the company.
 
 ### 10.1 Licensing — blocking, legal
 
-Does receiving brand money and paying it to creators make XUAMO a payment service provider under
+Does receiving brand money and paying it to creators make SHUAMO a payment service provider under
 Georgian law? This must be answered before a single lari is collected. It determines whether client
 money must be segregated, whether the account structure needs to change, and whether R2 is shippable
 at all in this shape. §13.6 deferred the question to R2; this is R2.
 
 ### 10.2 Creator tax treatment — blocking, tax
 
-Two questions. Must XUAMO withhold on payouts to individuals, and at what rate? And is XUAMO's VAT
+Two questions. Must SHUAMO withhold on payouts to individuals, and at what rate? And is SHUAMO's VAT
 base the fee alone (agent) or the whole invoice (principal)? This spec assumes fee-only VAT and
 gross payouts, and the ledger takes a `WITHHOLDING` kind without a migration if the answer differs —
 but the assumption needs signing off by someone qualified, not by this document.
@@ -555,11 +555,11 @@ An order cancelled after the creator has been paid drives `AVAILABLE` negative. 
 policies, none chosen:
 
 1. **Offset against future earnings.** The balance stays negative and absorbs into the creator's
-   next earnings. XUAMO never asks for money back. If the creator never earns again it is written
+   next earnings. SHUAMO never asks for money back. If the creator never earns again it is written
    off, visibly
 2. **Hold-back.** Commission becomes `AVAILABLE` only N days after release, so most returns surface
    first. This narrows the window rather than closing it, and delays every honest creator
-3. **Absorb.** XUAMO eats it. Simplest, and an open-ended loss
+3. **Absorb.** SHUAMO eats it. Simplest, and an open-ended loss
 
 All three are rules over the same ledger, so this blocks the cancellation-after-payout path and
 nothing else in the build. What must be decided before implementing that path is narrow: **may
@@ -640,7 +640,7 @@ trial balance at every step.
 No new services. The worker gains the close job and the nightly reconciliation run; both are
 schedules, and nothing in a request path waits on either.
 
-- XUAMO's VAT registration status and rate, the payout minimum, and the default net terms are
+- SHUAMO's VAT registration status and rate, the payout minimum, and the default net terms are
   environment configuration, not columns
 - The close job holds no lock across the run (R2 §6) and must be safe to run against live traffic
 - `pg_dump` already covers the new tables. Given that these are the accounting record, verify a
