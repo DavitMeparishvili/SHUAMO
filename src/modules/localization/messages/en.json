@@ -1,0 +1,10 @@
+{
+  "app.name": "SHUAMO",
+  "app.tagline": "Creator performance, measured.",
+  "nav.skipToContent": "Skip to content",
+  "nav.locale": "Language",
+  "error.title": "Something went wrong",
+  "error.retry": "Try again",
+  "notFound.title": "Page not found",
+  "notFound.body": "The page you asked for does not exist."
+}

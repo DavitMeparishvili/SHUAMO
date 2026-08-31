@@ -1,0 +1,10 @@
+{
+  "app.name": "SHUAMO",
+  "app.tagline": "კრეატორების შედეგი, გაზომილი.",
+  "nav.skipToContent": "გადასვლა შიგთავსზე",
+  "nav.locale": "ენა",
+  "error.title": "რაღაც ვერ შესრულდა",
+  "error.retry": "ხელახლა ცდა",
+  "notFound.title": "გვერდი ვერ მოიძებნა",
+  "notFound.body": "მოთხოვნილი გვერდი არ არსებობს."
+}
