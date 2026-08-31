@@ -59,6 +59,12 @@ required and validated by `src/config/env.ts` at first use:
 `parseServerEnv` reports every violation in one error rather than the first, so
 a fresh clone learns about all its missing keys in a single run.
 
+`NODE_ENV` is required but is **not** in `.env`. The runtime owns it: `next dev`
+sets `development`, `next build` and `next start` set `production`, and vitest
+sets `test`. Pinning it in `.env` put `next start` on a non-standard `NODE_ENV`,
+which meant the browser suite exercised the production artifact in development
+mode — and would have pointed a production server at the development database.
+
 ## Databases
 
 Two instances, never one:
