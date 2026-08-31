@@ -380,10 +380,38 @@ prerender of `/ka` and `/en` — a Phase 1 decision, not a Phase 0 patch.
 
 ### Deferred
 
-The review recorded four further LOW findings (15–18) as acceptable to defer.
-They were not restated in the hand-off to this implementation, so they are
-tracked in the review record rather than reproduced here; they should be pulled
-into the Phase 1 backlog verbatim from it.
+The review recorded four further LOW findings, accepted as deferrable but owed
+to the Phase 1 backlog.
+
+**L15 — untested surface that later phases lean on.** `t()`'s throw-on-missing-key
+in `get-messages.ts` is the one behaviour the plan calls out by name
+("throws rather than falling back") and has no test; `getMessages` has none
+either, since `messages.test.ts` only inspects the JSON. `clock.ts`,
+`result.ts`, `id-generator.ts`, `fake-clock.ts` and `fixed-id-generator.ts`
+have zero tests. `Money.ZERO`, `Money.minus`, `Money.isZero`, the rejection in
+`dividedByInteger(0)`, `Rate.storedValue` and `Rate.percent("1")` (the 100%
+boundary) are all unasserted.
+
+**L16 — `roundToTetri`/`floorToTetri` do not mean what their names say for
+negative values.** decimal.js `ROUND_HALF_UP` is half-away-from-zero and
+`ROUND_DOWN` truncates toward zero, so `Money.of("-22.885").roundToTetri()` is
+`-22.89`, not `-22.88`, and `floorToTetri` on a negative rounds _up_. Harmless
+in R1 — spec §6.3 forces `commission = 0` when `net <= 0` and every money column
+carries `CHECK (… >= 0)` — but the names promise IEEE floor/half-up and deliver
+neither. Fix the names or write an explicit sign policy **before reversals
+arrive**, since reversals are the first feature that makes negative money real.
+
+**L17 — missing decimal division primitive.** Spec §6.3 derives net as
+`(250 − 25) / 1.18 = 190.68`. `Money` offers only `dividedByInteger`, so the
+primitive set is one method short of arithmetic the spec already specifies.
+Phase 5 will need division by a decimal string.
+
+**L18 — `playwright.config.ts` will happily target a live deployment.**
+`baseURL = process.env.APP_URL ?? …` combined with
+`reuseExistingServer: !isCi` means that with a production `APP_URL` in `.env`
+— which is where `APP_URL` is meant to live — `pnpm test:e2e` runs the suite
+against production and skips starting a local server. Harmless while the suite
+is read-only; not harmless once an e2e test writes data.
 
 ## Clean-clone verification
 
