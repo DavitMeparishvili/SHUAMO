@@ -1,8 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { DEFAULT_LOCALE, isLocale } from "@/src/modules/localization/config";
-import { getMessages, t } from "@/src/modules/localization/get-messages";
+import {
+  DEFAULT_LOCALE,
+  getMessages,
+  isLocale,
+  t,
+} from "@/src/modules/localization";
 
 // An error boundary is a client component, so it cannot await `params`. The
 // locale still comes from the URL rather than a hardcoded default; the default

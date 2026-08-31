@@ -7,6 +7,11 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.{ts,tsx}", "app/**/*.test.{ts,tsx}"],
-    exclude: ["**/*.integration.test.ts"],
+    exclude: [
+      "**/*.integration.test.ts",
+      // Deliberately broken sources fed to the boundary checker by
+      // src/test/boundaries/verify-module-boundaries.test.ts.
+      "src/test/boundaries/fixtures/**",
+    ],
   },
 });

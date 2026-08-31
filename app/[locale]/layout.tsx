@@ -1,7 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { isLocale, LOCALES } from "@/src/modules/localization/config";
-import { getMessages, t } from "@/src/modules/localization/get-messages";
+import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -12,6 +12,25 @@ export function generateStaticParams() {
 // translated document — instead of the framework's bare error shell. The
 // notFound() below stays as the guard for anything that gets past this.
 export const dynamicParams = false;
+
+// WCAG 2.2 §2.4.2 (Level A, and so inside AA) requires every page to have a
+// title that describes its topic. It is localised for the same reason the copy
+// is: a Georgian page announcing itself in English is not a translated page.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+
+  const messages = getMessages(locale);
+
+  return {
+    title: t(messages, "meta.title"),
+    description: t(messages, "meta.description"),
+  };
+}
 
 export default async function LocaleLayout({
   children,

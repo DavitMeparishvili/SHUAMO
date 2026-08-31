@@ -1,10 +1,26 @@
-import { DEFAULT_LOCALE } from "@/src/modules/localization/config";
-import { getMessages, t } from "@/src/modules/localization/get-messages";
+"use client";
+
+import { useParams } from "next/navigation";
+import {
+  DEFAULT_LOCALE,
+  getMessages,
+  isLocale,
+  t,
+} from "@/src/modules/localization";
 
 // Rendered inside app/[locale]/layout.tsx, which already supplies the document
 // and the <main> landmark, so this contributes only the message.
+//
+// A not-found boundary receives no `params` prop, so — like error.tsx — the
+// locale comes from the router. Hardcoding it would serve Georgian copy inside
+// the <html lang="en"> that the layout emits on /en.
 export default function LocaleNotFound() {
-  const messages = getMessages(DEFAULT_LOCALE);
+  const params = useParams<{ locale: string }>();
+  const locale =
+    typeof params?.locale === "string" && isLocale(params.locale)
+      ? params.locale
+      : DEFAULT_LOCALE;
+  const messages = getMessages(locale);
 
   return (
     <>

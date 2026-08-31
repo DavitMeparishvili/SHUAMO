@@ -13,6 +13,8 @@ const config = [
       "next-env.d.ts",
       // `prisma generate` output — machine-written, not ours to lint.
       "src/generated/**",
+      // Deliberate boundary violations, fed to the checker by its own test.
+      "src/test/boundaries/fixtures/**",
       // Agent tooling that ships its own scripts; not application source.
       ".agents/**",
       ".claude/**",

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { isLocale } from "@/src/modules/localization/config";
-import { getMessages, t } from "@/src/modules/localization/get-messages";
+import { getMessages, isLocale, t } from "@/src/modules/localization";
 
 export default async function LandingPage({
   params,

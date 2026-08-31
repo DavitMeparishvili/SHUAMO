@@ -1,5 +1,9 @@
-import { DEFAULT_LOCALE } from "@/src/modules/localization/config";
-import { getMessages, t } from "@/src/modules/localization/get-messages";
+import type { Metadata } from "next";
+import { DEFAULT_LOCALE, getMessages, t } from "@/src/modules/localization";
+
+export const metadata: Metadata = {
+  title: t(getMessages(DEFAULT_LOCALE), "notFound.title"),
+};
 
 // Reached when nothing matched at all, and when app/[locale]/layout.tsx itself
 // calls notFound() for an unsupported locale — the throw happens above that
