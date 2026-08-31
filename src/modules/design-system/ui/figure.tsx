@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
-interface FigureProps {
+type FigureProps = {
   label: string;
   value: ReactNode;
   hint?: string;
-  estimate?: boolean;
-  estimateLabel?: string;
   href?: string;
-}
+} & (
+  | { estimate: true; estimateLabel: string }
+  | { estimate?: false; estimateLabel?: never }
+);
 
 export function Figure({
   label,
@@ -23,7 +24,7 @@ export function Figure({
       <span className="mt-1 block type-figure text-ink">{value}</span>
       {estimate ? (
         <span className="mt-2 block type-caption text-slate-600">
-          {estimateLabel ?? "Estimate"}
+          {estimateLabel}
         </span>
       ) : hint ? (
         <span className="mt-2 block type-caption text-slate-600">{hint}</span>
