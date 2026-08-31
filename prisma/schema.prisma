@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7 reads the connection URL from prisma.config.ts for migrations and
+// from the driver adapter passed to PrismaClient at runtime. A `url` here is a
+// schema validation error, not a fallback.
+datasource db {
+  provider = "postgresql"
+}
+
+/// Exists so Phase 0 can prove migration and round-trip without inventing a
+/// domain table. Later phases keep it: /api/health/ready reads it.
+model HealthProbe {
+  id         String   @id @default(uuid()) @db.Uuid
+  observedAt DateTime @default(now()) @map("observed_at") @db.Timestamptz(6)
+
+  @@map("health_probe")
+}

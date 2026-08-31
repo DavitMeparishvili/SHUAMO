@@ -1,0 +1,35 @@
+services:
+  postgres-dev:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shuamo_dev
+      POSTGRES_USER: shuamo_local
+      POSTGRES_PASSWORD: shuamo_local_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - shuamo_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuamo_local -d shuamo_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  postgres-test:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shuamo_test
+      POSTGRES_USER: shuamo_test
+      POSTGRES_PASSWORD: shuamo_test_local_only
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuamo_test -d shuamo_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  shuamo_dev_data:
