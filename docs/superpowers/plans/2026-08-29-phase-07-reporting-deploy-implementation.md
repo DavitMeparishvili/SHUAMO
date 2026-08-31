@@ -21,6 +21,7 @@ Inherited from the roadmap. The ones this phase exercises:
 - No counter is stored. All six link-view figures are derived (§7.2).
 - `Click` is retained in full for 13 months and aggregated thereafter (§4.5).
 - Every string in the product exists in both `ka` and `en`.
+- The MinIO volume carries no backup in the MVP (§11.2). The nightly `pg_dump` and its rehearsed restore cover Postgres only.
 - Each task ends in a commit.
 
 ---
@@ -82,6 +83,7 @@ app/api/brand/reports/csv/route.ts
 
 Dockerfile  ·  docker-entrypoint.sh
 compose.production.yaml  ·  deploy/Caddyfile  ·  deploy/.env.production.example
+                                                  + minio, minio-init services (R1 §11.2)
 scripts/backup-database.sh  ·  scripts/restore-database.sh
 scripts/seed-phase-07.ts
 src/test/e2e/reporting.spec.ts                       @phase-7
@@ -578,7 +580,7 @@ The attribution case is the one that would take the job down in production: `att
 
 - [ ] **Step 3: Write the CSV job**
 
-`runMonthlyCsvJob` generates the previous month's CSV for every brand with confirmations, on the first of the month at 00:30 Asia/Tbilisi, and stores the result where the brand's reports page can serve it. In the MVP it writes to a `report_file` row holding the CSV text — there is no object storage (§3.4), the files are kilobytes, and adding S3 for this would add a stateful dependency the spec explicitly excludes.
+`runMonthlyCsvJob` generates the previous month's CSV for every brand with confirmations, on the first of the month at 00:30 Asia/Tbilisi, and stores the result where the brand's reports page can serve it. In the MVP it writes to a `report_file` row holding the CSV text. MinIO exists by this phase (§11.2), but it is scoped to product images — routing a few kilobytes of text through a second storage system and a second code path would buy nothing a `text` column doesn't already give for free.
 
 - [ ] **Step 4: Build the scheduler and the entrypoint**
 
@@ -667,7 +669,54 @@ Comment the build-time placeholders explicitly. A future reader must be able to 
 
 - [ ] **Step 2: Write the production Compose file**
 
-Four services: `caddy`, `web`, `worker`, `postgres`. `web` and `worker` share the image and differ by command. Only `caddy` publishes ports. `postgres` has a named volume and a healthcheck; `web` waits on it.
+Five services: `caddy`, `web`, `worker`, `postgres`, `minio`, plus a one-shot `minio-init`. `web` and `worker` share the image and differ by command. Only `caddy` publishes ports. `postgres` and `minio` each have a named volume and a healthcheck; `web` waits on both.
+
+```yaml
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-deploy/.env.production}
+    command: server /data --console-address ":9001"
+    volumes:
+      - shuamo_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    env_file:
+      - ${ENV_FILE:-deploy/.env.production}
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -ec
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing "local/$$STORAGE_BUCKET"
+        mc anonymous set download "local/$$STORAGE_BUCKET"
+        mc admin user add local "$$STORAGE_ACCESS_KEY_ID" "$$STORAGE_SECRET_ACCESS_KEY" || true
+        mc admin policy attach local readwrite --user "$$STORAGE_ACCESS_KEY_ID"
+```
+
+Unlike the dev `compose.yaml` (Phase 3), `minio-init` carries no `profiles: ["setup"]` gate here — every
+`mc` command it runs is idempotent (`--ignore-existing`, a policy re-attach, `|| true` on the user
+add), so it is safe to run on every deploy, and running it automatically means a fresh VPS never needs
+a manual bucket-provisioning step. `web` depends on `minio-init` with
+`condition: service_completed_successfully`, so the bucket and its policy exist before the app can
+receive traffic that might trigger an upload.
+
+Add `shuamo_minio_data` to the top-level `volumes:` block, alongside the Postgres volume. Add
+`STORAGE_ENDPOINT`, `STORAGE_PUBLIC_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`,
+`STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` to
+`deploy/.env.production.example` — `STORAGE_PUBLIC_ENDPOINT` is the domain Caddy serves images through
+(§11.2's stored `imageUrls` are public URLs, so this must be reachable from the buyer's browser, not
+just from inside the Compose network).
 
 - [ ] **Step 3: Run migrations at start, before traffic**
 
@@ -679,7 +728,7 @@ TLS for the domain, `trusted_proxies`, the `X-Real-IP` header from Phase 4, secu
 
 - [ ] **Step 5: Back up, and prove the restore**
 
-`scripts/backup-database.sh` runs a nightly `pg_dump` to offsite storage. `scripts/restore-database.sh` restores a named dump into an empty database.
+`scripts/backup-database.sh` runs a nightly `pg_dump` to offsite storage. `scripts/restore-database.sh` restores a named dump into an empty database. This covers Postgres only — there is no equivalent script for the MinIO volume, and `docs/runbook.md` (Step 7) says so explicitly rather than leaving the gap to be discovered during an incident.
 
 **Then actually do it**, because a backup nobody has restored is a hope:
 
@@ -694,11 +743,11 @@ Record the date of the rehearsal in `docs/runbook.md`. §11 asks for this before
 
 - [ ] **Step 6: Write the deployment smoke test**
 
-Against the built image on a clean database: migrations apply, `/api/health/ready` returns 200, one redirect records a click, one postback creates a conversion. Four assertions; run it as part of the deploy, not as a manual checklist.
+Against the built image on a clean database: migrations apply, `/api/health/ready` returns 200, one redirect records a click, one postback creates a conversion, and the `shuamo-product-images` bucket exists with the `download` anonymous policy applied (`mc anonymous get local/shuamo-product-images` reports `download`, proving `minio-init` ran before `web` took traffic). Five assertions; run it as part of the deploy, not as a manual checklist.
 
 - [ ] **Step 7: Write the runbook**
 
-`docs/runbook.md` covers: how to deploy, how to roll back, how to approve an account, how to regenerate a brand key, how to run the CSV job by hand, how to read the structured logs, what `/api/health/live` versus `/ready` mean, what to do when the redirect p95 rises, and where the backups are. §2's operating model is one person doing all of this by hand, so it needs to be written down.
+`docs/runbook.md` covers: how to deploy, how to roll back, how to approve an account, how to regenerate a brand key, how to run the CSV job by hand, how to read the structured logs, what `/api/health/live` versus `/ready` mean, what to do when the redirect p95 rises, and where the backups are — stating plainly that the MinIO volume (`shuamo_minio_data`) is **not** backed up in the MVP, so a lost volume means brands re-upload their product photos. §2's operating model is one person doing all of this by hand, so it needs to be written down.
 
 - [ ] **Step 8: Commit**
 
@@ -803,8 +852,8 @@ git commit -m "test: prove the MVP end to end, click to CSV"
 - [ ] The retention job aggregates clicks past 13 months, skips clicks with attributions, and is idempotent.
 - [ ] Every forward-looking figure on screen carries the word "estimate" in both locales.
 - [ ] The `ka` and `en` catalogues have identical key sets, and no user-facing string is hard-coded in a component.
-- [ ] The four Compose services start clean, migrations apply before traffic, and the smoke test passes against the built image.
+- [ ] The five Compose services start clean, migrations apply before traffic, `minio-init` completes before `web` accepts requests, and the smoke test passes against the built image.
 - [ ] Caddy overwrites a client-supplied `X-Forwarded-For`, verified against the deployed instance.
 - [ ] **A `pg_dump` has been restored into an empty database, and the restored copy passes `pnpm test:integration`.** The date is recorded in `docs/runbook.md`.
-- [ ] `docs/runbook.md` covers deploy, rollback, approvals, key regeneration, manual CSV, log reading, and the latency escalation.
+- [ ] `docs/runbook.md` covers deploy, rollback, approvals, key regeneration, manual CSV, log reading, the latency escalation, and states plainly that the MinIO volume has no backup in the MVP.
 - [ ] The §13 non-code gates are answered or explicitly accepted in writing before pilot traffic: the cookie's legal review, creator payout tax treatment, locale ownership, and the commercial terms the CSV settles against.

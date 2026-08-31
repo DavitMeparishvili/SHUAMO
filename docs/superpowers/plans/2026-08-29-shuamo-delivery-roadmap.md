@@ -4,9 +4,9 @@
 
 **Goal:** Deliver SHUAMO as a sequence of independently testable releases — first the tracking spine that proves a click can be tied to a sale and priced correctly (R1), then the accounting stack that invoices brands, collects, and pays creators (R2).
 
-**Architecture:** A Next.js App Router modular monolith of vertical slices. Each module owns `domain` (framework-free, no ORM, no I/O), `application` (use cases over ports), `ports` (interfaces), `infrastructure` (Prisma adapters), `http` (dependency-injected handler factories), and `ui` (React). `app/` holds thin route wrappers only. PostgreSQL is the single datastore and the only stateful service; every commercial invariant is a transaction or a test, never a convention.
+**Architecture:** A Next.js App Router modular monolith of vertical slices. Each module owns `domain` (framework-free, no ORM, no I/O), `application` (use cases over ports), `ports` (interfaces), `infrastructure` (Prisma adapters), `http` (dependency-injected handler factories), and `ui` (React). `app/` holds thin route wrappers only. PostgreSQL is the transactional datastore and every commercial invariant is a transaction or a test, never a convention; MinIO (from Phase 3) is scoped to product images alone and touches no commercial invariant.
 
-**Tech Stack:** Node.js 24 LTS · pnpm · Next.js 16 (App Router) · React 19 · strict TypeScript · PostgreSQL 17 · Prisma 7 · Better Auth · Zod 4 · Tailwind CSS 4 · Vitest 4 (unit + integration projects) · Playwright · Docker Compose · Caddy.
+**Tech Stack:** Node.js 24 LTS · pnpm · Next.js 16 (App Router) · React 19 · strict TypeScript · PostgreSQL 17 · MinIO (S3-compatible object storage) · Prisma 7 · Better Auth · Zod 4 · Tailwind CSS 4 · Vitest 4 (unit + integration projects) · Playwright · Docker Compose · Caddy.
 
 **Specs:**
 
@@ -197,8 +197,9 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 
 **Scope**
 
-- `product`: SKU, title, description, price, up to 8 ordered image URLs, backlink URL, commission type and value, archive-only lifecycle, `UNIQUE (brand_id, sku)`.
-- Brand catalog UI: create, edit, archive; a rate editor that makes §1.2 risk 3 explicit in the interface.
+- `product`: SKU, title, description, price, up to 8 ordered images, backlink URL, commission type and value, archive-only lifecycle, `UNIQUE (brand_id, sku)`.
+- MinIO (dev `compose.yaml` service) and a presigned-PUT image upload flow: brand's browser uploads direct to object storage, the app server never touches file bytes (R1 §11.2).
+- Brand catalog UI: create, edit, archive, upload images; a rate editor that makes §1.2 risk 3 explicit in the interface.
 - `partnership`: creator applies, brand invites, approve/reject, `UNIQUE (brand_id, creator_id)`.
 - `tracking_link`: minting on partnership approval (one per active product) and on product creation (one per approved creator); unique `code`; `UNIQUE (product_id, creator_id)`.
 - The §5 disable chain as a pure domain function over a single joined row.
@@ -212,11 +213,13 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 - Minting tests: approval mints one link per active product; a product added later mints for every approved creator; **no link is ever minted for a non-`APPROVED` partnership**; re-approval does not duplicate links.
 - Rate validation: `PERCENT` above `1` is rejected by both the Zod schema and the database CHECK.
 - `image_urls` cardinality bounded at 8, each element a non-empty `https://` URL (application rule — the CHECK cannot express it).
-- Playwright: brand publishes a product, creator applies, brand approves, creator sees a link with a copyable code.
+- Image upload: a presigned URL is refused for a content-type outside `{image/jpeg, image/png, image/webp}`; a presigned URL always targets a key scoped to the requesting brand's own product; a request for another brand's product is refused.
+- Playwright: brand publishes a product, creator applies, brand approves, creator sees a link with a copyable code; brand uploads a product photo through the presigned-URL flow and it renders.
 
 **Exit criteria**
 
 - Archiving is the only deletion. No `DELETE` statement exists against `product`.
+- MinIO's bucket is public-read, private-write: an anonymous GET on an object succeeds; a PUT without a valid presigned URL is refused.
 - Phase command: `pnpm verify:phase-3`.
 
 **Execution plan:** `2026-08-29-phase-03-catalog-partnerships-implementation.md`
@@ -345,7 +348,7 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 - Creator earnings (§7.3): per link, per brand, per month, split pending / confirmed / cancelled, with the forward-looking figure always labelled an estimate.
 - Brand orders queue polish and the per-brand monthly CSV (§7.4), bucketed by **confirmation timestamp** in Asia/Tbilisi, `CONFIRMED` only, with a late cancellation carried as a negative line.
 - The worker service: a scheduler for monthly CSV generation and click retention aggregation at 13 months.
-- Deployment: `docker-compose` with `web`, `postgres`, `caddy`, `worker`; Caddy TLS and `trusted_proxies`; nightly `pg_dump` offsite with a rehearsed restore; structured logs; `/health`; external uptime ping.
+- Deployment: `docker-compose` with `web`, `postgres`, `minio`, `caddy`, `worker`; Caddy TLS and `trusted_proxies`; nightly `pg_dump` offsite with a rehearsed restore (Postgres only — the MinIO volume has no backup in the MVP, R1 §11.2); structured logs; `/health`; external uptime ping.
 - Full `ka`/`en` sweep: every string in the product, both locales, no exceptions.
 
 **Deliverable:** A running deployment where the full journey — click, postback, confirm, CSV — can be demonstrated end-to-end against a real domain, in both locales.
@@ -544,19 +547,20 @@ verify:r2       verify:phase-10 + integration(reconciliation) + seed:phase-11 + 
 
 ## Deployment strategy
 
-Four services, one of them stateful (§11). No Redis, no object storage, no queue — those are answers to measurements the pilot has not taken yet (§11.1).
+Five services, two of them stateful (§11). No Redis, no queue — those are answers to measurements the pilot has not taken yet (§11.1). Object storage (MinIO) is not deferred; it backs product images from Phase 3 (R1 §11.2), but it never sits on the redirect or conversions-API hot paths, so the "no premature dependency" posture of §11.1 still holds where it matters for latency.
 
 ```
 caddy     TLS, trusted_proxies, /r/:code and the app on one certificate
 web       Next.js standalone, built by a multi-stage Dockerfile
 worker    a scheduler: monthly CSV, retention aggregation, period close, nightly reconciliation
-postgres  PostgreSQL 17, the only datastore
+postgres  PostgreSQL 17, the transactional datastore
+minio     S3-compatible object storage, product images only (R1 §11.2)
 ```
 
-- Environments: `compose.yaml` for local development (dev + test databases), `compose.production.yaml` for the VPS.
+- Environments: `compose.yaml` for local development (dev + test databases, dev MinIO), `compose.production.yaml` for the VPS.
 - Migrations run from the deployed image at container start, before the app accepts traffic.
 - Every generated Prisma migration is diffed against the relevant spec appendix before it is applied. The appendix is the contract; Prisma is the tool.
-- Nightly `pg_dump` to offsite storage, with a **restore rehearsed before Phase 7 ships and again before the first invoice is issued**.
+- Nightly `pg_dump` to offsite storage, with a **restore rehearsed before Phase 7 ships and again before the first invoice is issued**. This covers Postgres only — the MinIO volume carries no backup in the MVP (R1 §11.2), a named gap, not an oversight.
 - Secrets in `.env`, never committed. `FINGERPRINT_SECRET`, `AUTH_SECRET`, and the database URL have no fallback values anywhere in the build.
 - Structured JSON logs; `/api/health/live` independent of PostgreSQL, `/api/health/ready` dependent on it; an external uptime ping against `live`.
 - VPS region chosen for proximity to Georgian traffic — with no edge network, region is the entire latency story.

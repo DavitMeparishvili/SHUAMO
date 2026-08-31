@@ -66,6 +66,11 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
    unattributed. §11.1 is the exit.
 8. **No money movement.** The MVP measures and reports. Brands and creators settle off-platform
    against a CSV. Everything in §8 is R2.
+9. **Product image uploads carry no server-enforced size limit.** The presigned PUT (§11.2) pins
+   content-type into the signature, but a presigned PUT — unlike a presigned POST — cannot carry a
+   content-length-range condition, so an oversized object is only stopped by client-side validation.
+   Acceptable at a curated pilot of 1–2 approved brands; a presigned POST with policy conditions is
+   the fix if abuse ever shows up.
 
 ---
 
@@ -75,7 +80,8 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 
 - Brand and creator accounts, both approved by an administrator
 - One user per brand
-- Product catalog: title, description, price, ordered image URLs, backlink URL, commission rate
+- Product catalog: title, description, price, up to 8 uploaded images, backlink URL, commission rate
+- Brand-side image upload via presigned URL, direct to self-hosted object storage (§11.2)
 - Brand ↔ creator partnership: Apply / Invite with Approve / Reject
 - One tracking link per creator per product, minted on approval
 - Redirect service with the disable chain
@@ -97,7 +103,7 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 | Brand domain verification (DNS TXT, `/.well-known/`)                     | Administrator approves the brand and eyeballs the backlink | R2         |
 | Brand team members and `OWNER`/`MEMBER` roles                            | One user owns one brand                                    | R2         |
 | Creator social bio-code ownership proof, self-reported reach             | Administrator approves the creator                         | R3         |
-| Image upload and hosting, `specs` jsonb                                  | Up to 8 brand-hosted image URLs, plus the description      | R2         |
+| `specs` jsonb — structured, per-category product attributes              | Free-text `description` only                               | R2         |
 | Browser pixel endpoint, public site keys, the pixel/postback trust model | Server postback only                                       | R2         |
 | API key rotation with overlap, `RETIRING` state, `lastUsedAt`            | One key; an administrator regenerates it                   | R2         |
 | Integration self-test gate, `TEST` links, `isTest` conversions           | Hand-held onboarding on a real link                        | R2         |
@@ -146,6 +152,9 @@ only because the MVP targets a pilot of 1–2 brands.
 | Commission rate         | Per product, percent or fixed. Set by the brand, changeable, not versioned                  |
 | Catalog price           | Display-only; drives the creator-facing estimate. Real commission always from the postback  |
 | Product deletion        | Archive only                                                                                |
+| Image storage           | Self-hosted, S3-compatible object storage (MinIO). Bucket is public-read, private-write     |
+| Image upload flow       | Server issues a presigned PUT scoped to one object and one content-type; the browser uploads directly to MinIO — bytes never touch the app server (§11.2) |
+| Image serving           | Stable public URL per object, no signing on read, cacheable, no expiry to manage            |
 | Partnership model       | Creator applies to a brand or is invited. Approval grants a link for every active product   |
 | Link minting            | Automatic on approval, and for any product the brand adds afterwards                        |
 | Disable scopes          | Single link · partnership · product · brand                                                 |
@@ -172,10 +181,12 @@ only because the MVP targets a pilot of 1–2 brands.
 | Market             | Georgia                                                                                  |
 | Locales            | `ka` and `en`, both complete. No string ships untranslated                               |
 | Team assumption    | Solo, AI-assisted, no hard deadline                                                      |
-| Stack              | Next.js (App Router) · PostgreSQL · Prisma · Caddy · Docker Compose on a self-hosted VPS |
+| Stack              | Next.js (App Router) · PostgreSQL · MinIO · Prisma · Caddy · Docker Compose on a self-hosted VPS |
 
-**PostgreSQL is the only datastore, and the only stateful service.** No Redis, no object storage, no
-queue. The redirect reads and writes Postgres synchronously (§6.1) and the worker is a scheduler.
+**PostgreSQL and a self-hosted, S3-compatible object store (MinIO) are the only stateful services.**
+No Redis, no queue. Object storage backs product images only (§11.2) — the redirect and the
+attribution calculator, the two components with a latency budget, still touch nothing but Postgres
+(§6.1, §6.3). The redirect reads and writes Postgres synchronously and the worker is a scheduler.
 Redis is the designed answer to scale, not a dependency the pilot carries in advance (§11.1). No edge
 network either, so VPS region is the entire latency story.
 
@@ -233,6 +244,11 @@ Attribution   conversionItem:→ConversionItem  click:→Click  creator:→Creat
 AuditEvent    actor:→User?  action:text  entityType:text  entityId:uuid
               changes:jsonb  at:ts
 ```
+
+`Product.imageUrls` is unchanged in shape from the original design — still an ordered `text[]`,
+still capped at 8 — but its values are now stable public MinIO URLs written by the presigned-upload
+flow (§11.2), not brand-pasted external links. The 8-element cap and the per-element URL-shape rule
+(§4.6) apply exactly as before.
 
 ### 4.2 The four columns that need justifying
 
@@ -766,6 +782,9 @@ Supporting coverage:
   containing duplicates, non-converters, and a multi-earning click
 - **Conversions API** — auth by prefix and hash, `Origin` rejection, same-payload replay returns the
   original, different-payload 409, timestamp skew, the unattributed path
+- **Image upload** — a presigned URL is refused for a content-type outside the allowlist; a presigned
+  URL always targets a key scoped to the requesting brand's own product; a request for another
+  brand's product is refused
 - **Money immutability** — confirming and cancelling change status only; no `commissionAmount` is
   ever rewritten, including across a rate change between click and confirmation
 - **CSV** — bucketed by confirmation date, `CONFIRMED` only, negative line for a late cancellation
@@ -776,13 +795,14 @@ Supporting coverage:
 
 ## 11. Deployment
 
-`docker-compose`: `web` (Next.js standalone) · `postgres` · `caddy` (TLS) · `worker`. Four services,
-one of them stateful.
+`docker-compose`: `web` (Next.js standalone) · `postgres` · `minio` (product image storage) · `caddy`
+(TLS) · `worker`. Five services, two of them stateful.
 
 The worker is a scheduler, not a queue consumer: monthly CSVs and retention aggregation. Nothing in
 the request path waits on it.
 
-- Nightly `pg_dump` to offsite storage
+- Nightly `pg_dump` to offsite storage. **This covers Postgres only** — the MinIO volume carries no
+  backup in the MVP (§11.2), a deliberate gap given the pilot's scale, not an oversight
 - Prisma Migrate for schema changes; every generated migration is diffed against Appendix A before it
   is applied
 - Caddy resolves the client IP through its `trusted_proxies` configuration; the application never
@@ -814,6 +834,39 @@ forecast.
 Two cheaper moves come first and may be sufficient: an in-process LRU on the link lookup, at the cost
 of a staleness window on disables, and `pgbouncer` if the ceiling turns out to be connections rather
 than queries.
+
+### 11.2 Product image uploads
+
+Brands upload product photos straight to MinIO. The bytes never pass through the Next.js server:
+
+```
+1  Brand's browser: POST /api/brand/products/:id/images/presign  { contentType }
+2  Server: verifies the product belongs to the requesting brand, checks contentType is one of
+   image/jpeg, image/png, image/webp, and generates a presigned PUT (5-minute expiry) for the key
+   products/{brandId}/{productId}/{uuid}.{ext} — content-type pinned into the signature, so the
+   object cannot land as anything the server did not authorise. Returns { uploadUrl, publicUrl }
+3  Browser: PUT uploadUrl, the file body, direct to MinIO
+4  Browser: PATCH the product's imageUrls to append publicUrl, subject to the existing 8-element
+   cap (image_urls_bounded, §4.6) and the existing per-element URL-shape rule
+```
+
+The bucket is public-read (`mc anonymous set download`) and private-write: anyone can fetch a product
+photo by its URL, nobody can write one without a presigned URL scoped to a specific brand's own
+product. Reads need no signing and no expiry to manage — the stored `imageUrls` value is the URL a
+browser renders directly.
+
+There is no server-enforced size cap (§1.2 risk 9): a presigned PUT signs a single object and a
+content-type, not a byte-size range the way a presigned POST's policy conditions can. Size is
+therefore a client-side guard only (5MB), which is an accepted risk at a curated pilot of 1–2 brands,
+not a defended boundary.
+
+Deletion is not implemented. Archiving a product does not remove its images from MinIO, consistent
+with §4.6's "nothing is ever hard-deleted" — an orphaned object after an archive is a disk-space cost,
+not a correctness one, and reclaiming it is not built.
+
+The MinIO volume carries no backup in the MVP. Unlike the nightly `pg_dump`, a lost volume loses
+product photos with no recovery path; brands would need to re-upload. This is a named gap, tracked for
+a future release, not a silent omission.
 
 ---
 
@@ -922,6 +975,8 @@ CREATE INDEX partnership_creator_idx ON partnership (creator_id, status);
 
 ```sql
 -- The rate lives here. There is no campaign and no history table; see §4.7 and §1.2 risk 3.
+-- image_urls holds MinIO-served public URLs written by the presigned-upload flow (§11.2),
+-- not brand-pasted links. Shape and constraints are unchanged: ordered, capped at 8.
 CREATE TABLE product (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id         uuid           NOT NULL REFERENCES brand(id) ON DELETE RESTRICT,

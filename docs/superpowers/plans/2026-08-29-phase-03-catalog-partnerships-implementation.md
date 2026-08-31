@@ -8,7 +8,7 @@
 
 **Tech Stack:** Prisma 7 · Zod 4 · React 19 server components and server actions · the Phase 1 component kit.
 
-**Spec:** `docs/superpowers/specs/2026-08-28-shuamo-r1-design.md` §3.2, §4.1, §4.5, §4.6, §5, §7.2 identity block, Appendix A.3.
+**Spec:** `docs/superpowers/specs/2026-08-28-shuamo-r1-design.md` §1.2 risk 9, §3.2, §4.1, §4.5, §4.6, §5, §7.2 identity block, §11.2, Appendix A.3.
 
 ## Global Constraints
 
@@ -20,6 +20,7 @@ Inherited from the roadmap. The ones this phase exercises:
 - SKUs are brand-scoped: `UNIQUE (brand_id, sku)`. Two brands may both use `P-9`, and Phase 5 depends on this being true.
 - A `TrackingLink` exists only where `Partnership.status = APPROVED` held at mint time (§4.6). This is a point-in-time rule, enforced at mint, not a state constraint.
 - Disabling is forward-looking only: clicks already recorded run out their full 30-day window (§5).
+- Product images upload via presigned PUT, direct to MinIO; the app server never handles file bytes, and the bucket is public-read, private-write (§11.2).
 - Money and rates are exact decimals. Locales `ka` and `en`. WCAG 2.2 AA.
 - Each task ends in a commit.
 
@@ -28,6 +29,7 @@ Inherited from the roadmap. The ones this phase exercises:
 ## Planned file structure
 
 ```
+compose.yaml  ·  .env.example  ·  src/config/env.ts    + minio, minio-init; STORAGE_* env (§11.2)
 prisma/schema.prisma                                  + Product, Partnership, TrackingLink,
                                                         ProductStatus, PartnershipStatus,
                                                         RateType, LinkStatus
@@ -35,16 +37,24 @@ src/modules/catalog/domain/product-rate.ts            RateType <-> Rate, validat
 src/modules/catalog/domain/product-rate.test.ts
 src/modules/catalog/domain/image-urls.ts              the 8-element application rule
 src/modules/catalog/domain/image-urls.test.ts
+src/modules/catalog/domain/image-upload.ts            content-type allowlist, object key, public URL
+src/modules/catalog/domain/image-upload.test.ts
 src/modules/catalog/ports/product-repository.ts
+src/modules/catalog/ports/image-storage.ts
 src/modules/catalog/application/create-product.ts     + test
 src/modules/catalog/application/update-product.ts     + test
 src/modules/catalog/application/archive-product.ts    + test
+src/modules/catalog/application/create-image-upload-url.ts + test
 src/modules/catalog/infrastructure/prisma-product-repository.ts
+src/modules/catalog/infrastructure/s3-image-storage.ts MinIO-backed ImageStoragePort
 src/modules/catalog/infrastructure/product.integration.test.ts
 src/modules/catalog/http/product-handlers.ts          + test
+src/modules/catalog/http/image-upload-handlers.ts     + test
 src/modules/catalog/ui/product-form.tsx
 src/modules/catalog/ui/product-list.tsx
 src/modules/catalog/index.ts
+
+app/api/brand/products/[id]/images/presign/route.ts
 
 src/modules/partnerships/domain/link-code.ts          code alphabet + shape
 src/modules/partnerships/domain/link-code.test.ts
@@ -822,7 +832,560 @@ git commit -m "feat: create, edit and archive products, minting links on creatio
 
 ---
 
-### Task 5: Apply, invite, approve and reject
+### Task 5: Add MinIO object storage and presigned image uploads
+
+**Files:**
+
+- Modify: `compose.yaml`, `.env.example`, `package.json`
+- Modify: `src/config/env.ts`, `src/config/env.test.ts`
+- Create: `src/modules/catalog/domain/image-upload.ts`, `image-upload.test.ts`
+- Create: `src/modules/catalog/ports/image-storage.ts`
+- Create: `src/modules/catalog/application/create-image-upload-url.ts`, and its test
+- Create: `src/modules/catalog/infrastructure/s3-image-storage.ts`
+- Create: `src/modules/catalog/http/image-upload-handlers.ts`, `image-upload-handlers.test.ts`
+- Create: `app/api/brand/products/[id]/images/presign/route.ts`
+
+**Interfaces:**
+
+- Consumes: `serverEnv()` from Phase 0; `Result` from `@/src/modules/shared`; `products.findOwned` — the same repository method Task 4's `archiveProduct` uses
+- Produces:
+  - `type AllowedImageContentType = "image/jpeg" | "image/png" | "image/webp"`
+  - `parseImageContentType(value: string): Result<AllowedImageContentType, "unsupported_content_type">`
+  - `buildImageObjectKey(input: { brandId: string; productId: string; contentType: AllowedImageContentType; random: { uuid: () => string } }): string`
+  - `publicImageUrl(input: { publicEndpoint: string; bucket: string; key: string }): string`
+  - `interface ImageStoragePort { presignPut(input: { key: string; contentType: string }): Promise<string> }`
+  - `createImageUploadUrl(deps)(brandId: string, productId: string, input: { contentType: string }): Promise<Result<{ uploadUrl: string; publicUrl: string }, "not_found" | "unsupported_content_type">>`
+
+- [ ] **Step 1: Add the MinIO services to `compose.yaml` and bring them up**
+
+R1 §11.2's bucket is public-read, private-write — `mc anonymous set download` grants anonymous
+**read**, unlike the `mc anonymous set none` a fully private bucket would use, because product photos
+are meant to be fetched by URL with no signing:
+
+```yaml
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    environment:
+      MINIO_ROOT_USER: shuamo_local
+      MINIO_ROOT_PASSWORD: shuamo_local_only
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - shuamo_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    profiles: ["setup"]
+    environment:
+      MINIO_ROOT_USER: shuamo_local
+      MINIO_ROOT_PASSWORD: shuamo_local_only
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -ec
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing local/shuamo-product-images
+        mc anonymous set download local/shuamo-product-images
+        mc admin user add local shuamo_app_key shuamo_app_secret_local_only || true
+        mc admin policy attach local readwrite --user shuamo_app_key
+```
+
+Add `shuamo_minio_data:` to the top-level `volumes:` block, alongside `shuamo_dev_data`.
+
+```json
+{
+  "storage:up": "docker compose up -d --wait minio",
+  "storage:init": "docker compose --profile setup run --rm minio-init"
+}
+```
+
+```bash
+pnpm storage:up
+pnpm storage:init
+docker compose ps       # minio healthy
+```
+
+- [ ] **Step 2: Extend server environment validation**
+
+Add to `serverEnvSchema` in `src/config/env.ts`, next to the Phase 0 fields:
+
+```ts
+  STORAGE_ENDPOINT: z.string().url(),
+  STORAGE_PUBLIC_ENDPOINT: z.string().url(),
+  STORAGE_REGION: z.string().min(1),
+  STORAGE_BUCKET: z.string().min(1),
+  STORAGE_ACCESS_KEY_ID: z.string().min(1),
+  STORAGE_SECRET_ACCESS_KEY: z.string().min(1),
+```
+
+Update the valid-environment fixture in `src/config/env.test.ts` to include all six — the Phase 0 test
+asserts a complete valid object parses cleanly, and that object now needs these fields to stay valid.
+Append to `.env.example`:
+
+```bash
+STORAGE_ENDPOINT=http://localhost:9000
+STORAGE_PUBLIC_ENDPOINT=http://localhost:9000
+STORAGE_REGION=us-east-1
+STORAGE_BUCKET=shuamo-product-images
+STORAGE_ACCESS_KEY_ID=shuamo_app_key
+STORAGE_SECRET_ACCESS_KEY=shuamo_app_secret_local_only
+```
+
+```bash
+pnpm vitest run src/config/env.test.ts
+```
+
+Expected: PASS. No `?? "default"` was added anywhere — the same discipline as Phase 0 Task 2.
+
+- [ ] **Step 3: Write the failing content-type and key tests**
+
+`image-upload.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { buildImageObjectKey, parseImageContentType, publicImageUrl } from "./image-upload";
+
+describe("parseImageContentType", () => {
+  it("accepts jpeg, png and webp", () => {
+    expect(parseImageContentType("image/jpeg")).toEqual({ ok: true, value: "image/jpeg" });
+    expect(parseImageContentType("image/png")).toEqual({ ok: true, value: "image/png" });
+    expect(parseImageContentType("image/webp")).toEqual({ ok: true, value: "image/webp" });
+  });
+
+  it("rejects a content type outside the allowlist", () => {
+    expect(parseImageContentType("image/gif")).toEqual({
+      ok: false,
+      error: "unsupported_content_type",
+    });
+    expect(parseImageContentType("image/svg+xml")).toEqual({
+      ok: false,
+      error: "unsupported_content_type",
+    });
+    expect(parseImageContentType("text/html")).toEqual({
+      ok: false,
+      error: "unsupported_content_type",
+    });
+  });
+});
+
+describe("buildImageObjectKey", () => {
+  it("scopes the key to the brand and product, with the matching extension", () => {
+    const key = buildImageObjectKey({
+      brandId: "b1",
+      productId: "p1",
+      contentType: "image/webp",
+      random: { uuid: () => "11111111-1111-1111-1111-111111111111" },
+    });
+
+    expect(key).toBe("products/b1/p1/11111111-1111-1111-1111-111111111111.webp");
+  });
+
+  it("gives two uploads for the same product different keys", () => {
+    let call = 0;
+    const random = { uuid: () => `uuid-${++call}` };
+    const first = buildImageObjectKey({ brandId: "b1", productId: "p1", contentType: "image/jpeg", random });
+    const second = buildImageObjectKey({ brandId: "b1", productId: "p1", contentType: "image/jpeg", random });
+
+    expect(first).not.toBe(second);
+  });
+});
+
+describe("publicImageUrl", () => {
+  it("joins endpoint, bucket and key", () => {
+    expect(
+      publicImageUrl({
+        publicEndpoint: "http://localhost:9000",
+        bucket: "shuamo-product-images",
+        key: "products/b1/p1/x.jpg",
+      }),
+    ).toBe("http://localhost:9000/shuamo-product-images/products/b1/p1/x.jpg");
+  });
+
+  it("tolerates a trailing slash on the endpoint", () => {
+    expect(
+      publicImageUrl({ publicEndpoint: "https://cdn.xu.ge/", bucket: "shuamo-product-images", key: "a.jpg" }),
+    ).toBe("https://cdn.xu.ge/shuamo-product-images/a.jpg");
+  });
+});
+```
+
+- [ ] **Step 4: Run, confirm failure, implement**
+
+```bash
+pnpm vitest run src/modules/catalog/domain/image-upload.test.ts   # FAIL: module not found
+```
+
+```ts
+export type AllowedImageContentType = "image/jpeg" | "image/png" | "image/webp";
+
+const EXTENSION_BY_CONTENT_TYPE: Record<AllowedImageContentType, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+export function parseImageContentType(
+  value: string,
+):
+  | { ok: true; value: AllowedImageContentType }
+  | { ok: false; error: "unsupported_content_type" } {
+  if (value === "image/jpeg" || value === "image/png" || value === "image/webp") {
+    return { ok: true, value };
+  }
+  return { ok: false, error: "unsupported_content_type" };
+}
+
+export function buildImageObjectKey(input: {
+  brandId: string;
+  productId: string;
+  contentType: AllowedImageContentType;
+  random: { uuid: () => string };
+}): string {
+  const extension = EXTENSION_BY_CONTENT_TYPE[input.contentType];
+  return `products/${input.brandId}/${input.productId}/${input.random.uuid()}.${extension}`;
+}
+
+export function publicImageUrl(input: {
+  publicEndpoint: string;
+  bucket: string;
+  key: string;
+}): string {
+  return `${input.publicEndpoint.replace(/\/$/, "")}/${input.bucket}/${input.key}`;
+}
+```
+
+- [ ] **Step 5: Write the failing application-layer test**
+
+The behaviour worth testing here is ordering: an unowned product or a bad content type must be
+refused **before** a presigned URL is ever generated, so a rejected request never touches storage.
+
+```ts
+import { describe, expect, it } from "vitest";
+import { createImageUploadUrl } from "./create-image-upload-url";
+
+const config = { publicEndpoint: "http://localhost:9000", bucket: "shuamo-product-images" };
+const random = { uuid: () => "fixed-uuid" };
+
+describe("createImageUploadUrl", () => {
+  it("refuses a product that does not belong to the brand, before touching storage", async () => {
+    let storageCalled = false;
+    const result = await createImageUploadUrl({
+      products: { findOwned: async () => undefined },
+      storage: { presignPut: async () => { storageCalled = true; return "unused"; } },
+      random,
+      config,
+    })("b1", "p-other-brand", { contentType: "image/jpeg" });
+
+    expect(result).toEqual({ ok: false, error: "not_found" });
+    expect(storageCalled).toBe(false);
+  });
+
+  it("refuses an unsupported content type, before touching storage", async () => {
+    let storageCalled = false;
+    const result = await createImageUploadUrl({
+      products: { findOwned: async () => ({ id: "p1" }) },
+      storage: { presignPut: async () => { storageCalled = true; return "unused"; } },
+      random,
+      config,
+    })("b1", "p1", { contentType: "image/gif" });
+
+    expect(result).toEqual({ ok: false, error: "unsupported_content_type" });
+    expect(storageCalled).toBe(false);
+  });
+
+  it("returns an upload URL and a matching public URL, keyed to the brand and product", async () => {
+    let signedKey: string | undefined;
+    const result = await createImageUploadUrl({
+      products: { findOwned: async () => ({ id: "p1" }) },
+      storage: {
+        presignPut: async ({ key }) => {
+          signedKey = key;
+          return `https://minio.local/${key}?signature=abc`;
+        },
+      },
+      random,
+      config,
+    })("b1", "p1", { contentType: "image/jpeg" });
+
+    expect(result.ok).toBe(true);
+    expect(signedKey).toBe("products/b1/p1/fixed-uuid.jpg");
+    expect(result.ok && result.value.publicUrl).toBe(
+      "http://localhost:9000/shuamo-product-images/products/b1/p1/fixed-uuid.jpg",
+    );
+    expect(result.ok && result.value.uploadUrl).toContain("signature=abc");
+  });
+});
+```
+
+- [ ] **Step 6: Implement**
+
+```ts
+import type { Result } from "@/src/modules/shared";
+import {
+  buildImageObjectKey,
+  parseImageContentType,
+  publicImageUrl,
+} from "../domain/image-upload";
+import type { ImageStoragePort } from "../ports/image-storage";
+
+export interface CreateImageUploadUrlDeps {
+  products: { findOwned: (brandId: string, productId: string) => Promise<{ id: string } | undefined> };
+  storage: ImageStoragePort;
+  random: { uuid: () => string };
+  config: { publicEndpoint: string; bucket: string };
+}
+
+export function createImageUploadUrl(deps: CreateImageUploadUrlDeps) {
+  return async (
+    brandId: string,
+    productId: string,
+    input: { contentType: string },
+  ): Promise<
+    Result<{ uploadUrl: string; publicUrl: string }, "not_found" | "unsupported_content_type">
+  > => {
+    const product = await deps.products.findOwned(brandId, productId);
+    if (!product) return { ok: false, error: "not_found" };
+
+    const contentType = parseImageContentType(input.contentType);
+    if (!contentType.ok) return contentType;
+
+    const key = buildImageObjectKey({
+      brandId,
+      productId,
+      contentType: contentType.value,
+      random: deps.random,
+    });
+    const uploadUrl = await deps.storage.presignPut({ key, contentType: contentType.value });
+    const publicUrl = publicImageUrl({
+      publicEndpoint: deps.config.publicEndpoint,
+      bucket: deps.config.bucket,
+      key,
+    });
+
+    return { ok: true, value: { uploadUrl, publicUrl } };
+  };
+}
+```
+
+- [ ] **Step 7: Implement the MinIO-backed storage adapter**
+
+MinIO speaks the S3 API, so this is the AWS SDK's S3 client pointed at MinIO's endpoint with
+path-style addressing — MinIO does not support virtual-hosted-style bucket URLs by default.
+
+```bash
+pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+`src/modules/catalog/ports/image-storage.ts`:
+
+```ts
+export interface ImageStoragePort {
+  presignPut(input: { key: string; contentType: string }): Promise<string>;
+}
+```
+
+`src/modules/catalog/infrastructure/s3-image-storage.ts`:
+
+```ts
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { ImageStoragePort } from "../ports/image-storage";
+
+export function createS3ImageStorage(config: {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+}): ImageStoragePort {
+  const client = new S3Client({
+    endpoint: config.endpoint,
+    region: config.region,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+  });
+
+  return {
+    async presignPut({ key, contentType }) {
+      const command = new PutObjectCommand({
+        Bucket: config.bucket,
+        Key: key,
+        ContentType: contentType,
+      });
+      // R1 §1.2 risk 9: this pins content-type into the signature but cannot
+      // pin a byte-size range — that needs a presigned POST, not a PUT.
+      return getSignedUrl(client, command, { expiresIn: 300 });
+    },
+  };
+}
+```
+
+- [ ] **Step 8: Write the failing HTTP-handler test**
+
+```ts
+import { describe, expect, it } from "vitest";
+import { createPresignHandler } from "./image-upload-handlers";
+
+function jsonRequest(body: unknown) {
+  return new Request("http://localhost/api/brand/products/p1/images/presign", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+describe("createPresignHandler", () => {
+  it("returns 400 for a body missing contentType", async () => {
+    const handler = createPresignHandler({
+      products: { findOwned: async () => ({ id: "p1" }) },
+      storage: { presignPut: async () => "https://minio.local/signed" },
+      random: { uuid: () => "u" },
+      config: { publicEndpoint: "http://localhost:9000", bucket: "shuamo-product-images" },
+    });
+
+    const response = await handler(jsonRequest({}), { brandId: "b1", productId: "p1" });
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 404 for a product that is not the brand's own", async () => {
+    const handler = createPresignHandler({
+      products: { findOwned: async () => undefined },
+      storage: { presignPut: async () => "unused" },
+      random: { uuid: () => "u" },
+      config: { publicEndpoint: "http://localhost:9000", bucket: "shuamo-product-images" },
+    });
+
+    const response = await handler(jsonRequest({ contentType: "image/jpeg" }), {
+      brandId: "b1",
+      productId: "p-other",
+    });
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 422 for an unsupported content type", async () => {
+    const handler = createPresignHandler({
+      products: { findOwned: async () => ({ id: "p1" }) },
+      storage: { presignPut: async () => "unused" },
+      random: { uuid: () => "u" },
+      config: { publicEndpoint: "http://localhost:9000", bucket: "shuamo-product-images" },
+    });
+
+    const response = await handler(jsonRequest({ contentType: "image/gif" }), {
+      brandId: "b1",
+      productId: "p1",
+    });
+    expect(response.status).toBe(422);
+  });
+
+  it("returns 200 with an uploadUrl and publicUrl", async () => {
+    const handler = createPresignHandler({
+      products: { findOwned: async () => ({ id: "p1" }) },
+      storage: { presignPut: async ({ key }) => `https://minio.local/${key}` },
+      random: { uuid: () => "fixed-uuid" },
+      config: { publicEndpoint: "http://localhost:9000", bucket: "shuamo-product-images" },
+    });
+
+    const response = await handler(jsonRequest({ contentType: "image/jpeg" }), {
+      brandId: "b1",
+      productId: "p1",
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.publicUrl).toBe(
+      "http://localhost:9000/shuamo-product-images/products/b1/p1/fixed-uuid.jpg",
+    );
+  });
+});
+```
+
+- [ ] **Step 9: Implement the handler and wire the route**
+
+```ts
+import { z } from "zod";
+import { createImageUploadUrl, type CreateImageUploadUrlDeps } from "../application/create-image-upload-url";
+
+const presignBodySchema = z.object({ contentType: z.string() });
+
+export function createPresignHandler(deps: CreateImageUploadUrlDeps) {
+  const run = createImageUploadUrl(deps);
+
+  return async (
+    request: Request,
+    context: { brandId: string; productId: string },
+  ): Promise<Response> => {
+    const parsed = presignBodySchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return Response.json({ error: "invalid_body" }, { status: 400 });
+    }
+
+    const result = await run(context.brandId, context.productId, parsed.data);
+    if (!result.ok) {
+      const status = result.error === "not_found" ? 404 : 422;
+      return Response.json({ error: result.error }, { status });
+    }
+
+    return Response.json(result.value, { status: 200 });
+  };
+}
+```
+
+`app/api/brand/products/[id]/images/presign/route.ts` wires `requireBrand` from
+`@/src/modules/identity`, the Prisma-backed product repository's `findOwned`,
+`createS3ImageStorage(serverEnv())`, and `crypto.randomUUID` as `random.uuid`:
+
+```ts
+import { requireBrand } from "@/src/modules/identity";
+import { serverEnv } from "@/src/config/env";
+import { createS3ImageStorage } from "@/src/modules/catalog/infrastructure/s3-image-storage";
+import { prismaProductRepository } from "@/src/modules/catalog/infrastructure/prisma-product-repository";
+import { createPresignHandler } from "@/src/modules/catalog/http/image-upload-handlers";
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const brand = await requireBrand();
+  const { id } = await params;
+  const env = serverEnv();
+
+  const handler = createPresignHandler({
+    products: prismaProductRepository,
+    storage: createS3ImageStorage({
+      endpoint: env.STORAGE_ENDPOINT,
+      region: env.STORAGE_REGION,
+      bucket: env.STORAGE_BUCKET,
+      accessKeyId: env.STORAGE_ACCESS_KEY_ID,
+      secretAccessKey: env.STORAGE_SECRET_ACCESS_KEY,
+    }),
+    random: { uuid: () => crypto.randomUUID() },
+    config: { publicEndpoint: env.STORAGE_PUBLIC_ENDPOINT, bucket: env.STORAGE_BUCKET },
+  });
+
+  return handler(request, { brandId: brand.id, productId: id });
+}
+```
+
+- [ ] **Step 10: Run everything and commit**
+
+```bash
+pnpm test:unit
+git add compose.yaml .env.example package.json src/config src/modules/catalog app/api/brand/products
+git commit -m "feat: add MinIO object storage and presigned product-image uploads"
+```
+
+---
+
+### Task 6: Apply, invite, approve and reject
 
 **Files:**
 
@@ -992,7 +1555,7 @@ git commit -m "feat: apply, approve and reject partnerships, minting links on ap
 
 ---
 
-### Task 6: Build the catalog and partnership screens
+### Task 7: Build the catalog and partnership screens
 
 **Files:**
 
@@ -1001,16 +1564,33 @@ git commit -m "feat: apply, approve and reject partnerships, minting links on ap
 - Create: `app/[locale]/creator/brands/page.tsx`, `creator/links/page.tsx`
 - Create: `src/modules/catalog/ui/product-form.tsx`, `product-list.tsx`
 - Create: `src/modules/partnerships/ui/partnership-queue.tsx`, `link-list.tsx`
+- Create: `src/test/fixtures/perfume.jpg` — a small real JPEG, for the upload e2e test
 - Modify: the message catalogues
 
 **Interfaces:**
 
-- Consumes: `requireBrand` / `requireCreator` from `@/src/modules/identity`; the Phase 1 kit
+- Consumes: `requireBrand` / `requireCreator` from `@/src/modules/identity`; the Phase 1 kit; `POST .../images/presign` from Task 5
 - Produces: five screens, both locales
 
 - [ ] **Step 1: Build the product form**
 
-Fields: SKU, title, description, price, up to 8 image URLs, backlink URL, commission type, commission value.
+Fields: SKU, title, description, price, up to 8 images, backlink URL, commission type, commission value.
+
+The image field is an upload widget, not a URL text input, since Task 5 moved image hosting behind a
+presigned upload:
+
+The file input carries the accessible label "Add image" in both locales, so the Step 6 Playwright test
+can target it without a test-only hook.
+
+1. On file selection, `POST .../images/presign` with the file's `type`. A rejected content type shows
+   the allowlist inline (`.jpg`, `.png`, `.webp`) rather than a raw `unsupported_content_type` error.
+2. `PUT` the file directly to the returned `uploadUrl`, with a progress indicator — this request goes
+   to MinIO, not to the Next.js server, so it never counts against the app's own request timeout.
+3. On success, append the returned `publicUrl` to the product's `imageUrls` and render a thumbnail.
+   The 8-image cap disables the widget once reached, matching `image_urls_bounded`.
+4. A failed `PUT` (network error, expired presigned URL) surfaces a retry action rather than silently
+   dropping the image — the widget re-requests a fresh presigned URL rather than reusing the expired
+   one, since Task 5's URLs expire after 5 minutes.
 
 The rate control is the one that needs design attention rather than a plain number input:
 
@@ -1069,14 +1649,34 @@ test("@phase-3 a creator sees a copyable link code", async ({ page }) => {
   await page.goto("/en/creator/links");
   await expect(page.getByRole("button", { name: /copy/i }).first()).toBeVisible();
 });
+
+test("@phase-3 a brand uploads a product photo through the presigned MinIO flow", async ({ page }) => {
+  // Exercises the real dev MinIO container (Task 5), not a mock: the presigned
+  // PUT must actually succeed against the running service.
+  await signInAsBrand(page, "en");
+  await page.goto("/en/brand/products/new");
+  await page.getByLabel(/add image/i).setInputFiles({
+    name: "perfume.jpg",
+    mimeType: "image/jpeg",
+    buffer: readFileSync("src/test/fixtures/perfume.jpg"),
+  });
+
+  const thumbnail = page.getByRole("img", { name: /perfume\.jpg/i });
+  await expect(thumbnail).toBeVisible();
+  await expect(thumbnail).toHaveAttribute("src", /^http:\/\/localhost:9000\/shuamo-product-images\//);
+});
 ```
+
+Add `import { readFileSync } from "node:fs";` to `catalog.spec.ts`'s existing import block. This test
+needs `pnpm storage:up && pnpm storage:init` (Task 5 Step 1) to have run — the same real-service
+requirement Playwright already has on `postgres-test`, extended to `minio`.
 
 - [ ] **Step 7: Wire the gate and run it**
 
 ```json
 {
   "seed:phase-3": "tsx scripts/seed-phase-03.ts",
-  "verify:phase-3": "pnpm verify:phase-2 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm seed:phase-3 && pnpm test:e2e --grep @phase-3"
+  "verify:phase-3": "pnpm verify:phase-2 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm storage:up && pnpm storage:init && pnpm seed:phase-3 && pnpm test:e2e --grep @phase-3"
 }
 ```
 
@@ -1109,3 +1709,6 @@ git commit -m "feat: add the catalog, partnership and link screens"
 - [ ] The rate editor shows the stored fraction and a worked earnings example, and warns on edit about §1.2 risk 3.
 - [ ] All four disable reasons render in Georgian and English on the creator's link list.
 - [ ] `pnpm seed:phase-3` produces exactly 6 tracking links, and is idempotent.
+- [ ] A presigned upload URL is refused for a content type outside `{image/jpeg, image/png, image/webp}`, and for a product belonging to another brand — both before any request reaches MinIO.
+- [ ] `mc anonymous set download` is applied to the product-images bucket: an anonymous `GET` on an uploaded object succeeds; a `PUT` without a valid presigned URL is refused.
+- [ ] A brand can upload a real JPEG through the presigned-URL flow in the browser and see it render as a product image, proved by the Playwright test against the running dev MinIO container.
