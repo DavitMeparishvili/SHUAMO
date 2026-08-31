@@ -19,6 +19,8 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
+    "tokens:generate": "tsx scripts/generate-tokens.mjs",
+    "tokens:check": "tsx scripts/generate-tokens.mjs --check",
     "db:up": "docker compose up -d --wait postgres-dev postgres-test",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",
