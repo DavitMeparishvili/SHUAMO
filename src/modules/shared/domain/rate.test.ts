@@ -30,4 +30,23 @@ describe("Rate", () => {
     expect(() => Rate.percent("-0.1")).toThrowError(/negative/);
     expect(() => Rate.fixed("-1.00")).toThrowError(/negative/);
   });
+
+  it("refuses a rate that numeric(9,4) would silently round", () => {
+    // 0.1234567 stores as 0.1235. A commission recomputed from the stored rate
+    // would then disagree with the one already written to the ledger.
+    expect(Rate.percent("0.1234").storedValue).toBe("0.1234");
+    expect(() => Rate.percent("0.1234567")).toThrowError(/numeric\(9,4\)/);
+    expect(() => Rate.fixed("5.00001")).toThrowError(/numeric\(9,4\)/);
+  });
+
+  it("refuses more integer digits than numeric(9,4) holds", () => {
+    expect(() => Rate.fixed("123456.00")).toThrowError(/numeric\(9,4\)/);
+  });
+
+  it("rejects every numeric notation that is not a plain decimal", () => {
+    for (const notation of ["0x1F", "1e2", "1_000", "Infinity", ""]) {
+      expect(() => Rate.fixed(notation), notation).toThrowError(/decimal/);
+      expect(() => Rate.percent(notation), notation).toThrowError(/decimal/);
+    }
+  });
 });

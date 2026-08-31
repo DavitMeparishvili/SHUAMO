@@ -1,10 +1,12 @@
 import Decimal from "decimal.js";
+import { assertFitsNumeric, parseDecimalText } from "./decimal-text";
 
 // 28 significant digits: comfortably above numeric(12,2) with room for the
 // unrounded intermediates in §6.3.
 Decimal.set({ precision: 28, toExpNeg: -18, toExpPos: 21 });
 
 const TETRI = 2;
+const STORAGE_PRECISION = 12;
 
 export class Money {
   static readonly ZERO = new Money(new Decimal(0));
@@ -12,16 +14,7 @@ export class Money {
   private constructor(private readonly value: Decimal) {}
 
   static of(value: string): Money {
-    if (typeof value !== "string") {
-      throw new TypeError(
-        "Money.of takes a string; a number cannot hold GEL exactly",
-      );
-    }
-    const parsed = new Decimal(value);
-    if (!parsed.isFinite()) {
-      throw new RangeError(`Money.of received a non-finite value: ${value}`);
-    }
-    return new Money(parsed);
+    return new Money(parseDecimalText(value, "Money.of"));
   }
 
   plus(other: Money): Money {
@@ -42,7 +35,9 @@ export class Money {
 
   /** Multiply by a decimal fraction supplied as a string. Never rounds. */
   timesRateFraction(fraction: string): Money {
-    return new Money(this.value.times(new Decimal(fraction)));
+    return new Money(
+      this.value.times(parseDecimalText(fraction, "Money.timesRateFraction")),
+    );
   }
 
   dividedByInteger(divisor: number): Money {
@@ -97,6 +92,7 @@ export class Money {
         `${this.value.toString()} is not exact at the tetri; round or floor it first`,
       );
     }
+    assertFitsNumeric(this.value, STORAGE_PRECISION, TETRI, "Money");
     return this.value.toFixed(TETRI);
   }
 }
