@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres-test:
+        image: postgres:17
+        env:
+          POSTGRES_DB: shuamo_test
+          POSTGRES_USER: shuamo_test
+          POSTGRES_PASSWORD: shuamo_test_local_only
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shuamo_test -d shuamo_test"
+          --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      CI: "true"
+      # NODE_ENV is deliberately not pinned at the job level. `next build` and
+      # `next start` set it themselves, and vitest sets it to "test"; forcing
+      # "test" here would put the production build on a non-standard NODE_ENV.
+      DATABASE_URL: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
+      DATABASE_URL_TEST: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
+      APP_URL: http://localhost:3000
+      AUTH_SECRET: ci-only-auth-secret-000000000000000000000000
+      FINGERPRINT_SECRET: ci-only-fingerprint-secret-00000000000000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc }
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate:test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm verify:phase-0
