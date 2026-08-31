@@ -43,8 +43,6 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const messages = getMessages(locale);
-
   return (
     <html lang={locale}>
       <body>

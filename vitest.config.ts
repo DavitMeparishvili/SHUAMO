@@ -13,7 +13,7 @@ export default defineConfig({
       // src/test/boundaries/verify-module-boundaries.test.ts.
       "src/test/boundaries/fixtures/**",
     ],
-    environment: "jsdom",
+    environment: "node",
     setupFiles: ["src/test/unit/setup.tsx"],
   },
 });

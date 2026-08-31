@@ -18,7 +18,12 @@ export function DataTable<Row extends Record<string, ReactNode>>({
   rowKey: keyof Row;
 }) {
   return (
-    <div className="max-w-full overflow-x-auto rounded-sm">
+    <div
+      className="max-w-full overflow-x-auto rounded-sm"
+      aria-label={caption}
+      role="region"
+      tabIndex={0}
+    >
       <table className="w-full min-w-[640px] border-collapse text-left type-small">
         <caption className="pb-3 text-left type-small font-semibold text-ink">
           {caption}

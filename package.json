@@ -27,7 +27,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:test": "tsx scripts/run-prisma-test.ts",
-    "verify:phase-0": "pnpm format:check && pnpm lint && pnpm verify:boundaries && pnpm typecheck && pnpm test:unit && pnpm test:integration && pnpm build && pnpm test:e2e --grep-invert \"@phase-\""
+    "verify:phase-0": "pnpm format:check && pnpm lint && pnpm verify:boundaries && pnpm typecheck && pnpm test:unit && pnpm test:integration && pnpm build && pnpm test:e2e --grep-invert \"@phase-\"",
+    "verify:phase-1": "pnpm verify:phase-0 && pnpm tokens:check && pnpm test:e2e --grep @phase-1"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.9.1",
