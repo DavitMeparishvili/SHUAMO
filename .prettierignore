@@ -25,6 +25,7 @@ src/test/boundaries/fixtures
 .claude
 .codex
 .impeccable
+.playwright-mcp
 .superpowers
 docs/REQUIREMENTS.md
 docs/superpowers

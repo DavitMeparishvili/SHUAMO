@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   Banner,
@@ -31,18 +32,28 @@ const PILL_KEYS: Record<PillState, string> = {
 };
 
 function Section({
+  id,
   title,
   rule,
   children,
 }: {
+  id?: string;
   title: string;
   rule: string;
   children: React.ReactNode;
 }) {
+  const headingId = id ? `${id}-heading` : undefined;
+
   return (
-    <section className="border-t border-slate-200 py-12 first:border-t-0">
+    <section
+      aria-labelledby={headingId}
+      className={`border-t border-slate-200 py-12 first:border-t-0 ${id ? "scroll-mt-20" : ""}`}
+      id={id}
+    >
       <div className="mb-8 grid gap-3 min-[800px]:grid-cols-[minmax(0,1fr)_minmax(260px,0.55fr)] min-[800px]:items-end">
-        <h2 className="m-0 type-h2 text-ink">{title}</h2>
+        <h2 className="m-0 type-h2 text-ink" id={headingId}>
+          {title}
+        </h2>
         <p className="m-0 max-w-[54ch] type-small text-slate-600 min-[800px]:justify-self-end min-[800px]:text-right">
           {rule}
         </p>
@@ -50,6 +61,22 @@ function Section({
       {children}
     </section>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+
+  const messages = getMessages(locale);
+
+  return {
+    title: `${t(messages, "design.title")} | SHUAMO`,
+    description: t(messages, "design.intro"),
+  };
 }
 
 export default async function DesignSystemPage({
@@ -273,31 +300,30 @@ export default async function DesignSystemPage({
       </Section>
 
       <Section
+        id="table"
         title={translate("design.section.table")}
         rule={translate("design.rule.table")}
       >
         <Card className="p-4 sm:p-6">
-          <div id="table">
-            <DataTable
-              caption={translate("design.table.caption")}
-              columns={[
-                { key: "order", label: translate("design.table.order") },
-                { key: "creator", label: translate("design.table.creator") },
-                {
-                  key: "net",
-                  label: translate("design.table.net"),
-                  align: "right",
-                },
-                {
-                  key: "commission",
-                  label: translate("design.table.commission"),
-                  align: "right",
-                },
-              ]}
-              rowKey="order"
-              rows={tableRows}
-            />
-          </div>
+          <DataTable
+            caption={translate("design.table.caption")}
+            columns={[
+              { key: "order", label: translate("design.table.order") },
+              { key: "creator", label: translate("design.table.creator") },
+              {
+                key: "net",
+                label: translate("design.table.net"),
+                align: "right",
+              },
+              {
+                key: "commission",
+                label: translate("design.table.commission"),
+                align: "right",
+              },
+            ]}
+            rowKey="order"
+            rows={tableRows}
+          />
         </Card>
       </Section>
 

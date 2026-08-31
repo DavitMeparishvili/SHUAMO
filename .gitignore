@@ -15,6 +15,7 @@
 /.impeccable/review/
 /.impeccable/hook.cache.json
 /.impeccable/config.local.json
+/.playwright-mcp/
 
 # testing
 /coverage
