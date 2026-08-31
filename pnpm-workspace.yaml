@@ -1,0 +1,10 @@
+# pnpm 11 reads build-script approvals from here, not from package.json.
+# These five packages ship native binaries or engines that must be unpacked at
+# install time; without the approval `pnpm install` leaves them unbuilt and the
+# Prisma CLI, esbuild, and the Next compiler all fail at first use.
+allowBuilds:
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
