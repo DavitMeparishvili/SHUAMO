@@ -40,8 +40,12 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
     "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "4.3.3",
+    "@testing-library/jest-dom": "6.9.0",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
     "@types/node": "24.10.1",
     "@types/pg": "8.21.0",
     "@types/react": "19.2.18",
@@ -50,6 +54,7 @@
     "dotenv": "17.2.4",
     "eslint": "9.39.5",
     "eslint-config-next": "16.1.0",
+    "jsdom": "27.0.0",
     "prettier": "3.9.6",
     "prisma": "7.9.1",
     "tailwindcss": "4.3.3",
