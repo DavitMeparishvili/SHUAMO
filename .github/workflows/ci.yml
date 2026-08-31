@@ -41,4 +41,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate:test
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm verify:phase-0
+      - run: pnpm verify:phase-1

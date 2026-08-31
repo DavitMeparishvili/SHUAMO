@@ -30,4 +30,19 @@ describe("Button", () => {
     render(<Button disabled>Confirm</Button>);
     expect(screen.getByRole("button")).toBeDisabled();
   });
+
+  it("uses declared token pairs for ghost and danger interaction states", () => {
+    const { rerender } = render(<Button variant="ghost">Ghost</Button>);
+    expect(screen.getByRole("button").className).toContain(
+      "active:bg-slate-100",
+    );
+
+    rerender(<Button variant="danger">Danger</Button>);
+    expect(screen.getByRole("button").className).toContain(
+      "hover:bg-reversed-hover",
+    );
+    expect(screen.getByRole("button").className).toContain(
+      "active:bg-reversed-active",
+    );
+  });
 });

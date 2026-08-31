@@ -1,8 +1,10 @@
 @import "tailwindcss";
 @import "./tokens.css";
+@import "@fontsource/noto-sans-georgian/georgian.css";
 
 :root {
   color-scheme: light;
+  --font-noto-sans-georgian: "Noto Sans Georgian";
 }
 
 * {

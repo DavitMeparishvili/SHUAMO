@@ -345,6 +345,7 @@ export default async function DesignSystemPage({
           <Card>
             <CopyField
               copiedLabel={translate("design.copy.copied")}
+              copyErrorLabel={translate("design.copy.error")}
               copyLabel={translate("design.copy.copy")}
               label={translate("design.copy.link")}
               value="xu.ge/r/K7M2QP"
@@ -353,6 +354,7 @@ export default async function DesignSystemPage({
           <Card>
             <CopyField
               copiedLabel={translate("design.copy.copied")}
+              copyErrorLabel={translate("design.copy.error")}
               copyLabel={translate("design.copy.copy")}
               label={translate("design.copy.apiKey")}
               oneTimeWarning={translate("design.copy.once")}

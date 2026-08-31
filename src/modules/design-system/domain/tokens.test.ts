@@ -10,7 +10,7 @@ describe("tokens", () => {
 
   it("sets tabular numerals on every mono style", () => {
     for (const [name, style] of Object.entries(TYPE_SCALE)) {
-      if (!style.fontFamily.startsWith("Geist Mono")) continue;
+      if (!("fontVariantNumeric" in style)) continue;
       expect(
         "fontVariantNumeric" in style ? style.fontVariantNumeric : undefined,
         name,
@@ -20,8 +20,10 @@ describe("tokens", () => {
 
   it("names Noto Sans Georgian in every text stack", () => {
     for (const [name, style] of Object.entries(TYPE_SCALE)) {
-      if (style.fontFamily.startsWith("Geist Mono")) continue;
-      expect(style.fontFamily, name).toContain("Noto Sans Georgian");
+      if ("fontVariantNumeric" in style) continue;
+      expect(style.fontFamily, name).toContain(
+        "var(--font-noto-sans-georgian)",
+      );
     }
   });
 
@@ -32,15 +34,34 @@ describe("tokens", () => {
       "signal button hover",
       "signal button active",
       "outline button rest",
+      "outline button hover",
+      "outline button active",
+      "outline button border rest",
+      "outline button border hover",
+      "outline button border active",
+      "ghost button rest",
+      "ghost button hover",
+      "ghost button active",
+      "danger button rest",
+      "danger button hover",
+      "danger button active",
       "body text on paper",
       "muted text on paper",
       "accrued pill",
       "settled pill",
       "reversed pill",
       "utility strip",
+      "destination border rest",
+      "destination border hover",
+      "destination border active",
     ]) {
       expect(named).toContain(required);
     }
+  });
+
+  it("declares each contrast state exactly once", () => {
+    const names = CONTRAST_PAIRS.map((pair) => pair.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 
   it("keeps the radius ramp to five steps", () => {

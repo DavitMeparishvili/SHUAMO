@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 
@@ -44,7 +46,10 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
-    <html lang={locale}>
+    <html
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      lang={locale}
+    >
       <body>
         <AppShell locale={locale} viewer={{ kind: "anonymous" }}>
           {children}

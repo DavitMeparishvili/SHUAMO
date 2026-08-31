@@ -6,6 +6,8 @@ const baseURL = process.env.APP_URL ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./src/test/e2e",
+  snapshotPathTemplate:
+    "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}-{platform}{ext}",
   forbidOnly: isCi,
   workers: 1,
   reporter: isCi ? [["dot"], ["html", { open: "never" }]] : "line",

@@ -26,68 +26,70 @@ colors:
   settled: "#0B6B4F"
   settled-soft: "#E3F3EC"
   reversed: "#A32A22"
+  reversed-hover: "#8E211B"
+  reversed-active: "#731A16"
   reversed-soft: "#FBE9E7"
   focus-ring: "rgb(68 54 245 / 0.28)"
 typography:
   display:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "48px"
     fontWeight: 700
     lineHeight: 1.05
     letterSpacing: "-0.03em"
   h1:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "34px"
     fontWeight: 700
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   h2:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "26px"
     fontWeight: 650
     lineHeight: 1.2
     letterSpacing: "-0.02em"
   h3:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "20px"
     fontWeight: 650
     lineHeight: 1.3
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
   small:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 450
     lineHeight: 1.5
   caption:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 500
     lineHeight: 1.4
   overline:
-    fontFamily: "Geist, Noto Sans Georgian, system-ui, sans-serif"
+    fontFamily: "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "11px"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "0.12em"
   figure-lg:
-    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontFamily: "var(--font-geist-mono), ui-monospace, monospace"
     fontSize: "28px"
     fontWeight: 600
     lineHeight: 1.1
     fontVariantNumeric: "tabular-nums"
   figure:
-    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontFamily: "var(--font-geist-mono), ui-monospace, monospace"
     fontSize: "20px"
     fontWeight: 600
     lineHeight: 1.2
     fontVariantNumeric: "tabular-nums"
   mono:
-    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontFamily: "var(--font-geist-mono), ui-monospace, monospace"
     fontSize: "14px"
     fontWeight: 500
     lineHeight: 1.5
@@ -144,7 +146,7 @@ The page uses a 1160px column with 32px gutters, narrowing to 24px below 1180px 
 
 ## Elevation
 
-There are three steps. A card at rest is `xs`; a card that is a destination raises to `sm` on hover and takes a `signal-200` border. Nothing in the product is at `md` except a modal and the mobile filter sheet. A hover raise promises a destination — a card that does not navigate does not raise.
+There are three steps. A card at rest is `xs`; a card that is a destination raises to `sm` on hover and takes a `signal` border with a 3:1 boundary against paper. Nothing in the product is at `md` except a modal and the mobile filter sheet. A hover raise promises a destination — a card that does not navigate does not raise.
 
 ## Components
 

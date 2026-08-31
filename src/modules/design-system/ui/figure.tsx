@@ -34,7 +34,7 @@ export function Figure({
   if (href) {
     return (
       <a
-        className="block rounded-md border border-slate-200 bg-paper p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-signal-200 hover:shadow-sm"
+        className="block rounded-md border border-slate-200 bg-paper p-4 shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-signal hover:shadow-sm active:border-signal-active"
         href={href}
       >
         {content}

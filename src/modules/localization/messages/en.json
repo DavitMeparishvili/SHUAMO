@@ -102,6 +102,7 @@
   "design.copy.apiKey": "Brand API key",
   "design.copy.copy": "Copy",
   "design.copy.copied": "Copied",
+  "design.copy.error": "Copy failed. Select and copy the value manually.",
   "design.copy.once": "This is the only time this key will be shown. Store it in the brand server now.",
   "error.title": "Something went wrong",
   "error.retry": "Try again",

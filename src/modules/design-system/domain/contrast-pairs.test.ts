@@ -10,4 +10,14 @@ describe("declared contrast pairs", () => {
       expect(ratio).toBeGreaterThanOrEqual(minimum);
     },
   );
+
+  it("holds text states to 4.5:1 and destination boundaries to 3:1", () => {
+    for (const pair of CONTRAST_PAIRS) {
+      if (pair.name.includes("border")) {
+        expect(pair.minimum, pair.name).toBe(3);
+      } else if (pair.name.includes("button")) {
+        expect(pair.minimum, pair.name).toBe(4.5);
+      }
+    }
+  });
 });

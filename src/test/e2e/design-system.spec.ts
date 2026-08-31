@@ -2,6 +2,31 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 for (const locale of ["ka", "en"] as const) {
+  test(`@phase-1 ${locale} design system loads its local type system`, async ({
+    page,
+  }) => {
+    await page.goto(`/${locale}/design`);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const fonts = await page.evaluate(() => ({
+      body: getComputedStyle(document.body).fontFamily,
+      faces: [...document.fonts].map((face) => face.family),
+      money: getComputedStyle(
+        document.querySelector<HTMLElement>("[data-amount]")!,
+      ).fontFamily,
+      size: document.fonts.size,
+    }));
+
+    expect(fonts.size).toBeGreaterThan(0);
+    expect(fonts.body).toMatch(/Geist/i);
+    expect(fonts.money).toMatch(/Geist/i);
+    expect(
+      fonts.faces.some((family) => /Noto Sans Georgian/i.test(family)),
+    ).toBe(true);
+  });
+
   test(`@phase-1 ${locale} design system has no accessibility violations`, async ({
     page,
   }) => {
@@ -37,7 +62,12 @@ for (const locale of ["ka", "en"] as const) {
     page,
   }) => {
     await page.goto(`/${locale}/design`);
-    await page.waitForLoadState("networkidle");
+    await Promise.all([
+      page.waitForLoadState("networkidle"),
+      page.evaluate(async () => {
+        await document.fonts.ready;
+      }),
+    ]);
 
     await expect(page).toHaveScreenshot(`design-${locale}.png`, {
       fullPage: true,

@@ -23,6 +23,8 @@ export const COLORS = {
   settled: "#0B6B4F",
   "settled-soft": "#E3F3EC",
   reversed: "#A32A22",
+  "reversed-hover": "#8E211B",
+  "reversed-active": "#731A16",
   "reversed-soft": "#FBE9E7",
   "focus-ring": "rgb(68 54 245 / 0.28)",
 } as const;
@@ -38,8 +40,9 @@ export interface TypeStyle {
   readonly fontVariantNumeric?: "tabular-nums";
 }
 
-const TEXT = "Geist, Noto Sans Georgian, system-ui, sans-serif";
-const MONO = "Geist Mono, ui-monospace, monospace";
+const TEXT =
+  "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif";
+const MONO = "var(--font-geist-mono), ui-monospace, monospace";
 
 export const TYPE_SCALE = {
   display: {
@@ -172,9 +175,69 @@ export const CONTRAST_PAIRS = [
     minimum: 4.5,
   },
   {
+    name: "outline button hover",
+    foreground: "ink",
+    background: "paper",
+    minimum: 4.5,
+  },
+  {
+    name: "outline button active",
+    foreground: "ink",
+    background: "slate-50",
+    minimum: 4.5,
+  },
+  {
+    name: "outline button border rest",
+    foreground: "slate-300",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "outline button border hover",
+    foreground: "ink",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "outline button border active",
+    foreground: "ink",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "ghost button rest",
+    foreground: "slate-700",
+    background: "paper",
+    minimum: 4.5,
+  },
+  {
+    name: "ghost button hover",
+    foreground: "slate-700",
+    background: "slate-100",
+    minimum: 4.5,
+  },
+  {
+    name: "ghost button active",
+    foreground: "slate-700",
+    background: "slate-100",
+    minimum: 4.5,
+  },
+  {
     name: "danger button rest",
     foreground: "paper",
     background: "reversed",
+    minimum: 4.5,
+  },
+  {
+    name: "danger button hover",
+    foreground: "paper",
+    background: "reversed-hover",
+    minimum: 4.5,
+  },
+  {
+    name: "danger button active",
+    foreground: "paper",
+    background: "reversed-active",
     minimum: 4.5,
   },
   {
@@ -240,6 +303,24 @@ export const CONTRAST_PAIRS = [
   {
     name: "interactive border on paper",
     foreground: "slate-300",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "destination border rest",
+    foreground: "slate-200",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "destination border hover",
+    foreground: "signal",
+    background: "paper",
+    minimum: 3,
+  },
+  {
+    name: "destination border active",
+    foreground: "signal-active",
     background: "paper",
     minimum: 3,
   },

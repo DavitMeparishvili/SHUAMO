@@ -18,7 +18,7 @@ export function Card({
   const classes = [
     "block rounded-md border border-slate-200 bg-paper p-5 shadow-xs",
     as === "a" && raised
-      ? "transition-[border-color,box-shadow] duration-150 hover:border-signal-200 hover:shadow-sm"
+      ? "transition-[border-color,box-shadow] duration-150 hover:border-signal hover:shadow-sm active:border-signal-active"
       : undefined,
     className,
   ]

@@ -5,8 +5,9 @@ const VARIANT = {
     "bg-signal text-paper shadow-xs hover:bg-signal-hover active:bg-signal-active",
   outline:
     "border border-slate-300 bg-paper text-ink hover:border-ink active:bg-slate-50",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200",
-  danger: "bg-reversed text-paper hover:brightness-95 active:brightness-90",
+  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-100",
+  danger:
+    "bg-reversed text-paper hover:bg-reversed-hover active:bg-reversed-active",
 } as const;
 
 export function Button({
@@ -31,7 +32,7 @@ export function Button({
       aria-busy={pending || undefined}
       className={[
         "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-pill type-small",
-        "cursor-pointer transition-[background-color,border-color,filter] duration-150",
+        "cursor-pointer transition-[background-color,border-color] duration-150",
         "disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "px-4" : "px-5",
         VARIANT[variant],
