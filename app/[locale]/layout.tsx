@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
+import { AppShell } from "@/src/modules/shell";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -47,8 +48,9 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
-        <a href="#main">{t(messages, "nav.skipToContent")}</a>
-        <main id="main">{children}</main>
+        <AppShell locale={locale} viewer={{ kind: "anonymous" }}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );
