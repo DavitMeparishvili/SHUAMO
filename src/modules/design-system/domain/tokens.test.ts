@@ -11,7 +11,10 @@ describe("tokens", () => {
   it("sets tabular numerals on every mono style", () => {
     for (const [name, style] of Object.entries(TYPE_SCALE)) {
       if (!style.fontFamily.startsWith("Geist Mono")) continue;
-      expect(style.fontVariantNumeric, name).toBe("tabular-nums");
+      expect(
+        "fontVariantNumeric" in style ? style.fontVariantNumeric : undefined,
+        name,
+      ).toBe("tabular-nums");
     }
   });
 

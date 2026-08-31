@@ -172,6 +172,12 @@ export const CONTRAST_PAIRS = [
     minimum: 4.5,
   },
   {
+    name: "danger button rest",
+    foreground: "paper",
+    background: "reversed",
+    minimum: 4.5,
+  },
+  {
     name: "body text on paper",
     foreground: "slate-700",
     background: "paper",
@@ -187,6 +193,12 @@ export const CONTRAST_PAIRS = [
     name: "body text on slate-50",
     foreground: "slate-700",
     background: "slate-50",
+    minimum: 4.5,
+  },
+  {
+    name: "neutral pill",
+    foreground: "slate-700",
+    background: "slate-100",
     minimum: 4.5,
   },
   {
