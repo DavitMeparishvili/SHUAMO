@@ -36,6 +36,50 @@ describe("parseServerEnv", () => {
     ).toThrowError(/DATABASE_URL/);
   });
 
+  // .env.example ships a 45-character placeholder, which satisfies min(40).
+  // Without this check `cp .env.example .env` boots a working application on a
+  // secret that is published in the repository, which is the outcome the "no
+  // secret defaults" rule exists to prevent.
+  const published = [
+    "replace-with-40-plus-characters-of-random-hex",
+    "ci-only-auth-secret-000000000000000000000000",
+    "ci-only-fingerprint-secret-00000000000000",
+  ];
+
+  it("refuses a published placeholder secret outside the test environment", () => {
+    for (const placeholder of published) {
+      expect(
+        () =>
+          parseServerEnv({
+            ...valid,
+            NODE_ENV: "production",
+            AUTH_SECRET: placeholder,
+          }),
+        placeholder,
+      ).toThrowError(/AUTH_SECRET/);
+
+      expect(
+        () =>
+          parseServerEnv({
+            ...valid,
+            NODE_ENV: "development",
+            FINGERPRINT_SECRET: placeholder,
+          }),
+        placeholder,
+      ).toThrowError(/FINGERPRINT_SECRET/);
+    }
+  });
+
+  it("allows a placeholder under NODE_ENV=test, where nothing is protected", () => {
+    expect(
+      parseServerEnv({
+        ...valid,
+        NODE_ENV: "test",
+        AUTH_SECRET: published[0] as string,
+      }).NODE_ENV,
+    ).toBe("test");
+  });
+
   it("supplies no default for any secret", () => {
     for (const key of ["AUTH_SECRET", "FINGERPRINT_SECRET", "DATABASE_URL"]) {
       const incomplete = { ...valid };

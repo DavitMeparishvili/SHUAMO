@@ -1,6 +1,8 @@
 {
   "app.name": "SHUAMO",
   "app.tagline": "კრეატორების შედეგი, გაზომილი.",
+  "meta.title": "SHUAMO — კრეატორების შედეგი, გაზომილი.",
+  "meta.description": "SHUAMO ზომავს, რას იძლევა კრეატორებთან პარტნიორობა სინამდვილეში.",
   "nav.skipToContent": "გადასვლა შიგთავსზე",
   "nav.locale": "ენა",
   "error.title": "რაღაც ვერ შესრულდა",

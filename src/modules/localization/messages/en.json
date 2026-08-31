@@ -1,6 +1,8 @@
 {
   "app.name": "SHUAMO",
   "app.tagline": "Creator performance, measured.",
+  "meta.title": "SHUAMO — Creator performance, measured.",
+  "meta.description": "SHUAMO measures what creator partnerships actually deliver.",
   "nav.skipToContent": "Skip to content",
   "nav.locale": "Language",
   "error.title": "Something went wrong",

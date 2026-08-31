@@ -26,10 +26,15 @@ jobs:
       DATABASE_URL: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
       DATABASE_URL_TEST: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
       APP_URL: http://localhost:3000
-      AUTH_SECRET: ci-only-auth-secret-000000000000000000000000
-      FINGERPRINT_SECRET: ci-only-fingerprint-secret-00000000000000
     steps:
       - uses: actions/checkout@v4
+      # Generated per run, not written down. The literals this workflow used to
+      # carry are now refused outright by src/config/env.ts, so a copy-paste of
+      # them into a real deployment fails at boot instead of shipping.
+      - name: Generate run-scoped secrets
+        run: |
+          echo "AUTH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "FINGERPRINT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc }
       - run: corepack enable

@@ -21,7 +21,11 @@ export default defineConfig({
     { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
-    command: isCi ? "pnpm start" : "pnpm dev",
+    // Always the built artifact, never the dev server. `verify:phase-0` builds
+    // immediately before this runs, and testing the thing that was just built
+    // is the only version of this that proves anything about a deployment.
+    // `pnpm test:e2e` on its own therefore needs a `pnpm build` first.
+    command: "pnpm start",
     url: `${baseURL}/api/health/live`,
     reuseExistingServer: !isCi,
   },

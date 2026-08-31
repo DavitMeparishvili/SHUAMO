@@ -8,6 +8,18 @@ const postgresUrl = z
     { message: "must be a postgresql:// connection string" },
   );
 
+// Secrets that exist in this repository's own files: the .env.example template
+// and the CI workflow. Each is long enough to satisfy min(40), so without an
+// explicit refusal `cp .env.example .env` produces a working application signed
+// with a published key.
+const PUBLISHED_PLACEHOLDER_SECRETS = new Set([
+  "replace-with-40-plus-characters-of-random-hex",
+  "ci-only-auth-secret-000000000000000000000000",
+  "ci-only-fingerprint-secret-00000000000000",
+]);
+
+const SECRET_KEYS = ["AUTH_SECRET", "FINGERPRINT_SECRET"] as const;
+
 const serverEnvSchema = z.object({
   DATABASE_URL: postgresUrl,
   DATABASE_URL_TEST: postgresUrl,
@@ -18,6 +30,23 @@ const serverEnvSchema = z.object({
   AUTH_SECRET: z.string().min(40),
   FINGERPRINT_SECRET: z.string().min(40),
   NODE_ENV: z.enum(["development", "test", "production"]),
+});
+
+const serverEnv$ = serverEnvSchema.superRefine((env, ctx) => {
+  // Under NODE_ENV=test nothing real is being protected, and fixtures should
+  // not have to invent entropy to run.
+  if (env.NODE_ENV === "test") return;
+
+  for (const key of SECRET_KEYS) {
+    if (PUBLISHED_PLACEHOLDER_SECRETS.has(env[key])) {
+      ctx.addIssue({
+        code: "custom",
+        path: [key],
+        message:
+          "is a placeholder published in this repository; generate a real secret",
+      });
+    }
+  }
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -32,7 +61,7 @@ export class EnvironmentError extends Error {
 export function parseServerEnv(
   source: Record<string, string | undefined>,
 ): ServerEnv {
-  const parsed = serverEnvSchema.safeParse(source);
+  const parsed = serverEnv$.safeParse(source);
 
   if (!parsed.success) {
     throw new EnvironmentError(
