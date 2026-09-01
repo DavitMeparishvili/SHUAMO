@@ -905,7 +905,7 @@ git commit -m "feat: define single-link attribution inputs and line net"
 - Consumes: Task 6's `CalculationInput` and `commissionableNet`.
 - Produces: `calculateAttributions(input: CalculationInput): CalculationResult`.
 
-- [ ] **Step 1: Write the failing contract tests**
+- [x] **Step 1: Write the failing contract tests**
 
 Use one fixed fixture and name tests with rule IDs:
 
@@ -943,7 +943,7 @@ it("ATTR-005 assigns the full matching commission to the link creator", () => {
 
 Also cover mixed carts, two separate matching lines, `FIXED × qty`, VAT, zero/negative net, empty cart, and exact half-up commission rounding. Assert one attribution at most per line and no references to other creators.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 ```powershell
 pnpm vitest run src/modules/attribution/domain/calculate.test.ts
@@ -951,7 +951,7 @@ pnpm vitest run src/modules/attribution/domain/calculate.test.ts
 
 Expected: FAIL because `calculate.ts` does not exist.
 
-- [ ] **Step 3: Implement the minimal direct calculator**
+- [x] **Step 3: Implement the minimal direct calculator**
 
 ```ts
 export function calculateAttributions(input: CalculationInput): CalculationResult {
@@ -993,11 +993,11 @@ export function calculateAttributions(input: CalculationInput): CalculationResul
 
 Do not add candidate clicks, cookies, click windows, creator arrays, share helpers, or degradation flags to this module.
 
-- [ ] **Step 4: Export only the public calculator contract**
+- [x] **Step 4: Export only the public calculator contract**
 
 `src/modules/attribution/index.ts` exports `calculateAttributions` and the types from `types.ts`. Keep `line-net.ts` private.
 
-- [ ] **Step 5: Run and commit**
+- [x] **Step 5: Run and commit**
 
 ```powershell
 pnpm vitest run src/modules/attribution
