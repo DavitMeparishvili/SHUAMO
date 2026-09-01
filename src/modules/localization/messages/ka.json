@@ -230,5 +230,13 @@
   "links.reason.BRAND_DISABLED": "ბრენდი მიუწვდომელია",
   "links.reason.CREATOR_REMOVED": "კრეატორი წაშლილია",
   "links.reason.PRODUCT_ARCHIVED": "პროდუქტი დაარქივებულია",
-  "links.reason.LINK_DISABLED": "ბმული გამორთულია"
+  "links.reason.LINK_DISABLED": "ბმული გამორთულია",
+  "offerEnded.metaTitle": "შეთავაზება დასრულდა — SHUAMO",
+  "offerEnded.title": "შეთავაზება დასრულდა",
+  "offerEnded.intro": "ეს ბმული პროდუქტზე აღარ გადაგიყვანთ. თქვენგან დამატებითი მოქმედება საჭირო არ არის.",
+  "offerEnded.reason.BRAND_DISABLED": "ბრენდის შეთავაზებები ამჟამად მიუწვდომელია.",
+  "offerEnded.reason.CREATOR_REMOVED": "კრეატორი ამ ბრენდთან აღარ თანამშრომლობს.",
+  "offerEnded.reason.PRODUCT_ARCHIVED": "ეს პროდუქტი შეთავაზებაში აღარ შედის.",
+  "offerEnded.reason.LINK_DISABLED": "ეს კონკრეტული ბმული გამორთულია.",
+  "offerEnded.note": "SHUAMO-მ ბმული უსაფრთხოდ შეაჩერა და შესყიდვის მონაცემი არ ჩაუწერია."
 }

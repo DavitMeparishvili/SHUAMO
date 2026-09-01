@@ -47,3 +47,40 @@ export async function seedApprovedPartnership() {
   });
   return { brand, creator, partnership };
 }
+
+export async function seedLink(
+  options: {
+    code?: string;
+    backlinkUrl?: string;
+    linkStatus?: "ACTIVE" | "DISABLED";
+    productStatus?: "ACTIVE" | "ARCHIVED";
+  } = {},
+) {
+  const { brand, creator, partnership } = await seedApprovedPartnership();
+  const suffix = crypto
+    .randomUUID()
+    .replaceAll("-", "")
+    .slice(0, 8)
+    .toUpperCase();
+  const product = await prisma.product.create({
+    data: {
+      brandId: brand.id,
+      sku: `TEST-${suffix}`,
+      title: "Tracked product",
+      priceGel: "100.00",
+      backlinkUrl: options.backlinkUrl ?? "https://shop.example.ge/product",
+      commissionType: "FIXED",
+      commissionValue: "10.0000",
+      status: options.productStatus ?? "ACTIVE",
+    },
+  });
+  const link = await prisma.trackingLink.create({
+    data: {
+      productId: product.id,
+      creatorId: creator.id,
+      code: options.code ?? suffix,
+      status: options.linkStatus ?? "ACTIVE",
+    },
+  });
+  return { brand, creator, partnership, product, link };
+}

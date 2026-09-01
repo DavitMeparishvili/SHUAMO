@@ -1,0 +1,21 @@
+{
+	servers {
+		# Only a proxy on this host is trusted by default. Add explicit deployed
+		# proxy CIDRs here if a CDN or load balancer is introduced.
+		trusted_proxies static 127.0.0.0/8 ::1/128
+		trusted_proxies_strict
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+xu.ge {
+	encode gzip zstd
+
+	# X-Real-IP is the only client address the application reads. Both headers
+	# are overwritten from Caddy's trust-aware client IP, so client-supplied
+	# forwarding headers cannot alter the fingerprint seen by the application.
+	reverse_proxy web:3000 {
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
+	}
+}

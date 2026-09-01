@@ -8,6 +8,16 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     services:
+      postgres-dev:
+        image: postgres:17
+        env:
+          POSTGRES_DB: shuamo_dev
+          POSTGRES_USER: shuamo_local
+          POSTGRES_PASSWORD: shuamo_local_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shuamo_local -d shuamo_dev"
+          --health-interval 2s --health-timeout 3s --health-retries 20
       postgres-test:
         image: postgres:17
         env:
@@ -23,7 +33,7 @@ jobs:
       # NODE_ENV is deliberately not pinned at the job level. `next build` and
       # `next start` set it themselves, and vitest sets it to "test"; forcing
       # "test" here would put the production build on a non-standard NODE_ENV.
-      DATABASE_URL: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
+      DATABASE_URL: postgresql://shuamo_local:shuamo_local_only@localhost:5432/shuamo_dev
       DATABASE_URL_TEST: postgresql://shuamo_test:shuamo_test_local_only@localhost:5433/shuamo_test
       APP_URL: http://localhost:3000
       STORAGE_ENDPOINT: http://localhost:9000
@@ -46,5 +56,9 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate:test
+      # The chained gate seeds and browsers against DATABASE_URL before the
+      # Phase 3 sub-gate reaches its own deploy step. A fresh CI dev database
+      # therefore has to be migrated explicitly before the chain starts.
+      - run: pnpm db:migrate:deploy
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm verify:phase-3
+      - run: pnpm verify:phase-4

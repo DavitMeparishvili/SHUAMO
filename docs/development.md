@@ -102,6 +102,15 @@ builds immediately before it, and testing the artifact that was just built is th
 only version of this that says anything about a deployment — so `pnpm test:e2e`
 on its own needs a `pnpm build` first.
 
+### Redirect latency baseline
+
+Phase 4 established the no-cache redirect baseline on 2026-09-01 with
+`pnpm measure:redirect`: 500 sequential requests against the built application
+and local PostgreSQL measured p50 **3.82ms**, p95 **4.77ms**, and p99 **7.18ms**
+of server time. The handler reports this as `Server-Timing: total`; network time
+is excluded. Re-run the same command before considering a redirect cache, and
+compare its p95 with the 50ms budget.
+
 Browsers install once per machine:
 
 ```bash

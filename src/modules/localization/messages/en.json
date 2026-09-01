@@ -230,5 +230,13 @@
   "links.reason.BRAND_DISABLED": "Brand unavailable",
   "links.reason.CREATOR_REMOVED": "Creator removed",
   "links.reason.PRODUCT_ARCHIVED": "Product archived",
-  "links.reason.LINK_DISABLED": "Link disabled"
+  "links.reason.LINK_DISABLED": "Link disabled",
+  "offerEnded.metaTitle": "Offer ended — SHUAMO",
+  "offerEnded.title": "This offer has ended",
+  "offerEnded.intro": "This link no longer leads to the product. There is nothing else you need to do.",
+  "offerEnded.reason.BRAND_DISABLED": "The brand's offers are unavailable right now.",
+  "offerEnded.reason.CREATOR_REMOVED": "The creator is no longer partnered with this brand.",
+  "offerEnded.reason.PRODUCT_ARCHIVED": "This product is no longer part of the offer.",
+  "offerEnded.reason.LINK_DISABLED": "This specific link has been switched off.",
+  "offerEnded.note": "SHUAMO stopped the link safely and did not record a purchase."
 }

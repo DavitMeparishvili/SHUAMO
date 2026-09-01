@@ -53,6 +53,7 @@ model Brand {
   user         AppUser       @relation(fields: [userId], references: [id], onDelete: Restrict)
   products     Product[]
   partnerships Partnership[]
+  clicks       Click[]
 
   @@map("brand")
 }
@@ -142,10 +143,33 @@ model TrackingLink {
 
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  clicks  Click[]
 
   @@unique([productId, creatorId])
   @@index([creatorId], map: "tracking_link_creator_idx")
   @@map("tracking_link")
+}
+
+/// id is the ck_... token echoed in ?xu=.
+/// brandId is denormalised so candidate-click lookup never needs to infer a
+/// click's brand through mutable catalogue rows.
+/// fpHash is only a cookie-less deduplication signal. Attribution must never
+/// use it as visitor identity.
+model Click {
+  id             String    @id
+  trackingLinkId String    @map("tracking_link_id") @db.Uuid
+  brandId        String    @map("brand_id") @db.Uuid
+  visitorId      String?   @map("visitor_id") @db.Uuid
+  fpHash         String?   @map("fp_hash")
+  occurredAt     DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  creditable     Boolean   @default(true)
+  convertedAt    DateTime? @map("converted_at") @db.Timestamptz(6)
+
+  trackingLink TrackingLink @relation(fields: [trackingLinkId], references: [id], onDelete: Restrict)
+  brand        Brand        @relation(fields: [brandId], references: [id], onDelete: Restrict)
+
+  @@index([trackingLinkId, occurredAt(sort: Desc)], map: "click_link_idx")
+  @@map("click")
 }
 
 // Better Auth schema. UUID ids keep User.id compatible with AppUser.id.

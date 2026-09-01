@@ -1150,16 +1150,16 @@ git commit -m "test: prove click durability, dedup boundaries and the latency bu
 
 ## Phase 4 completion checklist
 
-- [ ] `pnpm verify:phase-4` passes.
-- [ ] The click row is readable by a **second connection** immediately after the 302, with no retry loop in the test.
-- [ ] Dedup boundaries hold at 29m59s and 30m01s, for both the cookie and the fingerprint path.
-- [ ] A present cookie always decides creditability; the fingerprint query is not even issued.
-- [ ] The daily salt rolling at UTC midnight ends an otherwise-matching cookie-less pair.
-- [ ] A fingerprint-deduplicated click still receives `?xu=` — the sale still pays.
-- [ ] No `ip` or `user_agent` value appears in any column, log line, or `Server-Timing` header, checked by grepping a request trace.
-- [ ] A client-supplied `X-Forwarded-For` changes nothing, proved against the deployed Caddy config.
-- [ ] `fpHash` appears in no module outside `src/modules/tracking`, enforced by a test.
-- [ ] A failed click write still redirects, without `?xu=`; a failed link lookup returns 503.
-- [ ] A disabled link renders the offer-ended page at HTTP 200 in both locales, naming the reason, and writes no click row.
-- [ ] Redirect responses carry `Cache-Control: no-store`.
-- [ ] Redirect p95 is under 50ms over 500 sequential requests, and the number is recorded in `docs/development.md` as the baseline the Redis decision will be measured against.
+- [x] `pnpm verify:phase-4` passes.
+- [x] The click row is readable by a **second connection** immediately after the 302, with no retry loop in the test.
+- [x] Dedup boundaries hold at 29m59s and 30m01s, for both the cookie and the fingerprint path.
+- [x] A present cookie always decides creditability; the fingerprint query is not even issued.
+- [x] The daily salt rolling at UTC midnight ends an otherwise-matching cookie-less pair.
+- [x] A fingerprint-deduplicated click still receives `?xu=` — the sale still pays.
+- [x] No `ip` or `user_agent` value appears in any column, log line, or `Server-Timing` header, checked by grepping a request trace.
+- [x] A client-supplied `X-Forwarded-For` changes nothing, proved against the deployed Caddy config.
+- [x] `fpHash` appears in no module outside `src/modules/tracking`, enforced by a test.
+- [x] A failed click write still redirects, without `?xu=`; a failed link lookup returns 503.
+- [x] A disabled link renders the offer-ended page at HTTP 200 in both locales, naming the reason, and writes no click row.
+- [x] Redirect responses carry `Cache-Control: no-store`.
+- [x] Redirect p95 is under 50ms over 500 sequential requests, and the number is recorded in `docs/development.md` as the baseline the Redis decision will be measured against.
