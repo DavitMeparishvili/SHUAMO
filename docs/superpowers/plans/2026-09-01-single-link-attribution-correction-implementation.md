@@ -1024,7 +1024,7 @@ git commit -m "feat: calculate full commission for the cited product link"
 - Consumes: completed single-link calculator and synchronized active docs.
 - Produces: `pnpm verify:attribution-correction` and 100% branch coverage for the attribution domain.
 
-- [ ] **Step 1: Add deterministic property tests**
+- [x] **Step 1: Add deterministic property tests**
 
 For at least 5,000 seeded random matching lines, assert:
 
@@ -1044,11 +1044,11 @@ for (const calculated of result.lines) {
 
 Use the deterministic `mulberry32` generator pattern already documented in the superseded Phase 5 plan, but never use `Math.random` inside production domain code.
 
-- [ ] **Step 2: Add the purity test**
+- [x] **Step 2: Add the purity test**
 
 Scan non-test files in `src/modules/attribution/domain` and reject Prisma, `fetch`, `Date.now`, zero-argument `new Date()`, `node:crypto`, `Math.random`, `fpHash`, visitor identifiers, and `creditable`.
 
-- [ ] **Step 3: Add the stale-model drift guard**
+- [x] **Step 3: Add the stale-model drift guard**
 
 Create a Node script using `globSync` and exact active-file allowlists:
 
@@ -1086,7 +1086,7 @@ if (offenders.length > 0) {
 
 Tests may mention forbidden production identifiers only when proving their absence; exclude `*.test.*` from the source glob.
 
-- [ ] **Step 4: Configure coverage and the phase command**
+- [x] **Step 4: Configure coverage and the phase command**
 
 Add attribution-domain thresholds of 100% branches, functions, lines, and statements. Add:
 
@@ -1112,7 +1112,7 @@ coverage: {
 },
 ```
 
-- [ ] **Step 5: Run and close real gaps**
+- [x] **Step 5: Run and close real gaps**
 
 ```powershell
 pnpm verify:attribution-model
@@ -1122,7 +1122,7 @@ pnpm test:coverage
 
 Expected: PASS. For uncovered branches, add a meaningful case or delete dead code; do not exclude reachable calculator code.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src/modules/attribution scripts/verify-single-link-attribution.mjs vitest.config.ts package.json

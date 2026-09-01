@@ -15,5 +15,17 @@ export default defineConfig({
     ],
     environment: "node",
     setupFiles: ["src/test/unit/setup.tsx"],
+    coverage: {
+      provider: "v8",
+      include: ["src/modules/attribution/domain/**"],
+      thresholds: {
+        "src/modules/attribution/domain/**": {
+          branches: 100,
+          functions: 100,
+          lines: 100,
+          statements: 100,
+        },
+      },
+    },
   },
 });
