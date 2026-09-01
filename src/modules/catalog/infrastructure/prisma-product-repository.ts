@@ -34,6 +34,21 @@ export function createPrismaProductRepository(
   database: ProductDatabase,
 ): ProductRepository {
   return {
+    async findActiveOffer(productId) {
+      if (!UUID.test(productId)) return undefined;
+      const offer = await database.product.findFirst({
+        where: { id: productId, status: "ACTIVE" },
+        select: {
+          id: true,
+          brandId: true,
+          commissionType: true,
+          commissionValue: true,
+        },
+      });
+      return offer === null
+        ? undefined
+        : { ...offer, commissionValue: offer.commissionValue.toFixed(4) };
+    },
     async create(input) {
       return toRecord(
         await database.product.create({

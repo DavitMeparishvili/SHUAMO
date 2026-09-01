@@ -11,6 +11,12 @@ export {
 } from "./domain/link-code";
 export { applyToBrand, inviteCreator } from "./application/apply-to-brand";
 export { decidePartnership } from "./application/decide-partnership";
+export {
+  createProductLink,
+  type ProductLinkCreated,
+  type ProductLinkError,
+} from "./application/create-product-link";
+export { ActiveLinkExistsError } from "./ports/link-repository";
 export { setLinkStatus } from "./application/set-link-status";
 export {
   createPrismaPartnershipRepository,

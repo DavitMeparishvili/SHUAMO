@@ -495,7 +495,7 @@ git commit -m "refactor: make product links explicitly creator initiated"
 - Consumes: approved partnership; active product offer `{ id, brandId, commissionType, commissionValue }`.
 - Produces: `createProductLink(deps)(creatorId, productId): Promise<Result<ProductLinkCreated, ProductLinkError>>`.
 
-- [ ] **Step 1: Define the command contract in a failing unit test**
+- [x] **Step 1: Define the command contract in a failing unit test**
 
 ```ts
 type ProductLinkError =
@@ -537,7 +537,7 @@ it("ATTR-002 and ATTR-006 create one product link with offered terms", async () 
 
 Add separate tests for archived/missing product, missing/pending/rejected partnership, existing active link, and repository unique-conflict mapping to `active_link_exists`.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 ```powershell
 pnpm vitest run src/modules/partnerships/application/create-product-link.test.ts
@@ -545,7 +545,7 @@ pnpm vitest run src/modules/partnerships/application/create-product-link.test.ts
 
 Expected: FAIL because the command does not exist.
 
-- [ ] **Step 3: Add focused port methods**
+- [x] **Step 3: Add focused port methods**
 
 ```ts
 // catalog/ports/product-repository.ts
@@ -580,7 +580,7 @@ export class ActiveLinkExistsError extends Error {
 }
 ```
 
-- [ ] **Step 4: Implement the application command**
+- [x] **Step 4: Implement the application command**
 
 Order the checks and write exactly once:
 
@@ -619,11 +619,11 @@ try {
 }
 ```
 
-- [ ] **Step 5: Prove concurrency, history, and rate isolation in PostgreSQL**
+- [x] **Step 5: Prove concurrency, history, and rate isolation in PostgreSQL**
 
 Integration tests must call `createProductLinkForCreator` concurrently twice and assert one success, one `active_link_exists`, and exactly one active row. Then disable it, change the product rate, create a second link, and assert the old and new rows retain different rates.
 
-- [ ] **Step 6: Run focused and boundary verification**
+- [x] **Step 6: Run focused and boundary verification**
 
 ```powershell
 pnpm vitest run src/modules/partnerships/application/create-product-link.test.ts
@@ -634,7 +634,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add src

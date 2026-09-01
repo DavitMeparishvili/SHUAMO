@@ -10,6 +10,7 @@ import {
 } from "@/src/modules/catalog";
 import {
   applyToBrand,
+  createProductLink,
   createPrismaLinkRepository,
   createPrismaPartnershipRepository,
   decidePartnership,
@@ -96,4 +97,11 @@ export async function inviteCreatorForBrand(
 
 export const setLinkStatusForBrand = setLinkStatus({
   links: prismaLinkRepository,
+});
+
+export const createProductLinkForCreator = createProductLink({
+  products: prismaProductRepository,
+  partnerships: prismaPartnershipRepository,
+  links: prismaLinkRepository,
+  random,
 });
