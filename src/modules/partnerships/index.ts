@@ -16,7 +16,11 @@ export {
   type ProductLinkCreated,
   type ProductLinkError,
 } from "./application/create-product-link";
-export { ActiveLinkExistsError } from "./ports/link-repository";
+export {
+  ProductLinkCreateError,
+  type ProductLinkAcceptance,
+  type ProductLinkCreateFailure,
+} from "./ports/link-repository";
 export { setLinkStatus } from "./application/set-link-status";
 export {
   createPrismaPartnershipRepository,
@@ -37,7 +41,10 @@ export {
 export { CreatorBrandList, PartnershipQueue } from "./ui/partnership-queue";
 export { BrandLinkList, LinkList } from "./ui/link-list";
 export { LinkOfferList, type CreatorProductOffer } from "./ui/link-offer-list";
-export { createProductLinkHandler } from "./http/link-handlers";
+export {
+  createProductLinkHandler,
+  parseProductLinkAcceptance,
+} from "./http/link-handlers";
 export {
   createApplyHandler,
   createDecisionHandler,

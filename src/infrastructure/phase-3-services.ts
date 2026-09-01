@@ -97,8 +97,6 @@ export const setLinkStatusForBrand = setLinkStatus({
 });
 
 export const createProductLinkForCreator = createProductLink({
-  products: prismaProductRepository,
-  partnerships: prismaPartnershipRepository,
   links: prismaLinkRepository,
   random,
 });

@@ -3,6 +3,26 @@ import { createProductLinkForCreator } from "@/src/infrastructure/phase-3-servic
 import { seedApprovedPartnership } from "@/src/test/fixtures/accounts";
 import { describe, expect, it } from "vitest";
 
+function acceptance(product: {
+  id: string;
+  commissionType: "PERCENT" | "FIXED";
+  commissionValue: { toFixed(decimalPlaces: number): string };
+}) {
+  return {
+    productId: product.id,
+    commissionType: product.commissionType,
+    commissionValue: product.commissionValue.toFixed(4),
+  };
+}
+
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
 describe("creator product link creation", () => {
   it("ATTR-002 creates one active exact-product link under concurrency", async () => {
     const { brand, creator } = await seedApprovedPartnership();
@@ -17,9 +37,10 @@ describe("creator product link creation", () => {
         commissionValue: "0.1250",
       },
     });
+    const accepted = acceptance(product);
     const results = await Promise.all([
-      createProductLinkForCreator(creator.id, product.id),
-      createProductLinkForCreator(creator.id, product.id),
+      createProductLinkForCreator(creator.id, accepted),
+      createProductLinkForCreator(creator.id, accepted),
     ]);
     expect(results.filter((result) => result.ok)).toHaveLength(1);
     expect(results.filter((result) => !result.ok)).toEqual([
@@ -49,7 +70,10 @@ describe("creator product link creation", () => {
         commissionValue: "8.0000",
       },
     });
-    const oldResult = await createProductLinkForCreator(creator.id, product.id);
+    const oldResult = await createProductLinkForCreator(
+      creator.id,
+      acceptance(product),
+    );
     expect(oldResult.ok).toBe(true);
     if (!oldResult.ok) return;
     await prisma.trackingLink.update({
@@ -60,7 +84,13 @@ describe("creator product link creation", () => {
       where: { id: product.id },
       data: { commissionValue: "12.0000" },
     });
-    const newResult = await createProductLinkForCreator(creator.id, product.id);
+    const refreshed = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
+    const newResult = await createProductLinkForCreator(
+      creator.id,
+      acceptance(refreshed),
+    );
     expect(newResult).toMatchObject({
       ok: true,
       value: { commissionValue: "12.0000" },
@@ -73,5 +103,113 @@ describe("creator product link creation", () => {
       "8.0000",
       "12.0000",
     ]);
+  });
+
+  it.each([
+    ["brand", "brand_not_approved"],
+    ["creator", "creator_not_approved"],
+  ] as const)(
+    "refuses creation when the approved %s account becomes suspended",
+    async (account, error) => {
+      const { brand, creator } = await seedApprovedPartnership();
+      const product = await prisma.product.create({
+        data: {
+          brandId: brand.id,
+          sku: `SUSPEND-${crypto.randomUUID()}`,
+          title: "Suspended account offer",
+          priceGel: "100.00",
+          backlinkUrl: "https://shop.example.ge/suspended",
+          commissionType: "FIXED",
+          commissionValue: "8.0000",
+        },
+      });
+      if (account === "brand") {
+        await prisma.brand.update({
+          where: { id: brand.id },
+          data: { status: "SUSPENDED" },
+        });
+      } else {
+        await prisma.creator.update({
+          where: { id: creator.id },
+          data: { status: "SUSPENDED" },
+        });
+      }
+
+      expect(
+        await createProductLinkForCreator(creator.id, acceptance(product)),
+      ).toEqual({ ok: false, error });
+      expect(
+        await prisma.trackingLink.count({ where: { productId: product.id } }),
+      ).toBe(0);
+    },
+  );
+
+  it("rejects stale displayed terms instead of silently accepting a changed offer", async () => {
+    const { brand, creator } = await seedApprovedPartnership();
+    const product = await prisma.product.create({
+      data: {
+        brandId: brand.id,
+        sku: `STALE-${crypto.randomUUID()}`,
+        title: "Stale offer",
+        priceGel: "100.00",
+        backlinkUrl: "https://shop.example.ge/stale",
+        commissionType: "FIXED",
+        commissionValue: "8.0000",
+      },
+    });
+    const displayed = acceptance(product);
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { commissionValue: "12.0000" },
+    });
+
+    expect(await createProductLinkForCreator(creator.id, displayed)).toEqual({
+      ok: false,
+      error: "offer_changed",
+    });
+    expect(
+      await prisma.trackingLink.count({ where: { productId: product.id } }),
+    ).toBe(0);
+  });
+
+  it("serializes partnership revocation ahead of a racing link creation", async () => {
+    const { brand, creator, partnership } = await seedApprovedPartnership();
+    const product = await prisma.product.create({
+      data: {
+        brandId: brand.id,
+        sku: `REVOKE-${crypto.randomUUID()}`,
+        title: "Revoked offer",
+        priceGel: "100.00",
+        backlinkUrl: "https://shop.example.ge/revoked",
+        commissionType: "PERCENT",
+        commissionValue: "0.1250",
+      },
+    });
+    const changed = deferred();
+    const release = deferred();
+    const revocation = prisma.$transaction(async (transaction) => {
+      await transaction.partnership.update({
+        where: { id: partnership.id },
+        data: { status: "REJECTED" },
+      });
+      changed.resolve();
+      await release.promise;
+    });
+    await changed.promise;
+
+    const creation = createProductLinkForCreator(
+      creator.id,
+      acceptance(product),
+    );
+    release.resolve();
+    await revocation;
+
+    expect(await creation).toEqual({
+      ok: false,
+      error: "partnership_not_approved",
+    });
+    expect(
+      await prisma.trackingLink.count({ where: { productId: product.id } }),
+    ).toBe(0);
   });
 });

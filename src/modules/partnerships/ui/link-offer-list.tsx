@@ -43,6 +43,16 @@ export function LinkOfferList({
               <code className="type-mono text-ink">{rate}</code>
               <form action={createAction}>
                 <input type="hidden" name="productId" value={offer.productId} />
+                <input
+                  type="hidden"
+                  name="commissionType"
+                  value={offer.commissionType}
+                />
+                <input
+                  type="hidden"
+                  name="commissionValue"
+                  value={offer.commissionValue}
+                />
                 <Button type="submit">{copy.create}</Button>
               </form>
             </article>

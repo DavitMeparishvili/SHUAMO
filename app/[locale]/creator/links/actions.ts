@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createProductLinkForCreator } from "@/src/infrastructure/phase-3-services";
 import { currentViewer, requireCreator } from "@/src/modules/identity";
+import { parseProductLinkAcceptance } from "@/src/modules/partnerships";
 
 export async function createProductLinkAction(
   locale: string,
@@ -10,13 +11,15 @@ export async function createProductLinkAction(
 ) {
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) throw new Error("unauthenticated");
-  const productId = formData.get("productId");
-  if (typeof productId !== "string" || productId.length === 0) {
-    throw new Error("invalid_product");
-  }
+  const acceptance = parseProductLinkAcceptance({
+    productId: formData.get("productId"),
+    commissionType: formData.get("commissionType"),
+    commissionValue: formData.get("commissionValue"),
+  });
+  if (acceptance === undefined) throw new Error("invalid_product_offer");
   const result = await createProductLinkForCreator(
     allowed.value.creatorId,
-    productId,
+    acceptance,
   );
   if (!result.ok) throw new Error(result.error);
   revalidatePath(`/${locale}/creator/links`);

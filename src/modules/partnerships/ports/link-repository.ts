@@ -1,24 +1,34 @@
-export class ActiveLinkExistsError extends Error {
-  constructor() {
-    super("an active link already exists for this product and creator");
-    this.name = "ActiveLinkExistsError";
+export type ProductLinkCreateFailure =
+  | "product_not_found"
+  | "brand_not_approved"
+  | "creator_not_approved"
+  | "partnership_not_approved"
+  | "offer_changed"
+  | "active_link_exists";
+
+export class ProductLinkCreateError extends Error {
+  constructor(readonly reason: ProductLinkCreateFailure) {
+    super(reason);
+    this.name = "ProductLinkCreateError";
   }
+}
+
+export interface ProductLinkAcceptance {
+  productId: string;
+  commissionType: "PERCENT" | "FIXED";
+  commissionValue: string;
 }
 
 export interface ProductLinkWrite {
   productId: string;
   creatorId: string;
   code: string;
-  commissionType: "PERCENT" | "FIXED";
-  commissionValue: string;
+  acceptedCommissionType: "PERCENT" | "FIXED";
+  acceptedCommissionValue: string;
 }
 
 export interface LinkRepository {
-  findActive(
-    productId: string,
-    creatorId: string,
-  ): Promise<{ id: string } | undefined>;
-  create(input: ProductLinkWrite): Promise<{
+  createAccepted(input: ProductLinkWrite): Promise<{
     id: string;
     code: string;
     commissionType: "PERCENT" | "FIXED";

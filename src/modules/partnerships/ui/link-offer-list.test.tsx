@@ -27,5 +27,7 @@ describe("LinkOfferList", () => {
     expect(html).toContain("Aroma");
     expect(html).toContain("8.0000 ₾");
     expect(html).toContain("Create link at this rate");
+    expect(html).toContain('name="commissionType" value="FIXED"');
+    expect(html).toContain('name="commissionValue" value="8.0000"');
   });
 });
