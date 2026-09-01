@@ -9,10 +9,8 @@ export {
   isLinkCode,
   type LinkCodeRandomSource,
 } from "./domain/link-code";
-export { linksToMint, type LinkPair } from "./domain/link-minting";
 export { applyToBrand, inviteCreator } from "./application/apply-to-brand";
 export { decidePartnership } from "./application/decide-partnership";
-export { mintLinksForProduct } from "./application/mint-links-for-product";
 export { setLinkStatus } from "./application/set-link-status";
 export {
   createPrismaPartnershipRepository,

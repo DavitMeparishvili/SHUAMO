@@ -8,7 +8,7 @@ import {
 } from "@/src/test/fixtures/accounts";
 import { describe, expect, it } from "vitest";
 
-describe("link minting invariant", () => {
+describe("explicit link creation invariant", () => {
   it("does not mint for a partnership that was never approved", async () => {
     const [brand, creator] = await Promise.all([seedBrand(), seedCreator()]);
     await prisma.partnership.create({
@@ -29,7 +29,7 @@ describe("link minting invariant", () => {
       await prisma.trackingLink.count({ where: { creatorId: creator.id } }),
     ).toBe(0);
   });
-  it("mints when a product is added after approval", async () => {
+  it("does not mint when a product is added after approval", async () => {
     const { brand, creator } = await seedApprovedPartnership();
     const result = await createProductForBrand(brand.id, {
       sku: "P-LATER",
@@ -41,10 +41,10 @@ describe("link minting invariant", () => {
     });
     expect(result).toEqual(expect.objectContaining({ ok: true }));
     expect(
-      await prisma.trackingLink.findFirst({
+      await prisma.trackingLink.count({
         where: { creatorId: creator.id, product: { sku: "P-LATER" } },
       }),
-    ).toMatchObject({ status: "ACTIVE" });
+    ).toBe(0);
   });
   it("refuses two links for one product and creator", async () => {
     const { brand, creator } = await seedApprovedPartnership();

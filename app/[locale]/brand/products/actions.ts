@@ -42,9 +42,7 @@ export async function createProductAction(locale: string, formData: FormData) {
   const result = await createProductForBrand(await brandId(), input(formData));
   if (!result.ok) throw new Error(result.error);
   revalidatePath(`/${locale}/brand/products`);
-  redirect(
-    `/${locale}/brand/products/${result.value.id}?created=${result.value.mintedLinks}`,
-  );
+  redirect(`/${locale}/brand/products/${result.value.id}?created=1`);
 }
 
 export async function updateProductAction(

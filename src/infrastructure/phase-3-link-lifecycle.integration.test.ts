@@ -85,7 +85,7 @@ describe("Phase 3 brand link lifecycle", () => {
 
     await expect(
       decidePartnershipForBrand(brand.id, partnership.id, "REJECT"),
-    ).resolves.toEqual({ ok: true, value: { mintedLinks: 0 } });
+    ).resolves.toEqual({ ok: true, value: undefined });
     expect(
       await prisma.partnership.findUniqueOrThrow({
         where: { id: partnership.id },

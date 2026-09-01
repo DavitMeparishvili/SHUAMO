@@ -385,7 +385,7 @@ git commit -m "feat: snapshot immutable rates on tracking links"
 - Consumes: product creation and partnership decisions.
 - Produces: those commands without any link side effect; link creation becomes Task 4's explicit command.
 
-- [ ] **Step 1: Rewrite failing behavior tests**
+- [x] **Step 1: Rewrite failing behavior tests**
 
 Use explicit negative assertions:
 
@@ -415,7 +415,7 @@ it("brand invitation creates an approved partnership without links", async () =>
 });
 ```
 
-- [ ] **Step 2: Run focused tests and confirm they fail against auto-minting**
+- [x] **Step 2: Run focused tests and confirm they fail against auto-minting**
 
 ```powershell
 pnpm vitest run src/modules/catalog/application/create-product.test.ts src/modules/partnerships/application/decide-partnership.test.ts src/modules/partnerships/application/apply-to-brand.test.ts
@@ -423,7 +423,7 @@ pnpm vitest run src/modules/catalog/application/create-product.test.ts src/modul
 
 Expected: FAIL because current results include `mintedLinks` and current commands create links.
 
-- [ ] **Step 3: Remove link dependencies and side effects**
+- [x] **Step 3: Remove link dependencies and side effects**
 
 Reduce command results to:
 
@@ -441,7 +441,7 @@ inviteCreator(deps)(brandId, creatorId)
 
 Delete `linksToMint`, `mintLinksForProduct`, their exports, and all unused random/link/product dependencies from these paths. Keep product and partnership transactions only where they protect their own writes.
 
-- [ ] **Step 4: Replace the old concurrency proof**
+- [x] **Step 4: Replace the old concurrency proof**
 
 Delete the product-creation-versus-partnership-approval race test. Add an integration test proving those operations create zero links even when concurrent:
 
@@ -457,7 +457,7 @@ expect(await prisma.trackingLink.count({
 })).toBe(0);
 ```
 
-- [ ] **Step 5: Run Phase 3 unit and integration tests**
+- [x] **Step 5: Run Phase 3 unit and integration tests**
 
 ```powershell
 pnpm test:unit
@@ -467,7 +467,7 @@ pnpm typecheck
 
 Expected: PASS with no automatic minting references in production source.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src

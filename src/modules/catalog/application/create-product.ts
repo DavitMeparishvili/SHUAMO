@@ -1,23 +1,10 @@
 import type { Result } from "@/src/modules/shared";
-import { generateLinkCode, linksToMint } from "@/src/modules/partnerships";
 import type { ProductRepository } from "../ports/product-repository";
 import type { ProductInput, ProductInputError } from "./product-input";
 import { validateProductInput } from "./product-input";
 
 interface CreateProductScope {
   products: Pick<ProductRepository, "create" | "findBrandSku">;
-  partnerships: {
-    listApprovedCreatorIds(brandId: string): Promise<string[]>;
-  };
-  links: {
-    listForProducts(
-      productIds: readonly string[],
-    ): Promise<{ productId: string; creatorId: string }[]>;
-    createMany(
-      pairs: readonly { productId: string; creatorId: string; code: string }[],
-    ): Promise<void>;
-  };
-  random: { bytes(count: number): Uint8Array };
 }
 
 export interface CreateProductDeps extends CreateProductScope {
@@ -31,7 +18,7 @@ export function createProduct(deps: CreateProductDeps) {
     brandId: string,
     input: ProductInput,
   ): Promise<
-    Result<{ id: string; mintedLinks: number }, CreateProductError>
+    Result<{ id: string }, CreateProductError>
   > => {
     if (deps.transaction) {
       return deps.transaction((scope) => createProduct(scope)(brandId, input));
@@ -49,19 +36,6 @@ export function createProduct(deps: CreateProductDeps) {
     }
 
     const product = await deps.products.create(parsed.value);
-    const creatorIds = await deps.partnerships.listApprovedCreatorIds(brandId);
-    const existing = await deps.links.listForProducts([product.id]);
-    const pairs = linksToMint({
-      products: [{ id: product.id, status: "ACTIVE" }],
-      creators: creatorIds.map((id) => ({
-        id,
-        partnershipStatus: "APPROVED" as const,
-      })),
-      existing,
-    });
-    await deps.links.createMany(
-      pairs.map((pair) => ({ ...pair, code: generateLinkCode(deps.random) })),
-    );
-    return { ok: true, value: { id: product.id, mintedLinks: pairs.length } };
+    return { ok: true, value: { id: product.id } };
   };
 }

@@ -8,7 +8,7 @@ export function createDecisionHandler(
     brandId: string,
     partnershipId: string,
     decision: "APPROVE" | "REJECT",
-  ) => Promise<Result<{ mintedLinks: number }, "not_found">>,
+  ) => Promise<Result<void, "not_found">>,
 ) {
   return async (
     request: Request,
@@ -30,7 +30,7 @@ export function createDecisionHandler(
       parsed.data.decision,
     );
     return result.ok
-      ? Response.json(result.value)
+      ? new Response(null, { status: 204 })
       : Response.json({ error: result.error }, { status: 404 });
   };
 }

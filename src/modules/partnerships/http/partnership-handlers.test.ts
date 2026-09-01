@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { createDecisionHandler } from "./partnership-handlers";
 
 describe("partnership decision handler", () => {
-  it("validates the decision and returns the mint count", async () => {
+  it("validates the decision and records it without minting", async () => {
     const handler = createDecisionHandler(async () => ({
       ok: true,
-      value: { mintedLinks: 3 },
+      value: undefined,
     }));
     const response = await handler(
       new Request("http://localhost", {
@@ -14,13 +14,12 @@ describe("partnership decision handler", () => {
       }),
       { brandId: "b1", partnershipId: "pt1" },
     );
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ mintedLinks: 3 });
+    expect(response.status).toBe(204);
   });
   it("rejects an invalid decision", async () => {
     const handler = createDecisionHandler(async () => ({
       ok: true,
-      value: { mintedLinks: 0 },
+      value: undefined,
     }));
     const response = await handler(
       new Request("http://localhost", {

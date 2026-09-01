@@ -2,18 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createProductPostHandler } from "./product-handlers";
 
 describe("product post handler", () => {
-  it("creates a product and returns its mint count", async () => {
+  it("creates a product without minting links", async () => {
     const handler = createProductPostHandler({
       products: {
         findBrandSku: async () => undefined,
         create: async (input) => ({ id: "p1", status: "ACTIVE", ...input }),
       },
-      partnerships: { listApprovedCreatorIds: async () => ["c1"] },
-      links: {
-        listForProducts: async () => [],
-        createMany: async () => undefined,
-      },
-      random: { bytes: (n) => new Uint8Array(n) },
     });
     const response = await handler(
       new Request("http://localhost", {
@@ -30,7 +24,7 @@ describe("product post handler", () => {
       "b1",
     );
     expect(response.status).toBe(201);
-    expect(await response.json()).toEqual({ id: "p1", mintedLinks: 1 });
+    expect(await response.json()).toEqual({ id: "p1" });
   });
   it("rejects a percent whole-number typo in the Zod schema", async () => {
     const handler = createProductPostHandler({
@@ -38,12 +32,6 @@ describe("product post handler", () => {
         findBrandSku: async () => undefined,
         create: async (input) => ({ id: "p1", status: "ACTIVE", ...input }),
       },
-      partnerships: { listApprovedCreatorIds: async () => [] },
-      links: {
-        listForProducts: async () => [],
-        createMany: async () => undefined,
-      },
-      random: { bytes: (n) => new Uint8Array(n) },
     });
     const response = await handler(
       new Request("http://localhost", {
