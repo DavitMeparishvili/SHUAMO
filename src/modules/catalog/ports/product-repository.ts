@@ -18,12 +18,15 @@ export interface ProductRecord extends ProductWriteInput {
 }
 
 export interface ProductRepository {
-  findActiveOffer(productId: string): Promise<{
-    id: string;
-    brandId: string;
-    commissionType: "PERCENT" | "FIXED";
-    commissionValue: string;
-  } | undefined>;
+  findActiveOffer(productId: string): Promise<
+    | {
+        id: string;
+        brandId: string;
+        commissionType: "PERCENT" | "FIXED";
+        commissionValue: string;
+      }
+    | undefined
+  >;
   create(input: ProductWriteInput): Promise<ProductRecord>;
   update(
     id: string,

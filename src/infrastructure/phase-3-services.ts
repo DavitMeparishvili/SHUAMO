@@ -1,7 +1,6 @@
 import { prisma } from "@/src/infrastructure/db/client";
 import {
   archiveProduct,
-  createPrismaProductRepository,
   createProduct,
   parseProductImageUrls,
   prismaProductRepository,
@@ -11,8 +10,6 @@ import {
 import {
   applyToBrand,
   createProductLink,
-  createPrismaLinkRepository,
-  createPrismaPartnershipRepository,
   decidePartnership,
   inviteCreator,
   prismaBrandLookup,

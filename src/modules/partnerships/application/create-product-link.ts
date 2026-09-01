@@ -1,5 +1,8 @@
 import type { Result } from "@/src/modules/shared";
-import { generateLinkCode, type LinkCodeRandomSource } from "../domain/link-code";
+import {
+  generateLinkCode,
+  type LinkCodeRandomSource,
+} from "../domain/link-code";
 import {
   ActiveLinkExistsError,
   type LinkRepository,
@@ -7,9 +10,7 @@ import {
 import type { PartnershipRepository } from "../ports/partnership-repository";
 
 export type ProductLinkError =
-  | "product_not_found"
-  | "partnership_not_approved"
-  | "active_link_exists";
+  "product_not_found" | "partnership_not_approved" | "active_link_exists";
 
 export interface ProductLinkCreated {
   readonly linkId: string;
@@ -20,12 +21,15 @@ export interface ProductLinkCreated {
 
 export function createProductLink(deps: {
   products: {
-    findActiveOffer(productId: string): Promise<{
-      id: string;
-      brandId: string;
-      commissionType: "PERCENT" | "FIXED";
-      commissionValue: string;
-    } | undefined>;
+    findActiveOffer(productId: string): Promise<
+      | {
+          id: string;
+          brandId: string;
+          commissionType: "PERCENT" | "FIXED";
+          commissionValue: string;
+        }
+      | undefined
+    >;
   };
   partnerships: Pick<PartnershipRepository, "find">;
   links: Pick<LinkRepository, "findActive" | "create">;

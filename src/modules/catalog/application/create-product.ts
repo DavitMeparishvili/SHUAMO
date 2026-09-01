@@ -17,9 +17,7 @@ export function createProduct(deps: CreateProductDeps) {
   return async (
     brandId: string,
     input: ProductInput,
-  ): Promise<
-    Result<{ id: string }, CreateProductError>
-  > => {
+  ): Promise<Result<{ id: string }, CreateProductError>> => {
     if (deps.transaction) {
       return deps.transaction((scope) => createProduct(scope)(brandId, input));
     }

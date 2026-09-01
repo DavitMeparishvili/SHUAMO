@@ -14,7 +14,10 @@ export interface ProductLinkWrite {
 }
 
 export interface LinkRepository {
-  findActive(productId: string, creatorId: string): Promise<{ id: string } | undefined>;
+  findActive(
+    productId: string,
+    creatorId: string,
+  ): Promise<{ id: string } | undefined>;
   create(input: ProductLinkWrite): Promise<{
     id: string;
     code: string;

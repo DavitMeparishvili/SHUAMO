@@ -27,7 +27,11 @@ describe("creator product link creation", () => {
     ]);
     expect(
       await prisma.trackingLink.count({
-        where: { productId: product.id, creatorId: creator.id, status: "ACTIVE" },
+        where: {
+          productId: product.id,
+          creatorId: creator.id,
+          status: "ACTIVE",
+        },
       }),
     ).toBe(1);
   });
@@ -57,7 +61,10 @@ describe("creator product link creation", () => {
       data: { commissionValue: "12.0000" },
     });
     const newResult = await createProductLinkForCreator(creator.id, product.id);
-    expect(newResult).toMatchObject({ ok: true, value: { commissionValue: "12.0000" } });
+    expect(newResult).toMatchObject({
+      ok: true,
+      value: { commissionValue: "12.0000" },
+    });
     const history = await prisma.trackingLink.findMany({
       where: { productId: product.id, creatorId: creator.id },
       orderBy: { createdAt: "asc" },
