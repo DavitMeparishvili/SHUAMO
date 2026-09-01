@@ -68,20 +68,17 @@ for (const fixture of fixtures) {
     },
   });
   await prisma.trackingLink.upsert({
-    where: {
-      productId_creatorId: {
-        productId: fixture.productId,
-        creatorId: creator.id,
-      },
-    },
+    where: { code: fixture.code },
     create: {
       id: fixture.linkId,
       productId: fixture.productId,
       creatorId: creator.id,
       code: fixture.code,
+      commissionType: "FIXED",
+      commissionValue: "10.0000",
       status: fixture.linkStatus,
     },
-    update: { code: fixture.code, status: fixture.linkStatus },
+    update: { status: fixture.linkStatus },
   });
 }
 

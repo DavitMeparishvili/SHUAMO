@@ -134,18 +134,20 @@ model Partnership {
 }
 
 model TrackingLink {
-  id        String     @id @default(uuid()) @db.Uuid
-  productId String     @map("product_id") @db.Uuid
-  creatorId String     @map("creator_id") @db.Uuid
-  code      String     @unique
-  status    LinkStatus @default(ACTIVE)
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String     @id @default(uuid()) @db.Uuid
+  productId       String     @map("product_id") @db.Uuid
+  creatorId       String     @map("creator_id") @db.Uuid
+  code            String     @unique
+  commissionType  RateType   @map("commission_type")
+  commissionValue Decimal    @map("commission_value") @db.Decimal(9, 4)
+  status          LinkStatus @default(ACTIVE)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   clicks  Click[]
 
-  @@unique([productId, creatorId])
+  @@index([productId, creatorId], map: "tracking_link_product_creator_idx")
   @@index([creatorId], map: "tracking_link_creator_idx")
   @@map("tracking_link")
 }

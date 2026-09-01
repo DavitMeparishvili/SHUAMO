@@ -60,7 +60,13 @@ describe("link minting invariant", () => {
       },
     });
     await prisma.trackingLink.create({
-      data: { productId: product.id, creatorId: creator.id, code: "K7M2QPXZ" },
+      data: {
+        productId: product.id,
+        creatorId: creator.id,
+        code: "K7M2QPXZ",
+        commissionType: product.commissionType,
+        commissionValue: product.commissionValue,
+      },
     });
     await expect(
       prisma.trackingLink.create({
@@ -68,6 +74,8 @@ describe("link minting invariant", () => {
           productId: product.id,
           creatorId: creator.id,
           code: "ABCDEFGH",
+          commissionType: product.commissionType,
+          commissionValue: product.commissionValue,
         },
       }),
     ).rejects.toThrow();

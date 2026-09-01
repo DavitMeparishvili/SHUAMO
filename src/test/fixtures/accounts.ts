@@ -79,6 +79,8 @@ export async function seedLink(
       productId: product.id,
       creatorId: creator.id,
       code: options.code ?? suffix,
+      commissionType: product.commissionType,
+      commissionValue: product.commissionValue,
       status: options.linkStatus ?? "ACTIVE",
     },
   });

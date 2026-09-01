@@ -182,7 +182,7 @@ git commit -m "docs: synchronize single-link attribution requirements"
 - Consumes: existing `Product.commissionType` and `Product.commissionValue`.
 - Produces: `TrackingLink.commissionType`, `TrackingLink.commissionValue`, and database-enforced one-active-link-per-product/creator.
 
-- [ ] **Step 1: Write the failing migration invariant tests**
+- [x] **Step 1: Write the failing migration invariant tests**
 
 Create tests that insert explicit snapshots and prove `ATTR-001`, `ATTR-006`, and `ATTR-007`:
 
@@ -239,7 +239,7 @@ it("permits historical links but refuses two active links for one pair", async (
 });
 ```
 
-- [ ] **Step 2: Run the new integration test and confirm failure**
+- [x] **Step 2: Run the new integration test and confirm failure**
 
 Run:
 
@@ -249,7 +249,7 @@ pnpm vitest run --config vitest.integration.config.ts src/modules/partnerships/i
 
 Expected: FAIL because the link snapshot columns and partial uniqueness do not exist.
 
-- [ ] **Step 3: Modify the Prisma model**
+- [x] **Step 3: Modify the Prisma model**
 
 Use this model shape:
 
@@ -276,7 +276,7 @@ model TrackingLink {
 
 Prisma cannot express the required partial unique index; keep it in SQL and assert it in integration tests.
 
-- [ ] **Step 4: Generate and inspect the forward migration**
+- [x] **Step 4: Generate and inspect the forward migration**
 
 Create `prisma/migrations/20260901230000_single_link_attribution/migration.sql` directly with `apply_patch`; do not ask Prisma to rewrite or apply existing migrations. Use this safe order:
 
@@ -332,7 +332,7 @@ EXECUTE FUNCTION prevent_tracking_link_agreement_update();
 
 The Phase 3 migration defines the dropped object as the unique index `tracking_link_product_id_creator_id_key`; retain that exact name in the forward migration.
 
-- [ ] **Step 5: Update existing link fixtures mechanically**
+- [x] **Step 5: Update existing link fixtures mechanically**
 
 Every `prisma.trackingLink.create`, `createMany`, and seed input must include the snapshot copied from its product:
 
@@ -343,7 +343,7 @@ commissionValue: product.commissionValue,
 
 Replace composite-key `upsert` calls in `scripts/seed-phase-03.ts` and `scripts/seed-phase-04.ts` with stable-ID or stable-code upserts because the lifetime composite unique key no longer exists.
 
-- [ ] **Step 6: Run migration and integration verification**
+- [x] **Step 6: Run migration and integration verification**
 
 ```powershell
 pnpm db:generate
@@ -353,7 +353,7 @@ pnpm test:integration
 
 Expected: PASS, including backfill, 100 creators, historical rows, and active uniqueness.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add prisma src scripts

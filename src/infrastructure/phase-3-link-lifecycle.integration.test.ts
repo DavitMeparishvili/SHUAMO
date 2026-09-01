@@ -25,7 +25,13 @@ describe("Phase 3 brand link lifecycle", () => {
       },
     });
     const link = await prisma.trackingLink.create({
-      data: { productId: product.id, creatorId: creator.id, code: "OWNER001" },
+      data: {
+        productId: product.id,
+        creatorId: creator.id,
+        code: "OWNER001",
+        commissionType: product.commissionType,
+        commissionValue: product.commissionValue,
+      },
     });
 
     await expect(
@@ -68,7 +74,13 @@ describe("Phase 3 brand link lifecycle", () => {
       data: { brandId: brand.id, creatorId: creator.id, status: "APPROVED" },
     });
     const link = await prisma.trackingLink.create({
-      data: { productId: product.id, creatorId: creator.id, code: "HISTORY1" },
+      data: {
+        productId: product.id,
+        creatorId: creator.id,
+        code: "HISTORY1",
+        commissionType: product.commissionType,
+        commissionValue: product.commissionValue,
+      },
     });
 
     await expect(

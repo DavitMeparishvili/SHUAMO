@@ -1,7 +1,7 @@
 import { prisma } from "@/src/infrastructure/db/client";
 import type { LinkRepository } from "../ports/link-repository";
 
-type LinkDatabase = Pick<typeof prisma, "trackingLink">;
+type LinkDatabase = Pick<typeof prisma, "trackingLink" | "product">;
 
 export function createPrismaLinkRepository(
   database: LinkDatabase,
@@ -19,7 +19,22 @@ export function createPrismaLinkRepository(
       }),
     async createMany(links) {
       if (links.length === 0) return;
-      await database.trackingLink.createMany({ data: [...links] });
+      const products = await database.product.findMany({
+        where: { id: { in: [...new Set(links.map(({ productId }) => productId))] } },
+        select: { id: true, commissionType: true, commissionValue: true },
+      });
+      const offers = new Map(products.map((product) => [product.id, product]));
+      await database.trackingLink.createMany({
+        data: links.map((link) => {
+          const offer = offers.get(link.productId);
+          if (!offer) throw new Error("product offer missing during link creation");
+          return {
+            ...link,
+            commissionType: offer.commissionType,
+            commissionValue: offer.commissionValue,
+          };
+        }),
+      });
     },
     async setStatus(linkId, status) {
       await database.trackingLink.update({

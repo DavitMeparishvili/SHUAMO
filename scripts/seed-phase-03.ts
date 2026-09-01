@@ -108,10 +108,14 @@ for (const [productIndex, product] of activeProducts.entries()) {
   for (const [creatorIndex, creator] of approvedCreators.entries()) {
     const code = `P${productIndex + 1}C${creatorIndex + 1}X000`;
     await prisma.trackingLink.upsert({
-      where: {
-        productId_creatorId: { productId: product.id, creatorId: creator.id },
+      where: { code },
+      create: {
+        productId: product.id,
+        creatorId: creator.id,
+        code,
+        commissionType: product.commissionType,
+        commissionValue: product.commissionValue,
       },
-      create: { productId: product.id, creatorId: creator.id, code },
       update: { status: "ACTIVE" },
     });
   }
