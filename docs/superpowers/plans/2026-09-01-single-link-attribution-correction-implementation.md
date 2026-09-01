@@ -484,23 +484,24 @@ git commit -m "refactor: make product links explicitly creator initiated"
 - Create: `src/modules/partnerships/application/create-product-link.test.ts`
 - Modify: `src/modules/partnerships/ports/link-repository.ts`
 - Modify: `src/modules/partnerships/infrastructure/prisma-link-repository.ts`
-- Modify: `src/modules/catalog/ports/product-repository.ts`
-- Modify: `src/modules/catalog/infrastructure/prisma-product-repository.ts`
 - Modify: `src/modules/partnerships/index.ts`
 - Modify: `src/infrastructure/phase-3-services.ts`
 - Create or replace: `src/modules/partnerships/infrastructure/product-link-creation.integration.test.ts`
 
 **Interfaces:**
 
-- Consumes: approved partnership; active product offer `{ id, brandId, commissionType, commissionValue }`.
-- Produces: `createProductLink(deps)(creatorId, productId): Promise<Result<ProductLinkCreated, ProductLinkError>>`.
+- Consumes: authenticated creator ID and the displayed acceptance `{ productId, commissionType, commissionValue }`.
+- Produces: `createProductLink(deps)(creatorId, acceptance): Promise<Result<ProductLinkCreated, ProductLinkError>>`.
 
 - [x] **Step 1: Define the command contract in a failing unit test**
 
 ```ts
 type ProductLinkError =
   | "product_not_found"
+  | "brand_not_approved"
+  | "creator_not_approved"
   | "partnership_not_approved"
+  | "offer_changed"
   | "active_link_exists";
 
 interface ProductLinkCreated {
@@ -510,19 +511,25 @@ interface ProductLinkCreated {
   readonly commissionValue: string;
 }
 
-it("ATTR-002 and ATTR-006 create one product link with offered terms", async () => {
+it("ATTR-002 and ATTR-006 atomically accept the displayed product terms", async () => {
   const writes: unknown[] = [];
   const result = await createProductLink({
-    products: { findActiveOffer: async () => ({
-      id: "p1", brandId: "b1", commissionType: "PERCENT", commissionValue: "0.1250",
-    }) },
-    partnerships: { find: async () => ({ id: "pt1", brandId: "b1", creatorId: "c1", status: "APPROVED" }) },
     links: {
-      findActive: async () => undefined,
-      create: async (input) => { writes.push(input); return { id: "l1", ...input }; },
+      createAccepted: async (input) => {
+        writes.push(input);
+        return {
+          id: "l1", code: input.code,
+          commissionType: input.acceptedCommissionType,
+          commissionValue: input.acceptedCommissionValue,
+        };
+      },
     },
     random: { bytes: (count) => new Uint8Array(count).fill(1) },
-  })("c1", "p1");
+  })("c1", {
+    productId: "p1",
+    commissionType: "PERCENT",
+    commissionValue: "0.1250",
+  });
 
   expect(result).toEqual({ ok: true, value: {
     linkId: "l1", code: expect.any(String),
@@ -530,12 +537,12 @@ it("ATTR-002 and ATTR-006 create one product link with offered terms", async () 
   } });
   expect(writes).toEqual([expect.objectContaining({
     productId: "p1", creatorId: "c1",
-    commissionType: "PERCENT", commissionValue: "0.1250",
+    acceptedCommissionType: "PERCENT", acceptedCommissionValue: "0.1250",
   })]);
 });
 ```
 
-Add separate tests for archived/missing product, missing/pending/rejected partnership, existing active link, and repository unique-conflict mapping to `active_link_exists`.
+Map every typed persistence failure in the application test without hiding unrelated database failures. PostgreSQL tests cover inactive accounts/products, non-approved partnerships, stale terms, and the active-link unique conflict.
 
 - [x] **Step 2: Run and confirm failure**
 
@@ -545,65 +552,45 @@ pnpm vitest run src/modules/partnerships/application/create-product-link.test.ts
 
 Expected: FAIL because the command does not exist.
 
-- [x] **Step 3: Add focused port methods**
+- [x] **Step 3: Add the atomic persistence boundary**
 
 ```ts
-// catalog/ports/product-repository.ts
-findActiveOffer(productId: string): Promise<{
-  id: string;
-  brandId: string;
-  commissionType: "PERCENT" | "FIXED";
-  commissionValue: string;
-} | undefined>;
-
 // partnerships/ports/link-repository.ts
-findActive(productId: string, creatorId: string): Promise<{ id: string } | undefined>;
-create(input: {
+createAccepted(input: {
   productId: string;
   creatorId: string;
   code: string;
-  commissionType: "PERCENT" | "FIXED";
-  commissionValue: string;
+  acceptedCommissionType: "PERCENT" | "FIXED";
+  acceptedCommissionValue: string;
 }): Promise<{ id: string; code: string; commissionType: "PERCENT" | "FIXED"; commissionValue: string }>;
 ```
 
-The Prisma adapter converts decimal strings at its boundary. It catches only the active-pair unique violation and returns or throws a typed `ActiveLinkExistsError`; do not translate unrelated database failures.
+The Prisma adapter owns one transaction that locks and revalidates the active product, approved brand, approved creator, approved partnership, and current product terms before inserting the immutable snapshot. It catches only the active-pair unique violation and maps typed business failures; unrelated database failures propagate.
 
 Define the typed error next to the repository contract:
 
 ```ts
-export class ActiveLinkExistsError extends Error {
-  constructor() {
-    super("an active link already exists for this product and creator");
-    this.name = "ActiveLinkExistsError";
+export class ProductLinkCreateError extends Error {
+  constructor(readonly reason: ProductLinkError) {
+    super(reason);
+    this.name = "ProductLinkCreateError";
   }
 }
 ```
 
 - [x] **Step 4: Implement the application command**
 
-Order the checks and write exactly once:
+Pass the authenticated creator and displayed acceptance to the atomic repository operation:
 
 ```ts
-const offer = await deps.products.findActiveOffer(productId);
-if (offer === undefined) return { ok: false, error: "product_not_found" };
-
-const partnership = await deps.partnerships.find(offer.brandId, creatorId);
-if (partnership?.status !== "APPROVED") {
-  return { ok: false, error: "partnership_not_approved" };
-}
-if (await deps.links.findActive(productId, creatorId)) {
-  return { ok: false, error: "active_link_exists" };
-}
-
 const code = generateLinkCode(deps.random);
 try {
-  const link = await deps.links.create({
-    productId,
+  const link = await deps.links.createAccepted({
+    productId: acceptance.productId,
     creatorId,
     code,
-    commissionType: offer.commissionType,
-    commissionValue: offer.commissionValue,
+    acceptedCommissionType: acceptance.commissionType,
+    acceptedCommissionValue: acceptance.commissionValue,
   });
   return { ok: true, value: {
     linkId: link.id,
@@ -612,8 +599,8 @@ try {
     commissionValue: link.commissionValue,
   } };
 } catch (error) {
-  if (error instanceof ActiveLinkExistsError) {
-    return { ok: false, error: "active_link_exists" };
+  if (error instanceof ProductLinkCreateError) {
+    return { ok: false, error: error.reason };
   }
   throw error;
 }
@@ -621,7 +608,7 @@ try {
 
 - [x] **Step 5: Prove concurrency, history, and rate isolation in PostgreSQL**
 
-Integration tests must call `createProductLinkForCreator` concurrently twice and assert one success, one `active_link_exists`, and exactly one active row. Then disable it, change the product rate, create a second link, and assert the old and new rows retain different rates.
+Integration tests must call `createProductLinkForCreator` concurrently twice and assert one success, one `active_link_exists`, and exactly one active row. Then disable it, change the product rate, create a second link, and assert the old and new rows retain different rates. Hold product-rate, brand-status, creator-status, and partnership-status updates open in competing transactions and prove link creation waits, then rejects from the committed state.
 
 - [x] **Step 6: Run focused and boundary verification**
 
@@ -669,20 +656,25 @@ git commit -m "feat: let approved creators create immutable product links"
 - [x] **Step 1: Write the route-contract tests**
 
 ```ts
-it("creates one link for the authenticated creator and selected product", async () => {
-  const response = await createProductLinkHandler(async (creatorId, productId) => ({
+it("creates one link for the authenticated creator and accepted terms", async () => {
+  const response = await createProductLinkHandler(async (creatorId, acceptance) => ({
     ok: true,
     value: { linkId: "l1", code: "ABCDEFGH", commissionType: "FIXED", commissionValue: "8.0000" },
   }))("c1", new Request("https://shuamo.test", {
     method: "POST",
-    body: JSON.stringify({ productId: "p1" }),
+    body: JSON.stringify({
+      productId: "p1", commissionType: "FIXED", commissionValue: "8.0000",
+    }),
   }));
   expect(response.status).toBe(201);
 });
 
 it.each([
   ["product_not_found", 404],
+  ["brand_not_approved", 403],
+  ["creator_not_approved", 403],
   ["partnership_not_approved", 403],
+  ["offer_changed", 409],
   ["active_link_exists", 409],
 ] as const)("maps %s to %i", async (error, status) => {
   // Stub the command with the named error and assert the response status.
@@ -711,7 +703,7 @@ interface CreatorProductOffer {
 }
 ```
 
-The server action obtains `creatorId` only from `requireCreator(currentViewer())`, accepts only `productId` from form data, invokes the service, and revalidates the creator and brand link pages.
+The server action obtains `creatorId` only from `requireCreator(currentViewer())`. It validates the selected `productId` plus the displayed `commissionType` and `commissionValue`, invokes the service, and revalidates the creator and brand link pages. Persistence treats these rate fields only as expected terms: it locks and compares the current product offer, rejects `offer_changed`, and snapshots database values rather than trusting the form.
 
 - [x] **Step 4: Render explicit acceptance**
 
