@@ -51,6 +51,8 @@ export function recordClick(deps: RecordClickDeps) {
     }
 
     const now = deps.clock.now();
+    // Visitor and fingerprint signals deduplicate click analytics only. A
+    // conversion later resolves its submitted click ID to this tracking link.
     const fpHash = computeFingerprint({
       ip: request.ip,
       userAgent: request.userAgent,
@@ -68,7 +70,7 @@ export function recordClick(deps: RecordClickDeps) {
         trackingLinkId: snapshot.linkId,
         brandId: snapshot.brandId,
         // A cookie minted on this response did not identify the incoming
-        // request. Keeping this null preserves the no-cookie attribution rule.
+        // request, so it cannot describe this click's analytics identity.
         visitorId: request.visitorId,
         fpHash,
         occurredAt: now,

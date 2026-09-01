@@ -1146,7 +1146,7 @@ git commit -m "test: enforce the single-link attribution contract"
 - Consumes: existing Phase 4 redirect and the Task 7 calculator contract.
 - Produces: a clear Phase 6 seam: infrastructure resolves one click into `CitedLinkTerms`; the calculator never performs click lookup.
 
-- [ ] **Step 1: Add the containment assertion**
+- [x] **Step 1: Add the containment assertion**
 
 Extend the existing containment test to assert that attribution-domain production files contain none of:
 
@@ -1154,7 +1154,7 @@ Extend the existing containment test to assert that attribution-domain productio
 [/visitorId/, /fp_?[Hh]ash/, /creditable/, /candidate/i]
 ```
 
-- [ ] **Step 2: Correct misleading comments without changing redirect behavior**
+- [x] **Step 2: Correct misleading comments without changing redirect behavior**
 
 Use this meaning consistently:
 
@@ -1165,7 +1165,7 @@ the conversion's submitted click ID resolves the earning tracking link.
 
 Do not add link-rate columns to the redirect lookup. A click already stores `trackingLinkId`, and Phase 6 can join the immutable rate when the webhook arrives.
 
-- [ ] **Step 3: Verify the Phase 6 boundary matches Task 6**
+- [x] **Step 3: Verify the Phase 6 boundary matches Task 6**
 
 The future plan must map its resolved database row into exactly:
 
@@ -1184,7 +1184,7 @@ const link: CitedLinkTerms = {
 
 The resolver, not the calculator, rejects unknown, cross-brand, future, and expired clicks. It must not reject the cited click merely because `creditable = false`.
 
-- [ ] **Step 4: Run Phase 4 regression verification**
+- [x] **Step 4: Run Phase 4 regression verification**
 
 ```powershell
 pnpm vitest run src/modules/tracking
@@ -1194,7 +1194,7 @@ pnpm verify:phase-4
 
 Expected: PASS with redirect URL, cookie, and dedup behavior unchanged.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add prisma src/modules/tracking docs/superpowers/plans/2026-08-29-phase-06-conversions-api-implementation.md

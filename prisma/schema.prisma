@@ -153,10 +153,10 @@ model TrackingLink {
 }
 
 /// id is the ck_... token echoed in ?xu=.
-/// brandId is denormalised so candidate-click lookup never needs to infer a
-/// click's brand through mutable catalogue rows.
-/// fpHash is only a cookie-less deduplication signal. Attribution must never
-/// use it as visitor identity.
+/// brandId is denormalised so the submitted click can be rejected cross-brand
+/// without inferring its brand through mutable catalogue rows.
+/// visitorId, fpHash, and creditable support click-analytics deduplication only.
+/// The conversion's submitted click ID resolves its one earning tracking link.
 model Click {
   id             String    @id
   trackingLinkId String    @map("tracking_link_id") @db.Uuid

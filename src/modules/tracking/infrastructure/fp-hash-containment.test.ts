@@ -7,7 +7,20 @@ describe("fingerprint containment", () => {
       .filter(
         (file) => !file.replaceAll("\\", "/").includes("src/modules/tracking/"),
       )
+      .filter((file) => !file.endsWith(".test.ts"))
       .filter((file) => /fp_?[Hh]ash/.test(readFileSync(file, "utf8")));
+    expect(offenders).toEqual([]);
+  });
+
+  it("keeps visitor and deduplication signals out of attribution production", () => {
+    const forbidden = [/visitorId/, /fp_?[Hh]ash/, /creditable/, /candidate/i];
+    const offenders = globSync("src/modules/attribution/domain/*.{ts,tsx}")
+      .filter((file) => !file.includes(".test."))
+      .filter((file) => {
+        const source = readFileSync(file, "utf8");
+        return forbidden.some((pattern) => pattern.test(source));
+      });
+
     expect(offenders).toEqual([]);
   });
 
