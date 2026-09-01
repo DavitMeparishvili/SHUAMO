@@ -66,7 +66,7 @@ package.json                                                 correction verifica
 - Consumes: `ATTR-001`–`ATTR-010` from the approved design.
 - Produces: one non-contradictory source hierarchy: R1 spec → roadmap → this correction plan → future Phase 6 plan.
 
-- [ ] **Step 1: Replace the R1 attribution decision**
+- [x] **Step 1: Replace the R1 attribution decision**
 
 Replace every active assertion that commission is split among up to three creators with this normative text, preserving the rule IDs:
 
@@ -85,7 +85,7 @@ ATTR-005). Product-rate edits affect new links only (ATTR-007).
 
 Rewrite R1 §6.3 as the exact flow `click → tracking_link → creator/product/rate`, update §10's checklist to use the proof in the approved design §8, and update Appendix A so `tracking_link` owns `commission_type` and `commission_value`, `conversion` has no `split_degraded`, and each conversion item has at most one attribution.
 
-- [ ] **Step 2: Correct the roadmap and dependency graph**
+- [x] **Step 2: Correct the roadmap and dependency graph**
 
 Replace the Phase 3/5 global rules and insert the correction before Phase 5:
 
@@ -99,7 +99,7 @@ Phase 3  Catalog, partnerships & link authorization
 
 Phase 3 must say links are created on demand by an approved creator for one active product. Phase 5 must say it calculates one full attribution from immutable link terms. Phase 6 must say it resolves only the submitted click and does not query visitor candidates.
 
-- [ ] **Step 3: Make obsolete implementation plans impossible to execute accidentally**
+- [x] **Step 3: Make obsolete implementation plans impossible to execute accidentally**
 
 Add this banner immediately below the Phase 3 plan title:
 
@@ -121,7 +121,7 @@ Replace the old Phase 5 plan body with:
 > Tasks 6–8, which implement `ATTR-003` through `ATTR-010`.
 ```
 
-- [ ] **Step 4: Rewrite the future Phase 6 contract**
+- [x] **Step 4: Rewrite the future Phase 6 contract**
 
 Remove candidate-click queries, `splitDegraded`, three-row invariants, share conservation, and creator recency. Its repository input must resolve this shape from one click ID:
 
@@ -145,7 +145,7 @@ The Phase 6 test list must include these exact future test names:
 - `ATTR-009 attributes a recorded click after its link is disabled`
 - `ATTR-010 does not reject the cited click when creditable is false`
 
-- [ ] **Step 5: Run the active-document contradiction scan**
+- [x] **Step 5: Run the active-document contradiction scan**
 
 Run:
 
@@ -159,7 +159,7 @@ rg -n -i "up to 3|at most 3|split equally|brand-scoped split|candidate-click|spl
 
 Expected: no matches except text explicitly saying the former behavior is superseded. Search all later plans and specs as well; change current behavior claims, but retain clearly labelled historical decision records.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add docs/superpowers

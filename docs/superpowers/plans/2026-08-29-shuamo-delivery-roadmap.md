@@ -26,11 +26,11 @@ Every task in every phase plan inherits this section.
 - Market is Georgia. Currency is **GEL only**. Locales are `ka` and `en`, **both complete — no string ships untranslated**.
 - The buyer never transacts on SHUAMO. No cart, no checkout, no buyer account.
 - There is no `Campaign` in R1 (§4.7). A partnership is brand-wide and the rate lives on the product.
-- Commission is split equally among **up to 3** creators whose creditable clicks fall in the 30-day window (§3.1).
-- **Split scope is brand-scoped**, exactly as §6.3 is written — a creator who sent the visitor shares every line of the order, including products they never promoted. This is the decision recorded against §13.1; the test in Phase 5 exists to keep it visible.
+- One submitted click resolves one tracking link and therefore the only eligible creator, product, and immutable agreed rate (`ATTR-002`, `ATTR-003`, `ATTR-006`).
+- Only matching product lines earn, and the linked creator receives the full calculated amount; visitor cookies, fingerprints, other clicks, and `creditable` do not select earners (`ATTR-004`, `ATTR-005`, `ATTR-010`).
 - Attribution window is **30 days** before the order. Click dedup window is **30 minutes**.
 - `PERCENT` commission values are **fractions** (`0.125`, never `12.5`) and are `numeric(9,4)`. `FIXED` is GEL per unit, multiplied by `qty`.
-- Rounding: line commission rounded to 0.01 GEL, then **floored** per share; leftover tetri handed out one each in recency order, cited click first (§6.3). Never round-half-up a share.
+- Rounding: each matching line's full commission is rounded half-up to 0.01 GEL using exact decimal arithmetic.
 - Nothing is ever hard-deleted. Products archive; ledger entries are append-only; corrections are new rows.
 
 **Engineering**
@@ -62,10 +62,11 @@ Every task in every phase plan inherits this section.
 Phase 0  Engineering foundation
   -> Phase 1  Design language & component kit
     -> Phase 2  Identity, accounts & approvals
-      -> Phase 3  Catalog, partnerships & link minting
+      -> Phase 3  Catalog, partnerships & link authorization
         -> Phase 4  Redirect & click tracking
-          -> Phase 5  Attribution calculator          (pure, exhaustive)
-            -> Phase 6  Conversions API & order lifecycle
+          -> Single-link attribution correction
+            -> Phase 5  Exact-link commission calculator
+              -> Phase 6  Conversion webhook & order lifecycle
               -> Phase 7  Reporting, CSV, worker & deploy   = R1 / MVP
                 -> Phase 8  Billing periods & creator ledger
                   -> Phase 9  Invoicing & the close job
@@ -86,7 +87,7 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 | Deviation | Spec says | We do | Why |
 | --- | --- | --- | --- |
 | Credential storage | R1 Appendix A puts `password_hash` on `app_user` | Better Auth with the Prisma adapter owns credentials and sessions in its own tables. `app_user` keeps `id`, `email`, `locale`, `is_admin` and drops `password_hash` | Hand-rolled password and session handling is the largest avoidable security surface in the build. Every other column in Appendix A is unchanged, and the migration diff notes this one line |
-| Split scope | §6.3 brand-scoped, §13.1 open | Brand-scoped, as written | Recorded decision. Phase 5 carries the test that makes the consequence visible so it stays reversible before pilot |
+| Attribution scope | Superseded multi-creator decision | Exact submitted-click link only | Corrected by the approved 2026-09-01 single-link attribution design |
 | Admin approvals in R1 | §2 "approvals happen by seed script and direct database access" | Seed scripts, as specified, through Phase 7 | Unchanged. The admin console arrives in Phase 11 because money moves through it (R2 §7.3), not because approvals were inconvenient |
 
 ---
@@ -191,30 +192,30 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 
 ---
 
-## Phase 3 — Catalog, partnerships & link minting
+## Phase 3 — Catalog, partnerships & link authorization
 
-**Outcome:** An approved partnership produces one tracking link per active product, automatically, and the four-row disable chain resolves correctly for each of them.
+**Outcome:** An approved partnership authorizes a creator to explicitly create a link for one active product, and the four-row disable chain resolves correctly.
 
 **Scope**
 
 - `product`: SKU, title, description, price, up to 8 ordered images, backlink URL, commission type and value, archive-only lifecycle, `UNIQUE (brand_id, sku)`.
 - MinIO (dev `compose.yaml` service) and a presigned-PUT image upload flow: brand's browser uploads direct to object storage, the app server never touches file bytes (R1 §11.2).
-- Brand catalog UI: create, edit, archive, upload images; a rate editor that makes §1.2 risk 3 explicit in the interface.
+- Brand catalog UI: create, edit, archive, upload images; the current offered rate is shown as the terms for new links.
 - `partnership`: creator applies, brand invites, approve/reject, `UNIQUE (brand_id, creator_id)`.
-- `tracking_link`: minting on partnership approval (one per active product) and on product creation (one per approved creator); unique `code`; `UNIQUE (product_id, creator_id)`.
+- `tracking_link`: explicit creator creation after approval, one product and immutable rate snapshot per link; unique `code`; at most one active row per `(product_id, creator_id)`.
 - The §5 disable chain as a pure domain function over a single joined row.
 - Link list for creators and brands.
 
-**Deliverable:** `pnpm seed:phase-3` yields a brand with 3 products and 2 approved creators; 6 tracking links exist; archiving a product resolves its links to `PRODUCT_ARCHIVED` without deleting anything.
+**Deliverable:** deterministic seeds create only named fixture links; archiving a product resolves existing links to `PRODUCT_ARCHIVED` without deleting anything.
 
 **Automated proof**
 
 - Disable-chain table test: all four rows plus the active case, and the ordering — a brand that is suspended *and* has an archived product reports `BRAND_DISABLED`, never `PRODUCT_ARCHIVED`.
-- Minting tests: approval mints one link per active product; a product added later mints for every approved creator; **no link is ever minted for a non-`APPROVED` partnership**; re-approval does not duplicate links.
+- Authorization tests: product and partnership creation mint no links; an approved creator can explicitly accept one active product's rate; concurrent duplicate requests create one active link.
 - Rate validation: `PERCENT` above `1` is rejected by both the Zod schema and the database CHECK.
 - `image_urls` cardinality bounded at 8, each element a non-empty `https://` URL (application rule — the CHECK cannot express it).
 - Image upload: a presigned URL is refused for a content-type outside `{image/jpeg, image/png, image/webp}`; a presigned URL always targets a key scoped to the requesting brand's own product; a request for another brand's product is refused.
-- Playwright: brand publishes a product, creator applies, brand approves, creator sees a link with a copyable code; brand uploads a product photo through the presigned-URL flow and it renders.
+- Playwright: after approval, a creator chooses one offered product and sees one copyable link with its agreed rate while another active product remains unlinked.
 
 **Exit criteria**
 
@@ -261,36 +262,40 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 
 ---
 
-## Phase 5 — Attribution calculator
+## Mandatory Phase 4.5 — Single-link attribution correction
 
-**Outcome:** The pure function `(citedClick, candidateClicks, lineItems, products) → Attribution[]`, exhaustively proved, with no I/O anywhere in the module.
+**Outcome:** Forward-only schema correction, explicit creator link creation, immutable link-rate snapshots, and synchronized active documentation.
+
+**Dependency:** Phase 4 must be complete. This correction must pass `pnpm verify:attribution-correction` before Phase 5 begins.
+
+**Execution plan:** `2026-09-01-single-link-attribution-correction-implementation.md`
+
+---
+
+## Phase 5 — Exact-link commission calculator
+
+**Outcome:** The pure function `(citedLinkTerms, lineItems) → CalculationResult`, exhaustively proved, with no I/O anywhere in the module.
 
 **Scope**
 
-- Candidate-click selection: brand-scoped, visitor-scoped, `creditable = true`, inside the 30-day window. **`fpHash` never enters this set.**
-- Creator ordering by most-recent candidate click, cited creator promoted to the front, capped at 3.
-- Per line: SKU resolution, `net = (unitPrice × qty − lineDiscount) − lineVat`, VAT derivation at 18% when the brand is VAT-registered and `lineVat` is absent, commission by rate type, round to 0.01.
-- Share distribution: floor per share, remainder distributed one tetri each in recency order.
-- The degraded no-cookie path: single-click attribution, `splitDegraded`.
+- The submitted click is resolved before calculation to one creator, product, SKU, and immutable rate.
+- Per line: match only the linked SKU, calculate net after discount and VAT, calculate the full commission from the link rate, and round to 0.01 GEL.
+- Nonmatching lines record zero commission and no attribution. A matching line has at most one attribution.
 
 **Deliverable:** `src/modules/attribution/domain/` with a test suite that covers every row of §10's calculator list and passes property tests over randomised input.
 
 **Automated proof** — this is the whole phase, so it is enumerated rather than summarised:
 
-- 1, 2, and 3 creators; the >3 cap keeps the three most recent plus the cited creator.
-- Cited click's creator retained when three or more creators clicked more recently.
-- Cross-brand SKU collision: identical SKU at two brands; only the conversion's brand attributes.
-- Brand-scoped split made visible: a creator who promoted only product A still shares product B in the same cart. The test is named for the decision it encodes.
-- Remainder cases: `10.00` across 3 → `3.34 / 3.33 / 3.33`; `0.05` across 3 → `0.02 / 0.02 / 0.01`. Neither inverts recency order.
+- Product-A link earns zero on product B and earns the full amount on matching product-A lines.
+- Other visitor activity and click creditability never change the earning creator.
+- Fixed rates multiply by matching quantity; percent rates apply to matching commissionable net.
 - Zero and negative line nets → commission 0, recorded.
 - SKU absent from the brand's catalog → line earns nothing, recorded.
-- Expired clicks (30 days + 1 second) and non-creditable clicks excluded from candidacy.
-- A cited click that deduplication marked non-creditable still resolves and still holds its creator's slot.
-- Degraded no-cookie path pays the cited click alone and sets `splitDegraded`.
+- Click eligibility and the 30-day window are Phase 6 infrastructure concerns, outside this pure module.
 - VAT derivation for a VAT-registered brand with `lineVat` absent; and a non-registered brand where the line total is the net.
 - `FIXED` rate with `qty > 1` → `value × qty`.
-- **Property test:** `Σ shares == commission` exactly, and shares are non-increasing by click recency, for random commissions in `[0, 100000]` and `n ∈ 1..3`.
-- **Purity test:** the module's import graph contains no Prisma, no `fetch`, no `Date.now`, and no `crypto`. The clock arrives as a parameter.
+- **Property test:** each input line produces one result; matching positive-net lines pay exactly one creator and all other lines pay zero.
+- **Purity test:** the module contains no Prisma, network, clock, crypto, random, visitor, fingerprint, or creditability dependency.
 
 **Exit criteria**
 
@@ -310,8 +315,8 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 - `POST /v1/conversions`: bearer auth by key prefix then hash comparison; `Origin` header → 401, logged as a probable leaked secret.
 - Idempotency on `(brand, order_id)`: same payload → the original result at 200; different payload → 409.
 - `occurredAt` within ±48h → otherwise 422. Zod validation of the item shape.
-- Click resolution: absent, unknown, or older than 30 days → `UNATTRIBUTED`, stop.
-- Candidate-click query, calculator invocation, and a single transaction persisting `conversion`, `conversion_item[]`, `attribution[]`, and stamping `click.converted_at` on every earning click that lacks one.
+- Click resolution: absent, unknown, cross-brand, future, or older than 30 days → `UNATTRIBUTED`; otherwise resolve the submitted click's one link and immutable terms.
+- Invoke the exact-link calculator and persist `conversion`, `conversion_item[]`, zero-or-one `attribution` per item, and the cited click's first `converted_at` in one transaction.
 - Brand orders queue: confirm and cancel at whole-order level, `CONFIRMED → CANCELLED` permitted, `confirmed_at` stamped, `AuditEvent` on every transition.
 - Pending count, oldest-pending age, and the banner escalating at 7, 14, and 30 days.
 

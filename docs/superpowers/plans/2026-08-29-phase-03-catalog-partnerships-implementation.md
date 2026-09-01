@@ -1,5 +1,10 @@
 # Phase 3 — Catalog, Partnerships & Link Minting Implementation Plan
 
+> **Historical plan:** Phase 3 was implemented before the single-link
+> attribution correction. Automatic catalog-wide minting in this document is
+> superseded by `2026-09-01-single-link-attribution-correction-implementation.md`.
+> Do not recreate that behavior.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** An approved partnership produces one tracking link per active product, automatically, and the four-row disable chain resolves correctly for every one of them.

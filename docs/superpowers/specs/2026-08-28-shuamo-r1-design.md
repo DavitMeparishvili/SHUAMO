@@ -9,7 +9,7 @@
 ## 1. Product summary
 
 SHUAMO is a B2B creator-performance platform for the Georgian market. Brands publish a product
-catalog; creators partner with a brand and receive one tracking link per product; buyers click
+catalog; creators partner with a brand and explicitly create links for products they choose; buyers click
 through to the brand's own online store and purchase there. SHUAMO measures which creator drove which
 sale and what commission is owed.
 
@@ -21,8 +21,8 @@ The whole model is four nouns:
 Brand ──partners with──▶ Creator ──gets a link for──▶ Product ──▶ Click ──▶ Conversion
 ```
 
-There is no campaign. A creator is approved by a brand once, and from then on has a link for every
-active product in that brand's catalog. The rate lives on the product.
+There is no campaign. An approved partnership authorizes link creation. Each link binds one creator
+and one active product and snapshots the product's offered rate when the creator accepts it.
 
 ### 1.1 What the MVP has to prove
 
@@ -35,7 +35,7 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 
 | Decision                                                                                | Why it stays                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commission is split equally among up to 3 creators whose creditable clicks fall in the window | Explicit product decision. Last-click-wins would be simpler and is a different product. This is the single largest source of remaining complexity, and it is deliberate. |
+| The submitted click's tracking link identifies the only earning creator and product | Direct single-link attribution is auditable, exact, and independent of other visitor activity. |
 | A SHUAMO-hosted "offer ended" page for disabled links                                    | A dead link has to explain itself to the buyer and to the creator who posted it. Active links still 302 straight through, so a working link never shows a SHUAMO page.    |
 
 ### 1.2 Accepted risks
@@ -47,18 +47,15 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 2. **A leaked API key allows fabricated conversions.** The key is a static bearer token, shown once
    and stored as a hash. There is no HMAC signing and no rotation: a compromise means an
    administrator regenerates the key and the brand redeploys.
-3. **Rate changes affect clicks that have not converted yet.** There is no rate history (§4). A
-   calculated commission is frozen the moment it is written, but a click sitting inside its 30-day
-   window will earn at whatever rate is current when the order lands. The operational rule is to
-   archive a product and publish a new SKU rather than edit a live rate.
-4. **Split credit is brand-scoped, not product-scoped.** A creator who sent a visitor to the brand
-   shares in every line of that visitor's order, including products they never promoted. This is the
-   direct consequence of dropping campaigns (§4.6) and it is the widest of the reasonable readings.
-   §6.3 notes the one-line change that narrows it.
+3. **Rate edits require deliberate link replacement.** A product holds the terms offered for new
+   links. Existing links retain their immutable snapshots; creators disable and recreate links to
+   accept changed terms (`ATTR-006`, `ATTR-007`).
+4. **A submitted click is product-specific.** Only lines for that link's product earn commission;
+   a creator never earns from unrelated catalog items (`ATTR-003`, `ATTR-004`).
 5. **Pending orders never expire.** No auto-approve. A brand that stops confirming freezes creator
    earnings indefinitely. In-app reminders only.
 6. **Visitor cookie and click fingerprint require legal review.** The cookie is first-party and
-   functionally necessary for split attribution, but is still a tracking cookie for any EU visitor.
+   used for analytics deduplication, but is still a tracking cookie for any EU visitor.
    The `fpHash` derived from IP and User-Agent (§6.1) is *pseudonymous, not anonymous* — hashing does
    not move it outside GDPR or the Georgian personal data law. Non-code task before pilot.
 7. **Postgres is a hard dependency of the redirect.** No cache, no queue (§3.4). A failed click write
@@ -83,12 +80,12 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 - Product catalog: title, description, price, up to 8 uploaded images, backlink URL, commission rate
 - Brand-side image upload via presigned URL, direct to self-hosted object storage (§11.2)
 - Brand ↔ creator partnership: Apply / Invite with Approve / Reject
-- One tracking link per creator per product, minted on approval
+- Creator-initiated product links after partnership approval
 - Redirect service with the disable chain
 - Click recording, cookie and fingerprint deduplication, and per-click conversion state
 - One API key per brand for the conversion postback
 - `POST /v1/conversions` — server-to-server, the only conversion path
-- Per-line-item split attribution across up to 3 creators
+- Per-line-item exact-link attribution to one creator
 - Confirm / Cancel by brand at whole-order level
 - Link detail view (§7.2) and creator earnings dashboard
 - Per-brand monthly CSV export of confirmed commissions
@@ -108,7 +105,7 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 | API key rotation with overlap, `RETIRING` state, `lastUsedAt`            | One key; an administrator regenerates it                   | R2         |
 | Integration self-test gate, `TEST` links, `isTest` conversions           | Hand-held onboarding on a real link                        | R2         |
 | Conversion delivery log and the Developers tab diagnostics               | Structured server logs, read by the operator               | R2         |
-| Rate version history and as-of resolution                                | Current rate on the product (§1.2 risk 3)                  | R2         |
+| Negotiated rate history beyond links                                    | Immutable link snapshots are the R1 agreement record       | R2         |
 | Order-level totals, reconciliation warnings, pro-rata discount allocation | Line items only                                            | R2         |
 | Separate `Idempotency-Key` header                                        | `orderId` is the idempotency key                           | —          |
 | Click country, parsed device (OS, browser, form factor)                  | Salted IP+UA hash, for deduplication only                  | R3         |
@@ -130,16 +127,16 @@ only because the MVP targets a pilot of 1–2 brands.
 | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Conversion reporting | Server-to-server postback only. No pixel, no platform plugin                                                     |
 | Visitor identity     | First-party cookie `xu_vid` on the SHUAMO redirect domain, 30 days                                                |
-| Attribution model    | Equal split among up to 3 creators whose creditable clicks on **the same brand** fall in the window              |
+| Attribution model    | The submitted click resolves one link and the only earning creator/product (`ATTR-002`, `ATTR-003`)              |
 | Window               | 30 days before the order                                                                                         |
-| Rounding             | Line commission rounded to 0.01 GEL, then floored per share; leftover tetri handed out one each in recency order |
+| Rounding             | The full matching-line commission is rounded half-up to 0.01 GEL with exact decimal arithmetic                   |
 | Granularity          | Per line item, not per order                                                                                     |
 | Commissionable value | Line total after line discount, net of line VAT                                                                  |
-| Rate resolution      | The rate currently on the product, read at conversion time. No history (§1.2 risk 3)                             |
+| Rate resolution      | Immutable commission type and value stored on the cited tracking link (`ATTR-006`, `ATTR-007`)                    |
 | Deduplication        | Same visitor, same link, within 30 minutes → one creditable click. With no cookie, same fingerprint              |
-| Click fingerprint    | `sha256(ip ‖ user-agent ‖ daily salt)`. A dedup signal only; never widens the §6.3 candidate set                 |
+| Click fingerprint    | `sha256(ip ‖ user-agent ‖ daily salt)`. A click-analytics dedup signal only                                       |
 | Click conversion state | Each click carries `convertedAt`, stamped the first time it earns commission                                   |
-| No-cookie fallback   | Single-click attribution, `splitDegraded` set                                                                    |
+| No-cookie behavior   | Exact submitted-click attribution is unchanged                                                                    |
 | Buyer PII            | Nothing raw. A click keeps a cookie id and a salted hash; no IP or User-Agent at rest                            |
 | Idempotency          | `orderId` is the key. Same brand and order, same payload → the original result; different payload → 409          |
 | Brand credential     | One static secret `xu_sk_` per brand, shown once at generation, stored as a hash                                 |
@@ -149,14 +146,14 @@ only because the MVP targets a pilot of 1–2 brands.
 | Decision                | Value                                                                                       |
 | ----------------------- | --------------------------------------------------------------------------------------------- |
 | Product source          | Brand-uploaded catalog, each product linking to the brand's own store page                  |
-| Commission rate         | Per product, percent or fixed. Set by the brand, changeable, not versioned                  |
+| Commission rate         | Product advertises current terms; each created link snapshots them immutably                 |
 | Catalog price           | Display-only; drives the creator-facing estimate. Real commission always from the postback  |
 | Product deletion        | Archive only                                                                                |
 | Image storage           | Self-hosted, S3-compatible object storage (MinIO). Bucket is public-read, private-write     |
 | Image upload flow       | Server issues a presigned PUT scoped to one object and one content-type; the browser uploads directly to MinIO — bytes never touch the app server (§11.2) |
 | Image serving           | Stable public URL per object, no signing on read, cacheable, no expiry to manage            |
-| Partnership model       | Creator applies to a brand or is invited. Approval grants a link for every active product   |
-| Link minting            | Automatic on approval, and for any product the brand adds afterwards                        |
+| Partnership model       | Creator applies or is invited. Approval authorizes explicit product-link creation            |
+| Link creation           | Creator explicitly accepts one active product's offered terms                               |
 | Disable scopes          | Single link · partnership · product · brand                                                 |
 | Disabled link behaviour | SHUAMO "offer ended" page                                                                    |
 | In-flight clicks        | Clicks recorded before a disable stay creditable through their full 30-day window           |
@@ -227,19 +224,20 @@ Product       brand:→Brand  sku:text  title:text  description:text  priceGel:g
               status:ProductStatus                                       ✦(brand,sku)
 
 TrackingLink  product:→Product  creator:→Creator  code:text✦
-              status:LinkStatus                                          ✦(product,creator)
+              commissionType:RateType  commissionValue:numeric(9,4)
+              status:LinkStatus                       one ACTIVE(product,creator)
 
 Click         id:text pk (ck_…)  trackingLink:→TrackingLink  brand:→Brand
               visitorId:uuid?  fpHash:text?  occurredAt:ts  creditable:bool  convertedAt:ts?
 
 Conversion    brand:→Brand  orderId:text  occurredAt:ts
-              status:ConversionStatus  confirmedAt:ts?  splitDegraded:bool  ✦(brand,orderId)
+              status:ConversionStatus  confirmedAt:ts?  ✦(brand,orderId)
 
 ConversionItem  conversion:→Conversion  sku:text  qty:int  unitPrice:gel
                 lineDiscount:gel  lineVat:gel  commissionableNet:gel
 
-Attribution   conversionItem:→ConversionItem  click:→Click  creator:→Creator
-              product:→Product  commissionAmount:gel        ✦(conversionItem,creator)
+Attribution   conversionItem:→ConversionItem✦  click:→Click  creator:→Creator
+              product:→Product  commissionAmount:gel
 
 AuditEvent    actor:→User?  action:text  entityType:text  entityId:uuid
               changes:jsonb  at:ts
@@ -252,17 +250,12 @@ flow (§11.2), not brand-pasted external links. The 8-element cap and the per-el
 
 ### 4.2 The four columns that need justifying
 
-**`Product.commissionType` / `commissionValue`.** The rate lives on the product because there is
-nothing else for it to live on. `PERCENT` is a fraction (`0.125`, not `12.5`) and `FIXED` is an
-absolute GEL amount per unit, which is why the column needs four decimal places where money needs
-two. Changing it changes what un-converted clicks will earn (§1.2 risk 3); already-written
-`Attribution.commissionAmount` is never recomputed.
+**Commission terms.** The product stores the currently advertised terms for new links. A tracking
+link copies those terms at creation and is the immutable agreement record. `PERCENT` is a fraction
+(`0.125`, not `12.5`) and `FIXED` is GEL per matching unit. Product edits never change old links.
 
-**`Click.brand` is a deliberate denormalisation.** Brand-filtering candidate clicks is a correctness
-requirement (§6.3), not an optimisation — without it, a SKU string shared by two brands attributes
-one brand's order to the other. Without the column, that filter is a two-table join on the
-calculator's hottest query. The redirect's own lookup already has the brand in hand, so writing it is
-free.
+**`Click.brand` is a deliberate denormalisation.** It lets conversion intake reject a submitted
+cross-brand click without trusting request data. The redirect lookup already has the brand in hand.
 
 **`Click.convertedAt` is a deliberate denormalisation**, added because "did this click convert, and
 when?" is the question the link view (§7.2) is built around, and answering it through
@@ -310,15 +303,8 @@ AuditEvent   ─→ User?       free-floating; no FK to the entity it describes
 creator without a fourth table. `Partnership` is the gate that permits the link to exist; it is not
 in the click path.
 
-`Conversion` has no edge to the click cited in `?xu=`. That click is resolved at intake (§6.2 step
-4), handed to the calculator, and discarded. `Click.convertedAt` does not record it either — it is
-stamped only on *earning* clicks, and a cited click may earn nothing. The single stored `Click` edge
-is `Attribution`'s: one of the up-to-three that actually take a share.
-
-The cost is an audit gap, and it is real. A creator's most recent candidate click is not always the
-one cited, so `Attribution` does not reliably recover it, and an `UNATTRIBUTED` conversion has no
-`Attribution` rows at all. "The brand sent no `xu`" and "the brand sent a 31-day-old `xu`" are
-therefore indistinguishable after the write — which is §1.2 risk 1 losing its only forensic trace.
+The submitted click is resolved at intake and is the only possible earning click. Matching items
+store that exact click on their attribution. An `UNATTRIBUTED` conversion has no attribution rows.
 
 ### 4.5 Keys, indexes, retention
 
@@ -328,11 +314,11 @@ UNIQUE  Brand (keyPrefix)                          bearer token lookup
 UNIQUE  Partnership (brandId, creatorId)
 UNIQUE  Product (brandId, sku)                     SKUs are brand-scoped; two brands may use P-9
 UNIQUE  TrackingLink (code)                        the redirect lookup — §6.1
-UNIQUE  TrackingLink (productId, creatorId)        one link per creator per product
+UNIQUE  TrackingLink (productId, creatorId) ACTIVE one active link; disabled history remains
 UNIQUE  Conversion (brandId, orderId)              idempotency and double-billing, one constraint
-UNIQUE  Attribution (conversionItemId, creatorId)  a creator earns once per line
+UNIQUE  Attribution (conversionItemId)             at most one earning creator per line
 
-INDEX   Click (brandId, visitorId, occurredAt desc) where creditable  candidate clicks — §6.3
+INDEX   Click (trackingLinkId, visitorId, occurredAt desc)             analytics dedup — §6.1
 INDEX   Click (trackingLinkId, fpHash, occurredAt desc)               fingerprint dedup — §6.1
 INDEX   Click (trackingLinkId, occurredAt desc)                       link view counters — §7.2
 INDEX   Click (trackingLinkId) where convertedAt is not null          converted clicks — §7.2
@@ -346,21 +332,16 @@ retained in full for 13 months and aggregated thereafter. Nothing is ever hard-d
 
 ### 4.6 Invariants
 
-- `Σ Attribution.commissionAmount` over one `ConversionItem` equals that item's computed commission
-  exactly
+- A matching `ConversionItem` has one attribution whose amount equals its full computed commission
 - `Attribution.commissionAmount` is written once and never recomputed. Confirming or cancelling
   changes `Conversion.status`, never an amount
-- At most 3 `Attribution` rows per `ConversionItem`
+- At most 1 `Attribution` row per `ConversionItem`
 - `Click.convertedAt` is non-null if and only if that click has at least one `Attribution`
-- `Click.visitorId` is null only on the no-cookie path, which forces `Conversion.splitDegraded`.
-  This is an intake-time rule, not a checkable relation: with no stored edge to the cited click,
-  nothing after the write can re-derive it
-- `Click.fpHash` is set on every click. Only `visitorId` may identify a visitor to §6.3; `fpHash`
-  never enters the candidate set, at any distance
+- `Click.visitorId`, `fpHash`, and `creditable` are analytics/dedup fields and never select earners
 - `Product.status` may move `ACTIVE → ARCHIVED`; rows are never deleted
 - `Conversion.confirmedAt` is set if and only if `status = CONFIRMED`
 - A `Conversion` with `status = UNATTRIBUTED` has no `Attribution` rows
-- A `TrackingLink` exists only where `Partnership.status = APPROVED` held at mint time
+- A `TrackingLink` is explicitly created only while the partnership is `APPROVED`
 
 ### 4.7 Why there is no Campaign
 
@@ -411,9 +392,10 @@ queries.
 Active → 302 straight to the backlink, no interstitial. Disabled → localised "offer ended" page,
 HTTP 200.
 
-Links are minted automatically when a `Partnership` moves to `APPROVED`, one per active product, and
-again for any product the brand adds while the partnership is live. Disabling is forward-looking
-only: clicks already recorded run out their full 30-day window and can still earn.
+Approval authorizes a creator to explicitly create a link for one active product. Product and
+partnership writes never create links. Link creation snapshots the offered rate, and a partial unique
+index permits history while enforcing one active link per pair. Disabling is forward-looking only:
+clicks already recorded run out their full 30-day window and can still earn.
 
 ---
 
@@ -516,103 +498,43 @@ Budget: p95 under 200ms.
 
 ### 6.3 Attribution calculator
 
-A pure function of `(citedClick, candidateClicks, lineItems, products) → Attribution[]`. It performs
-no I/O, which is what makes it exhaustively testable. The cited click is a parameter rather than a
-stored column (§4.4): it seeds the visitor lookup and holds its creator's slot, then goes nowhere.
+### Single-link attribution
 
-Dropping campaigns simplified this materially: the creator set is now computed **once per
-conversion** rather than once per line, because there is no per-line campaign to scope by. The loop
-body is pure arithmetic.
+An approved partnership authorizes a creator to create product links. Each
+tracking link binds exactly one creator and one product and snapshots the
+product's offered commission terms when created (ATTR-001, ATTR-002,
+ATTR-006). The shop returns the recorded click ID after a successful sale;
+that click's tracking link identifies the only earning creator (ATTR-003,
+ATTR-010). Only order lines matching the link's product earn commission, and
+the creator receives the full calculated amount without a split (ATTR-004,
+ATTR-005). Product-rate edits affect new links only (ATTR-007).
 
-```
-candidateClicks = clicks where
-    brand      = conversion.brand      ← SKUs are brand-scoped. Without this filter,
-                                         a SKU shared by two brands attributes one
-                                         brand's order to the other
-    visitorId  = conversion click's visitorId
-    creditable = true
-    occurredAt within 30 days before conversion.occurredAt
-                                       ← and never fpHash; see below
+The conversion resolver follows exactly:
 
-creators = distinct creators among candidateClicks, each represented by their
-           most recent such click, ordered by that click's recency descending
-if the cited click's creator is among them:
-    move that creator to the front     ← the click that carried ?xu= delivered
-creators = first 3 of creators           the buyer; it never loses its slot to
-                                         more recent clickers
-n = count(creators)
-
-for each lineItem:
-    product = product where brand = conversion.brand and sku = lineItem.sku
-    if none: line earns nothing; record and continue      ← unknown SKU
-
-    net = (unitPrice × qty − lineDiscount) − lineVat
-    if net <= 0: commission = 0; record and continue
-
-    commission = round(product.commissionType == PERCENT
-                       ? net × product.commissionValue
-                       : product.commissionValue × qty, 0.01)
-
-    share = floor(commission / n, 0.01)
-    rem   = commission − n × share       (0 ≤ rem < n × 0.01)
-    assign share to each creator, plus 0.01 to the first `rem / 0.01` entries
-    of `creators` — cited click first, then recency
-
-    one Attribution per creator: (conversionItem, that creator's click,
-                                  creator, product, amount)
+```text
+submitted click ID → click → tracking_link → creator / product / immutable rate
 ```
 
-`fpHash` never appears in that filter and never will. A CGNAT address shared by thousands of
-subscribers would merge strangers into a single visitor and pay commission to creators who never
-touched this buyer. Deduplication that is wrong pays less; identity that is wrong pays the wrong
-person, and only the first of those is a recoverable mistake.
+An absent, unknown, cross-brand, future, or expired click produces an
+`UNATTRIBUTED` conversion. A click recorded while its link was active remains
+eligible after disablement. Neither `creditable`, `visitorId`, `fpHash`, nor
+any other click participates in choosing the creator.
 
-Worked example:
+The pure calculator receives the resolved link terms and order lines. It
+calculates `max(0, unit price × quantity − line discount − line VAT)`; when a
+VAT-registered brand omits VAT, VAT is derived at 18%. Only lines whose SKU
+matches the link product earn. Percent rates multiply matching net and fixed
+rates multiply matching quantity. The full line commission is rounded half-up
+to 0.01 GEL and assigned to the link creator in one attribution row.
 
-```
-Cart:   perfume 250.00 GEL (12%)  promo −25.00
-        laptop 2000.00 GEL (3%)
-Clicks: Nino → perfume link (Aug 1), Dato → laptop link (Aug 11)
-Order:  Aug 12
-
-creators = [Dato, Nino]        n = 2, brand-scoped, same for both lines
-
-perfume  net (250 − 25) / 1.18 = 190.68  → 22.88  → Dato 11.44 · Nino 11.44
-laptop   net 2000 / 1.18       = 1694.92 → 50.85  → Dato 25.43 · Nino 25.42
-```
-
-Note what §1.2 risk 4 means in practice: Nino, who only ever promoted the perfume, takes half the
-laptop commission. **To narrow this to product scope**, restrict `creators` inside the loop to those
-whose candidate clicks were on links for *this line's* product. That is a one-line change, it makes
-the worked example pay Nino 22.88 and Dato 50.85, and it is the decision to revisit before pilot —
-not after money has moved.
-
-Remainder handling, for cases that do not divide evenly:
-
-```
-commission 10.00 across Nino, Ana, Dato (Dato most recent)
-  floor 3.33 each, rem 0.01   → Dato 3.34 · Ana 3.33 · Nino 3.33
-
-commission 0.05 across the same three
-  floor 0.01 each, rem 0.02   → Dato 0.02 · Ana 0.02 · Nino 0.01
-```
-
-Flooring each share rather than rounding keeps this monotonic. Rounding half-up makes the remainder
-negative for the `0.05` case and pays the most recent clicker *less* than the others.
-
-If `lineVat` is absent and the brand is VAT-registered, the line total is treated as VAT-inclusive and
-VAT derived as `lineTotal × 0.18 / 1.18`. If the brand is not VAT-registered, `lineVat` is zero and
-the line total is the net directly.
-
-All attributions are created against a `PENDING` conversion.
-
----
+A repeated `(brand, orderId)` returns the originally stored result without a
+second conversion or commission (ATTR-008). Attribution amounts are immutable.
 
 ## 7. Views
 
 ### 7.1 Brand — Orders queue
 
-Order ID, date, line items, and the attributed creators with their shares.
+Order ID, date, line items, and the one attributed creator and full amount where applicable.
 
 ```
 Order #1234 — 250 ₾ — Creator: Nino — Commission: 20 ₾
@@ -718,8 +640,8 @@ debit, automated bank connectivity, multi-currency, and any creator wallet withd
 | Case                                                    | Behaviour                                                               |
 | --------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Missing, unknown, or >30d click ID                      | `UNATTRIBUTED`, surfaced to the brand. Never silently dropped           |
-| Cited click was deduplicated                            | Resolves normally for visitor lookup; loses only its own candidacy      |
-| Same SKU string owned by two brands                     | Candidate clicks are brand-filtered; no cross-brand attribution         |
+| Cited click was deduplicated                            | Resolves normally to its exact link                                     |
+| Same SKU string owned by two brands                     | Submitted click must resolve to the authenticated brand                  |
 | SKU not in the brand's catalog                          | Line earns nothing, recorded for visibility                             |
 | Repeat `orderId`, same payload                          | 200 with the original result, no new records                            |
 | Repeat `orderId`, different payload                     | 409                                                                     |
@@ -727,14 +649,14 @@ debit, automated bank connectivity, multi-currency, and any creator wallet withd
 | `FIXED` rate with `qty > 1`                             | `value × qty`                                                           |
 | `occurredAt` more than ±48h from server time            | 422                                                                     |
 | Backlink has existing query or fragment                 | Preserved; `?xu=` appended                                              |
-| No `xu_vid` cookie                                      | Single-click attribution, `splitDegraded` set; dedup uses `fpHash`      |
+| No `xu_vid` cookie                                      | Exact-click attribution is unchanged; dedup uses `fpHash`                |
 | Two cookie-less buyers behind one CGNAT address         | Second click non-creditable; still earns via the single-click path      |
 | Client sets its own `X-Forwarded-For`                   | Ignored. Caddy resolves the client IP from its trusted-proxy config     |
 | Click earns on a second order                           | `convertedAt` keeps the first. Both orders reachable via `Attribution`  |
 | Conversion later cancelled                              | `convertedAt` stays set — the click did convert. Money state is on the conversion |
-| Rate changed after a click, before its order            | The new rate applies (§1.2 risk 3). Written amounts never change        |
+| Rate changed after a click, before its order            | The cited link's immutable stored rate applies                           |
 | Partnership rejected or product archived after clicks exist | Existing clicks stay creditable through their window                |
-| Brand adds a product while a partnership is live        | A link is minted for every approved creator                             |
+| Brand adds a product while a partnership is live        | No link exists until a creator explicitly accepts the offer              |
 | Return after confirmation                               | `CONFIRMED → CANCELLED`, audit-logged, next-CSV negative line           |
 | Postgres unavailable at click write                     | 302 without `?xu=` — the sale is never blocked, the attribution is lost |
 | Postgres unavailable at link lookup                     | 503. No cache exists to serve from (§1.2 risk 7)                        |
@@ -746,52 +668,24 @@ debit, automated bank connectivity, multi-currency, and any creator wallet withd
 
 ## 10. Testing strategy
 
-The attribution calculator is built test-first and covered exhaustively, because it is where every
-lari of correctness lives:
+The attribution contract is built test-first and traced by stable rule IDs:
 
-- 1, 2, and 3 creators; the >3 cap
-- Cited click's creator retained when three or more creators clicked more recently
-- Cross-brand SKU collision: identical SKU at two brands, only the conversion's brand attributes
-- Brand-scoped split: a creator who promoted only product A still shares product B in the same cart
-  (§1.2 risk 4 — the test exists to make the decision visible, not to bless it)
-- Remainder cases: 10.00 across 3, and 0.05 across 3 (never inverts recency order)
-- Zero and negative line nets
-- SKUs absent from the brand's catalog
-- Expired and non-creditable clicks
-- Degraded no-cookie single-click path
-- Property test: `Σ shares == commission` exactly, and shares non-increasing by click recency, for
-  random commissions and N ∈ 1..3
+- 100 approved creators can each hold an active link for one product (ATTR-001).
+- Every link resolves exactly one creator, product, brand, and snapshotted rate (ATTR-002).
+- Other visitor clicks never receive or alter attribution (ATTR-003, ATTR-010).
+- Product-A links pay zero for product B and mixed carts pay only matching lines (ATTR-004).
+- Matching percent and fixed lines pay the link creator the full exact amount (ATTR-005).
+- Existing links retain their stored terms after product-rate edits (ATTR-006, ATTR-007).
+- Replaying one shop order performs no second write (ATTR-008).
+- A click remains usable after its link is disabled (ATTR-009).
+- A cited non-creditable click still resolves to its exact link (ATTR-010).
+- Unknown, cross-brand, future, and expired click IDs produce `UNATTRIBUTED`.
+- Every money assertion compares exact decimal storage strings.
 
-Supporting coverage:
-
-- **Disable chain** — table-driven across all four rows, active and disabled
-- **Link minting** — approval mints one link per active product; a product added later mints for
-  every approved creator; no link is ever minted for a non-`APPROVED` partnership
-- **Redirect** — 302 target correctness, query and fragment preservation, cookie set and reuse, the
-  30-minute dedup boundary, disabled-page render, latency budget
-- **Fingerprint dedup** — matching IP and User-Agent with no cookie, inside and outside the
-  30-minute boundary; a present cookie always takes precedence; the salt rolling at UTC midnight
-  ends an otherwise-matching pair; no candidate-click query mentions `fpHash`; and the case that
-  costs money — a fingerprint-deduplicated click still earns through the single-click path
-- **Click durability** — the `Click` row is committed before the 302, so a conversion posted
-  milliseconds later always resolves; a failed click write still redirects, without `?xu=`
-- **`convertedAt`** — stamped on every earning click in the same transaction as the attribution;
-  keeps the first order's timestamp when a second order also earns on it; survives a later
-  cancellation; null for every click that earned nothing
-- **Link counters** — total, unique, distinct-visitor, and converted counts against a seeded fixture
-  containing duplicates, non-converters, and a multi-earning click
-- **Conversions API** — auth by prefix and hash, `Origin` rejection, same-payload replay returns the
-  original, different-payload 409, timestamp skew, the unattributed path
-- **Image upload** — a presigned URL is refused for a content-type outside the allowlist; a presigned
-  URL always targets a key scoped to the requesting brand's own product; a request for another
-  brand's product is refused
-- **Money immutability** — confirming and cancelling change status only; no `commissionAmount` is
-  ever rewritten, including across a rate change between click and confirmation
-- **CSV** — bucketed by confirmation date, `CONFIRMED` only, negative line for a late cancellation
-- **End-to-end** — seeded brand → product → approved partnership → link → simulated click →
-  simulated postback → asserted attribution rows and `convertedAt`
-
----
+Supporting coverage preserves the redirect, cookie, fingerprint, click
+durability, disable-chain, lifecycle, image upload, reporting, and CSV
+contracts. A drift guard rejects superseded creator-selection helpers and
+degradation flags from active source and documents.
 
 ## 11. Deployment
 
@@ -874,7 +768,7 @@ a future release, not a silent omission.
 
 | Release | Contents                                                                                                                                                                                                     |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **MVP** | This document. Catalog with rates, brand↔creator partnerships, per-product links, redirect, click tracking with conversion state, conversions API, split attribution, confirm/cancel, CSV export              |
+| **MVP** | This document. Catalog with rates, brand↔creator partnerships, explicit per-product links, redirect, click tracking, exact-link attribution, conversions API, confirm/cancel, CSV export                     |
 | **R2**  | Campaigns and campaign-scoped rates (§4.7), domain verification, brand teams, pixel path, key rotation, self-test, delivery log, rate history — and the money stack: accrual ledger, platform fee, VAT invoicing, month close, payout batches, admin console |
 | **R3**  | Email, `ru` locale, bot filtering, anomaly alerts, HMAC signing, creator social proof, public directories                                                                                                    |
 | **R4**  | Compliance and automation: licensing position, KYC/AML depth, bank statement import                                                                                                                          |
@@ -886,15 +780,12 @@ point building an invoicing engine on numbers that might be wrong.
 
 ## 13. Open non-code items before pilot
 
-1. **Decide brand-scoped versus product-scoped split** (§1.2 risk 4, §6.3). This determines who gets
-   paid and is a one-line code change now, a migration and a set of apologies later
-2. Legal review of the `xu_vid` cookie against Georgian data protection law and GDPR
-3. Georgian tax treatment of creator payouts, and who issues which document to whom — needed even
+1. Legal review of the `xu_vid` cookie against Georgian data protection law and GDPR
+2. Georgian tax treatment of creator payouts, and who issues which document to whom — needed even
    though the MVP moves no money, because the brand pays the creator directly against the CSV
-4. Decide who writes and reviews both launch locales
-5. Confirm the commercial terms the CSV settles against, since there is no contract mechanism in the
-   product
-6. Naming: repository is `SHUAMO`, product is `SHUAMO`. Reconcile or accept
+3. Decide who writes and reviews both launch locales
+4. Confirm the commercial terms the CSV settles against; the immutable link is the R1 agreement record
+5. Naming: repository is `SHUAMO`, product is `SHUAMO`. Reconcile or accept
 
 The fund-handling licensing question that dominated the earlier draft does not arise in the MVP:
 SHUAMO never receives money. It returns with R2 and must be answered before that release, not this one.
@@ -959,7 +850,7 @@ CREATE TABLE creator (
   created_at   timestamptz     NOT NULL DEFAULT now()
 );
 
--- Brand-wide. Approval mints a tracking link for every active product.
+-- Brand-wide authorization boundary. Approval does not create links.
 CREATE TABLE partnership (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id   uuid               NOT NULL REFERENCES brand(id)   ON DELETE CASCADE,
@@ -974,9 +865,6 @@ CREATE INDEX partnership_creator_idx ON partnership (creator_id, status);
 ### A.3 Catalog and links
 
 ```sql
--- The rate lives here. There is no campaign and no history table; see §4.7 and §1.2 risk 3.
--- image_urls holds MinIO-served public URLs written by the presigned-upload flow (§11.2),
--- not brand-pasted links. Shape and constraints are unchanged: ordered, capped at 8.
 CREATE TABLE product (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id         uuid           NOT NULL REFERENCES brand(id) ON DELETE RESTRICT,
@@ -991,54 +879,57 @@ CREATE TABLE product (
   status           product_status NOT NULL DEFAULT 'ACTIVE',
   created_at       timestamptz    NOT NULL DEFAULT now(),
   UNIQUE (brand_id, sku),
-  -- PERCENT is a fraction (0.125), never a whole number of percent
   CONSTRAINT percent_is_fraction CHECK (commission_type <> 'PERCENT' OR commission_value <= 1),
-  -- Array order is display order; element 1 is the primary image. Empty is legal.
-  -- Per-element "non-empty https:// URL" is an application rule: a CHECK over every
-  -- element of an array needs a subquery, which CHECK does not allow.
   CONSTRAINT image_urls_bounded CHECK (cardinality(image_urls) <= 8)
 );
 
 CREATE TABLE tracking_link (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id uuid        NOT NULL REFERENCES product(id) ON DELETE RESTRICT,
-  creator_id uuid        NOT NULL REFERENCES creator(id) ON DELETE RESTRICT,
-  code       text        NOT NULL UNIQUE,
-  status     link_status NOT NULL DEFAULT 'ACTIVE',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (product_id, creator_id)
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id       uuid         NOT NULL REFERENCES product(id) ON DELETE RESTRICT,
+  creator_id       uuid         NOT NULL REFERENCES creator(id) ON DELETE RESTRICT,
+  code             text         NOT NULL UNIQUE,
+  commission_type  rate_type    NOT NULL,
+  commission_value numeric(9,4) NOT NULL CHECK (commission_value >= 0),
+  status           link_status  NOT NULL DEFAULT 'ACTIVE',
+  created_at       timestamptz  NOT NULL DEFAULT now(),
+  CONSTRAINT tracking_link_percent_is_fraction
+    CHECK (commission_type <> 'PERCENT' OR commission_value <= 1)
 );
+CREATE INDEX tracking_link_product_creator_idx
+  ON tracking_link (product_id, creator_id);
+CREATE UNIQUE INDEX tracking_link_one_active_product_creator
+  ON tracking_link (product_id, creator_id) WHERE status = 'ACTIVE';
 CREATE INDEX tracking_link_creator_idx ON tracking_link (creator_id);
 ```
+
+The tracking-link identity, code, product, creator, commission type, and
+commission value are immutable. Disabled history is retained; only one active
+row may exist for a creator/product pair.
 
 ### A.4 Tracking
 
 ```sql
--- id is the ck_… token echoed in ?xu=.
--- brand_id is denormalised: brand-filtering candidate clicks is a correctness
--- requirement (§6.3), not an optimisation.
--- converted_at is denormalised: it is the question the link view is built around,
--- and deriving it costs three joins on the busiest table in the schema (§4.2).
--- fp_hash is sha256(ip ‖ user-agent ‖ hmac(serverSecret, utcDate)). It deduplicates
--- cookie-less clicks and does nothing else: it must never reach the candidate-click
--- query below, because one CGNAT address is thousands of unrelated people (§6.3).
+-- visitor_id and fp_hash deduplicate click analytics only. The submitted click
+-- ID resolves the earning tracking link.
 CREATE TABLE click (
   id               text PRIMARY KEY,
   tracking_link_id uuid        NOT NULL REFERENCES tracking_link(id) ON DELETE RESTRICT,
-  brand_id         uuid        NOT NULL REFERENCES brand(id)         ON DELETE RESTRICT,
+  brand_id         uuid        NOT NULL REFERENCES brand(id) ON DELETE RESTRICT,
   visitor_id       uuid,
   fp_hash          text,
   occurred_at      timestamptz NOT NULL DEFAULT now(),
   creditable       boolean     NOT NULL DEFAULT true,
   converted_at     timestamptz
 );
-CREATE INDEX click_candidates_idx ON click (brand_id, visitor_id, occurred_at DESC)
-  WHERE creditable;
-CREATE INDEX click_link_idx       ON click (tracking_link_id, occurred_at DESC);
-CREATE INDEX click_fp_dedup_idx   ON click (tracking_link_id, fp_hash, occurred_at DESC)
+CREATE INDEX click_link_idx ON click (tracking_link_id, occurred_at DESC);
+CREATE INDEX click_visitor_dedup_idx
+  ON click (tracking_link_id, visitor_id, occurred_at DESC)
+  WHERE visitor_id IS NOT NULL;
+CREATE INDEX click_fp_dedup_idx
+  ON click (tracking_link_id, fp_hash, occurred_at DESC)
   WHERE fp_hash IS NOT NULL;
-CREATE INDEX click_converted_idx  ON click (tracking_link_id)
-  WHERE converted_at IS NOT NULL;
+CREATE INDEX click_converted_idx
+  ON click (tracking_link_id) WHERE converted_at IS NOT NULL;
 
 CREATE TABLE conversion (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1047,55 +938,34 @@ CREATE TABLE conversion (
   occurred_at    timestamptz       NOT NULL,
   status         conversion_status NOT NULL DEFAULT 'PENDING',
   confirmed_at   timestamptz,
-  split_degraded boolean           NOT NULL DEFAULT false,
   created_at     timestamptz       NOT NULL DEFAULT now(),
-  UNIQUE (brand_id, order_id),   -- idempotency and double-billing in one constraint
+  UNIQUE (brand_id, order_id),
   CONSTRAINT confirmed_at_matches_status CHECK (
     (status = 'CONFIRMED') = (confirmed_at IS NOT NULL)
   )
 );
-CREATE INDEX conversion_queue_idx ON conversion (brand_id, status, confirmed_at);
 
 CREATE TABLE conversion_item (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversion_id      uuid          NOT NULL REFERENCES conversion(id) ON DELETE CASCADE,
   sku                text          NOT NULL,
   qty                integer       NOT NULL CHECK (qty > 0),
-  unit_price         numeric(12,2) NOT NULL CHECK (unit_price         >= 0),
-  line_discount      numeric(12,2) NOT NULL CHECK (line_discount      >= 0),
-  line_vat           numeric(12,2) NOT NULL CHECK (line_vat           >= 0),
+  unit_price         numeric(12,2) NOT NULL CHECK (unit_price >= 0),
+  line_discount      numeric(12,2) NOT NULL CHECK (line_discount >= 0),
+  line_vat           numeric(12,2) NOT NULL CHECK (line_vat >= 0),
   commissionable_net numeric(12,2) NOT NULL CHECK (commissionable_net >= 0),
   created_at         timestamptz   NOT NULL DEFAULT now()
 );
-CREATE INDEX conversion_item_conversion_idx ON conversion_item (conversion_id);
 
--- click_id is the earning creator's most recent candidate click.
--- product_id records which catalog row produced the amount — the audit link
--- between money paid and the rate that produced it.
 CREATE TABLE attribution (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversion_item_id uuid          NOT NULL REFERENCES conversion_item(id) ON DELETE CASCADE,
-  click_id           text          NOT NULL REFERENCES click(id)           ON DELETE RESTRICT,
-  creator_id         uuid          NOT NULL REFERENCES creator(id)         ON DELETE RESTRICT,
-  product_id         uuid          NOT NULL REFERENCES product(id)         ON DELETE RESTRICT,
+  conversion_item_id uuid          NOT NULL UNIQUE REFERENCES conversion_item(id) ON DELETE CASCADE,
+  click_id           text          NOT NULL REFERENCES click(id) ON DELETE RESTRICT,
+  creator_id         uuid          NOT NULL REFERENCES creator(id) ON DELETE RESTRICT,
+  product_id         uuid          NOT NULL REFERENCES product(id) ON DELETE RESTRICT,
   commission_amount  numeric(12,2) NOT NULL CHECK (commission_amount >= 0),
-  created_at         timestamptz   NOT NULL DEFAULT now(),
-  UNIQUE (conversion_item_id, creator_id)
+  created_at         timestamptz   NOT NULL DEFAULT now()
 );
-CREATE INDEX attribution_item_idx    ON attribution (conversion_item_id);
-CREATE INDEX attribution_creator_idx ON attribution (creator_id);
-CREATE INDEX attribution_click_idx   ON attribution (click_id);
-
-CREATE TABLE audit_event (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  actor_id    uuid        REFERENCES app_user(id) ON DELETE SET NULL,
-  action      text        NOT NULL,
-  entity_type text        NOT NULL,
-  entity_id   uuid        NOT NULL,
-  changes     jsonb       NOT NULL DEFAULT '{}',
-  at          timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX audit_event_entity_idx ON audit_event (entity_type, entity_id, at DESC);
 ```
 
 ### A.5 The link view, as SQL
@@ -1126,17 +996,14 @@ separate so the counter query never fans out across line items.
 
 ### A.6 What the schema cannot enforce
 
-Real invariants from §4.6 that no constraint expresses. Each needs application code and, more
-importantly, a test — §10 is where they actually live.
+| Invariant | Enforcement |
+| --- | --- |
+| Submitted click belongs to the authenticated brand and is within its window | Phase 6 resolver and named integration tests |
+| Each conversion item has at most one attribution | `UNIQUE (conversion_item_id)` |
+| Attribution amount is never rewritten | Immutable-write application path and integration test |
+| `converted_at` is set iff the cited click earned | One Phase 6 transaction |
+| `UNATTRIBUTED` implies no attribution rows | Phase 6 transaction and integration test |
+| Link creation requires an approved partnership and active product | Application command plus database integration tests |
 
-| Invariant                                                            | Why not a constraint                                             |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `Σ commission_amount` per line equals the line's computed commission | Cross-row aggregate against a value derived outside the database |
-| At most 3 attribution rows per line                                  | A count across sibling rows; needs a trigger or a guarded write  |
-| `commission_amount` is never rewritten after insert                  | Would need a column-level append-only trigger                    |
-| `converted_at` set iff the click has an attribution                  | Cross-table, and written in the same transaction instead         |
-| `UNATTRIBUTED` implies no attribution rows                           | Cross-table                                                      |
-| `visitor_id IS NULL` implies `split_degraded`                        | No stored edge to the cited click; set at intake, unverifiable   |
-| Links minted only for `APPROVED` partnerships                        | A point-in-time rule, not a state rule; enforced at mint time    |
-
-The first is the one that costs money if it breaks, and it is covered by a property test.
+Order replay is protected by `UNIQUE (brand_id, order_id)`; immutable link
+identity and agreed terms are protected by a database update trigger.
