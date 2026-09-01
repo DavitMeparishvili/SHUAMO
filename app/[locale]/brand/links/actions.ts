@@ -18,5 +18,6 @@ export async function setLinkStatusAction(
   );
   if (!result.ok) throw new Error(result.error);
   revalidatePath(`/${locale}/brand/links`);
+  revalidatePath(`/${locale}/brand/products`, "layout");
   revalidatePath(`/${locale}/creator/links`);
 }

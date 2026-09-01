@@ -42,6 +42,7 @@ export default async function BrandLinksPage({
           active: t(messages, "links.active"),
           link: t(messages, "links.link"),
           creator: t(messages, "links.creator"),
+          rate: t(messages, "links.rate"),
           enable: t(messages, "links.enable"),
           disable: t(messages, "links.disable"),
           copy: t(messages, "design.copy.copy"),

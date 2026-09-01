@@ -69,20 +69,34 @@ test("@phase-3 a creator explicitly accepts one product rate", async ({
   await expect(
     page.locator("article").filter({ hasText: otherProduct }),
   ).toContainText("Create link at this rate");
+
+  await page.context().clearCookies();
+  await signIn(page, "en", BRAND);
+  await page.goto("/en/brand/products");
+  await page
+    .getByRole("link", {
+      name: `P-E2E-chosen-${testInfo.project.name}-${RUN_ID}`,
+    })
+    .click();
+  const creatorLinks = page.locator("#creator-links");
+  await expect(
+    creatorLinks.getByRole("heading", { name: "Creator links" }),
+  ).toBeVisible();
+  const creatorLink = creatorLinks
+    .locator("article")
+    .filter({ hasText: "Nino" });
+  await expect(creatorLink).toContainText(agreedRate);
+  await expect(creatorLink.getByRole("button", { name: "Copy" })).toBeVisible();
 });
 
 test("@phase-3 archiving preserves links and reports PRODUCT_ARCHIVED", async ({
   page,
 }, testInfo) => {
   await signIn(page, "en", BRAND);
-  await page.goto("/en/brand/products");
-  await page
-    .getByRole("link", {
-      name: testInfo.project.name.includes("mobile")
-        ? "AROMA-050"
-        : "AROMA-100",
-    })
-    .click();
+  const productId = testInfo.project.name.includes("mobile")
+    ? "32000000-0000-4000-8000-000000000002"
+    : "32000000-0000-4000-8000-000000000001";
+  await page.goto(`/en/brand/products/${productId}`);
   await page.getByRole("button", { name: "Archive product" }).click();
   await expect(page.getByText("Product archived").first()).toBeVisible();
   await page.context().clearCookies();

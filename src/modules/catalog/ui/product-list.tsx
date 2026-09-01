@@ -77,7 +77,17 @@ export function ProductList({
         label={product.status === "ACTIVE" ? copy.active : copy.archived}
       />
     ),
-    links: <span className="type-mono">{product._count.links}</span>,
+    links: (
+      <Link
+        className="type-mono font-semibold text-signal underline decoration-signal-200 underline-offset-4 hover:text-signal-hover"
+        href={`/${locale}/brand/products/${product.id}#creator-links`}
+      >
+        {product._count.links}
+        <span className="sr-only">
+          {copy.links}: {product.title}
+        </span>
+      </Link>
+    ),
   }));
   return (
     <DataTable

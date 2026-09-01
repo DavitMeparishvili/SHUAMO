@@ -213,3 +213,17 @@ export async function listResolvedLinksForBrand(brandId: string) {
     ],
   });
 }
+
+export async function listResolvedLinksForBrandProduct(
+  brandId: string,
+  productId: string,
+) {
+  return prisma.trackingLink.findMany({
+    where: { productId, product: { brandId } },
+    include: {
+      product: { include: { brand: true } },
+      creator: { include: { partnerships: true } },
+    },
+    orderBy: [{ status: "asc" }, { creator: { displayName: "asc" } }],
+  });
+}

@@ -2,6 +2,7 @@ import { prisma } from "@/src/infrastructure/db/client";
 import { createProductLinkForCreator } from "@/src/infrastructure/phase-3-services";
 import { seedApprovedPartnership } from "@/src/test/fixtures/accounts";
 import { describe, expect, it } from "vitest";
+import { listResolvedLinksForBrandProduct } from "./prisma-link-repository";
 
 function acceptance(product: {
   id: string;
@@ -37,6 +38,41 @@ async function expectBlocked<T>(operation: Promise<T>) {
 }
 
 describe("creator product link creation", () => {
+  it("scopes a brand product drill-down to that product's creator links", async () => {
+    const { brand, creator } = await seedApprovedPartnership();
+    const products = await Promise.all(
+      ["FIRST", "OTHER"].map((suffix) =>
+        prisma.product.create({
+          data: {
+            brandId: brand.id,
+            sku: `DRILL-${suffix}-${crypto.randomUUID()}`,
+            title: `${suffix} drill-down product`,
+            priceGel: "100.00",
+            backlinkUrl: `https://shop.example.ge/${suffix.toLowerCase()}`,
+            commissionType: "PERCENT",
+            commissionValue: "0.1250",
+          },
+        }),
+      ),
+    );
+    for (const product of products) {
+      expect(
+        await createProductLinkForCreator(creator.id, acceptance(product)),
+      ).toMatchObject({ ok: true });
+    }
+
+    const links = await listResolvedLinksForBrandProduct(
+      brand.id,
+      products[0]!.id,
+    );
+
+    expect(links).toHaveLength(1);
+    expect(links[0]).toMatchObject({
+      productId: products[0]!.id,
+      creator: { displayName: creator.displayName },
+    });
+  });
+
   it("ATTR-002 creates one active exact-product link under concurrency", async () => {
     const { brand, creator } = await seedApprovedPartnership();
     const product = await prisma.product.create({

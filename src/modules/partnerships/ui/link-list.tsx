@@ -146,6 +146,7 @@ export function BrandLinkList({
   baseUrl,
   setStatusAction,
   copy,
+  showProduct = true,
 }: {
   links: readonly ResolvedLinkRow[];
   baseUrl: string;
@@ -159,6 +160,7 @@ export function BrandLinkList({
     active: string;
     link: string;
     creator: string;
+    rate: string;
     enable: string;
     disable: string;
     copy: string;
@@ -166,6 +168,7 @@ export function BrandLinkList({
     copyError: string;
     reasons: Record<DisableReason, string>;
   };
+  showProduct?: boolean;
 }) {
   if (links.length === 0) {
     return <EmptyState title={copy.emptyTitle} body={copy.emptyBody} />;
@@ -176,15 +179,31 @@ export function BrandLinkList({
       {links.map((link) => {
         const resolution = resolutionFor(link);
         const nextStatus = link.status === "ACTIVE" ? "DISABLED" : "ACTIVE";
+        const rate =
+          link.commissionType === "PERCENT"
+            ? `${new Decimal(link.commissionValue.toString()).times(100).toString()}%`
+            : `${link.commissionValue.toString()} ₾`;
         return (
           <article
             className="grid gap-5 rounded-md border border-slate-200 bg-paper p-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)_auto] lg:items-center"
             key={link.id}
           >
             <div className="grid min-w-0 gap-2">
-              <h2 className="m-0 type-h3 text-ink">{link.product.title}</h2>
-              <p className="m-0 break-words type-small text-slate-600">
-                {copy.creator}: {link.creator.displayName}
+              {showProduct ? (
+                <>
+                  <h2 className="m-0 type-h3 text-ink">{link.product.title}</h2>
+                  <p className="m-0 break-words type-small text-slate-600">
+                    {copy.creator}: {link.creator.displayName}
+                  </p>
+                </>
+              ) : (
+                <h3 className="m-0 break-words type-h3 text-ink">
+                  <span className="sr-only">{copy.creator}: </span>
+                  {link.creator.displayName}
+                </h3>
+              )}
+              <p className="m-0 type-small text-slate-600">
+                {copy.rate}: <code className="type-mono text-ink">{rate}</code>
               </p>
               <div>
                 <StatusPill
