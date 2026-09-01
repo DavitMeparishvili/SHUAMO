@@ -19,7 +19,7 @@ function moneyFromTetri(tetri: number): Money {
 }
 
 describe("single-link attribution properties", () => {
-  it("keeps 5,000 seeded matching lines bound to only the cited creator", () => {
+  it("ATTR-003 and ATTR-010 keep 5,000 seeded matching lines bound to only the cited creator", () => {
     const random = mulberry32(0x5a17c0de);
     const matchingLines = Array.from({ length: 5_000 }, (_, index) => {
       const unitTetri = 1 + Math.floor(random() * 100_000);

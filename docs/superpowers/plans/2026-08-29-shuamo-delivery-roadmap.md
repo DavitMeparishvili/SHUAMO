@@ -528,7 +528,7 @@ Four layers, each with a job the others cannot do.
 **Rules the layers are held to:**
 
 - The calculator (Phase 5) and the ledger (Phase 8) are built **test-first**, exhaustively, because they are where the money is. Everything else is test-first by default and may be pragmatic where it is not load-bearing.
-- Property tests carry the invariants that examples cannot: share conservation, ledger conservation, non-negative accrual, append-only.
+- Property tests carry the invariants that examples cannot: exact cited-link assignment, line-count preservation, ledger conservation, non-negative accrual, and append-only history.
 - **Every invariant listed in R1 A.6 and R2 A.7 has a named test.** Those two tables are the checklist; a row without a test is an incomplete phase.
 - Integration tests never mock PostgreSQL. A constraint that has not been exercised against a real database has not been proved.
 - Playwright tests are tagged `@phase-N` so each phase's gate runs its own journeys plus every earlier one.

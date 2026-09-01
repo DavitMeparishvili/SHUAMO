@@ -62,6 +62,7 @@ calculator, owns click lookup and the 30-day window.
 
 ## Required tests
 
+- `ATTR-003 attributes only the creator resolved from the submitted click`
 - `ATTR-008 replays one shop order without another conversion or commission`
 - `ATTR-009 attributes a recorded click after its link is disabled`
 - `ATTR-010 does not reject the cited click when creditable is false`

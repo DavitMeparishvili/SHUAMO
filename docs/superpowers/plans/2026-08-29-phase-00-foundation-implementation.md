@@ -1,5 +1,11 @@
 # Phase 0 — Engineering Foundation Implementation Plan
 
+> **Historical plan:** Phase 0 was implemented before the single-link
+> attribution correction. Split-only money primitives and test examples in this
+> completed plan are superseded by
+> `2026-09-01-single-link-attribution-correction-implementation.md`, Tasks 6–8.
+> Do not recreate them.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A deployable empty SHUAMO with enforced architecture boundaries, exact-decimal money primitives, and three working test loops.

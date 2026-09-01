@@ -1215,7 +1215,7 @@ git commit -m "docs: align click tracking with exact-link attribution"
 - Consumes: Tasks 1–9.
 - Produces: evidence that every approved design rule is implemented or deliberately deferred to the already-corrected Phase 6 plan.
 
-- [ ] **Step 1: Produce the traceability evidence**
+- [x] **Step 1: Produce the traceability evidence**
 
 Run:
 
@@ -1228,7 +1228,7 @@ foreach ($id in 1..10) {
 
 Expected: every ID appears in the approved spec and at least one executable test or, for webhook-only behavior not implemented until Phase 6, in a named Phase 6 test step. `ATTR-001`, `002`, `006`, and `007` must already have PostgreSQL integration coverage; `ATTR-004` and `005` must have calculator unit coverage.
 
-- [ ] **Step 2: Run the complete correction command**
+- [x] **Step 2: Run the complete correction command**
 
 ```powershell
 pnpm verify:attribution-correction
@@ -1236,7 +1236,7 @@ pnpm verify:attribution-correction
 
 Expected: exit 0, including Phase 0–4 regressions, schema migration from an empty test database, single-link drift guard, and attribution coverage.
 
-- [ ] **Step 3: Inspect the final diff for accidental scope**
+- [x] **Step 3: Inspect the final diff for accidental scope**
 
 ```powershell
 git status --short
@@ -1246,23 +1246,23 @@ git log --oneline --decorate -12
 
 Expected: no uncommitted changes, no whitespace errors, and focused commits corresponding to Tasks 1–9.
 
-- [ ] **Step 4: Complete the checklist**
+- [x] **Step 4: Complete the checklist**
 
 ```text
-[ ] Unlimited creators can link one product.
-[ ] One active link per creator/product is database-enforced.
-[ ] Link rates are immutable snapshots.
-[ ] Existing links survive product-rate changes.
-[ ] Product and partnership changes create no links automatically.
-[ ] Creator chooses one product and explicitly creates its link.
-[ ] Matching lines pay one creator the full amount.
-[ ] Nonmatching lines pay zero.
-[ ] Candidate selection, share distribution, creator cap, and splitDegraded are absent.
-[ ] Phase 6 is specified to resolve exactly one submitted click.
-[ ] Active specs, roadmap, phase plans, schema, code, and tests agree.
+[x] Unlimited creators can link one product.
+[x] One active link per creator/product is database-enforced.
+[x] Link rates are immutable snapshots.
+[x] Existing links survive product-rate changes.
+[x] Product and partnership changes create no links automatically.
+[x] Creator chooses one product and explicitly creates its link.
+[x] Matching lines pay one creator the full amount.
+[x] Nonmatching lines pay zero.
+[x] Candidate selection, share distribution, creator cap, and splitDegraded are absent.
+[x] Phase 6 is specified to resolve exactly one submitted click.
+[x] Active specs, roadmap, phase plans, schema, code, and tests agree.
 ```
 
-- [ ] **Step 5: Commit any final plan-status-only changes**
+- [x] **Step 5: Commit any final plan-status-only changes**
 
 ```powershell
 git add docs/superpowers/plans

@@ -20,11 +20,13 @@ Every aggregate and commission is traceable to its source rows; catalogue values
 
 ## Operating Context
 
-Brands maintain a brand-wide catalogue, archive rather than delete products, approve creators, and update rates. Creators browse approved brands and share one automatically minted link per active product. The product is bilingual in Georgian and English.
+Brands maintain a brand-wide catalogue, archive rather than delete products, approve creators, and update offered rates. After partnership approval, creators choose individual active products and create links that snapshot the accepted rate. The product is bilingual in Georgian and English.
 
 ## Capabilities and Constraints
 
 - Partnerships are brand-wide; there is no campaign entity.
+- Product and partnership changes never create links automatically; creators explicitly accept one product offer at a time.
+- One tracking link identifies one creator and product and preserves its accepted commission terms.
 - Percent commissions are stored as exact fractions no greater than 1; fixed commissions are exact GEL per unit.
 - Product images upload directly to S3-compatible storage with presigned PUT URLs, with at most eight JPEG, PNG, or WebP images.
 - Link availability resolves brand, partnership, product, then link status in that exact order.

@@ -14,7 +14,7 @@ const forbidden = [
 ];
 
 describe("attribution domain purity", () => {
-  it("contains no I/O, ambient time, randomness, or visitor attribution inputs", () => {
+  it("ATTR-010 contains no I/O, ambient time, randomness, or visitor attribution inputs", () => {
     const productionFiles = globSync(
       "src/modules/attribution/domain/*.{ts,tsx}",
     ).filter((file) => !file.includes(".test."));

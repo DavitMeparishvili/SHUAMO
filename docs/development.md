@@ -340,12 +340,11 @@ were exported from nowhere at all; they now have their own public surface at
   unchanged, PostgreSQL rounded it to `0.1235`, and a commission recomputed from
   the stored rate then disagreed with the ledger by a tetri. Rate now enforces
   four decimal places and five integer digits.
-- **The money property test could not fail.** Operands of five digits at two
-  decimal places are exact in any representation, so it would have passed against
-  a `number`-backed implementation. It is replaced by the §6.3 split invariant
-  over _unrounded_ intermediates: floored shares plus remainder reconstruct the
-  commission exactly, the remainder is never negative, and it is never a whole
-  tetri per creator.
+- **The original money property test could not fail.** Operands of five digits at
+  two decimal places are exact in any representation, so it would have passed
+  against a `number`-backed implementation. The Phase 4.5 correction replaces
+  the superseded split proof with deterministic calculator properties over 5,000
+  exact-decimal matching lines, each bound to only the cited link creator.
 
 ### Secrets and titles
 
@@ -397,23 +396,20 @@ in `get-messages.ts` is the one behaviour the plan calls out by name
 ("throws rather than falling back") and has no test; `getMessages` has none
 either, since `messages.test.ts` only inspects the JSON. `clock.ts`,
 `result.ts`, `id-generator.ts`, `fake-clock.ts` and `fixed-id-generator.ts`
-have zero tests. `Money.ZERO`, `Money.minus`, `Money.isZero`, the rejection in
-`dividedByInteger(0)`, `Rate.storedValue` and `Rate.percent("1")` (the 100%
-boundary) are all unasserted.
+have zero tests. `Money.ZERO`, `Money.minus`, `Money.isZero`,
+`Rate.storedValue` and `Rate.percent("1")` (the 100% boundary) are all
+unasserted.
 
-**L16 — `roundToTetri`/`floorToTetri` do not mean what their names say for
-negative values.** decimal.js `ROUND_HALF_UP` is half-away-from-zero and
-`ROUND_DOWN` truncates toward zero, so `Money.of("-22.885").roundToTetri()` is
-`-22.89`, not `-22.88`, and `floorToTetri` on a negative rounds _up_. Harmless
-in R1 — spec §6.3 forces `commission = 0` when `net <= 0` and every money column
-carries `CHECK (… >= 0)` — but the names promise IEEE floor/half-up and deliver
-neither. Fix the names or write an explicit sign policy **before reversals
-arrive**, since reversals are the first feature that makes negative money real.
+**L16 — `roundToTetri` is half-away-from-zero for negative values.** decimal.js
+`ROUND_HALF_UP` makes `Money.of("-22.885").roundToTetri()` produce `-22.89`, not
+`-22.88`. Harmless in R1 — commission calculation clamps non-positive net to
+zero and reversal rows negate an already-rounded positive amount — but an
+explicit sign policy is still required before any feature rounds negative input
+directly. The split-only floor primitive was removed by the Phase 4.5 correction.
 
-**L17 — missing decimal division primitive.** Spec §6.3 derives net as
-`(250 − 25) / 1.18 = 190.68`. `Money` offers only `dividedByInteger`, so the
-primitive set is one method short of arithmetic the spec already specifies.
-Phase 5 will need division by a decimal string.
+**L17 — resolved by Phase 4.5.** Spec §6.3 derives net as
+`(250 − 25) / 1.18 = 190.68`. `Money.dividedByDecimal` now performs that
+operation without exposing decimal.js or rounding the intermediate.
 
 **L18 — `playwright.config.ts` will happily target a live deployment.**
 `baseURL = process.env.APP_URL ?? …` combined with
