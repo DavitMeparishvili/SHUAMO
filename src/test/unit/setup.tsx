@@ -1,3 +1,4 @@
+import "dotenv/config";
 import type {} from "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
 

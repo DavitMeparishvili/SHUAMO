@@ -97,7 +97,7 @@ src/test/e2e/catalog.spec.ts                          @phase-3
 - Consumes: `Brand`, `Creator` from Phase 2
 - Produces: models `Product`, `Partnership`, `TrackingLink`; enums `ProductStatus`, `PartnershipStatus`, `RateType`, `LinkStatus`
 
-- [ ] **Step 1: Write the failing constraint test**
+- [x] **Step 1: Write the failing constraint test**
 
 `src/modules/catalog/infrastructure/product.integration.test.ts`. Every CHECK in Appendix A.3 gets an assertion — a constraint nobody has tried to violate is a constraint nobody has proved:
 
@@ -228,7 +228,7 @@ describe("product table", () => {
 
 `src/test/fixtures/accounts.ts` is new here: a small helper that creates an approved brand or creator with sensible defaults. Every later phase's integration tests use it, so write it once and export `seedBrand`, `seedCreator`, `seedApprovedPartnership`.
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 ```bash
 pnpm test:integration
@@ -236,7 +236,7 @@ pnpm test:integration
 
 Expected: FAIL — `prisma.product` undefined.
 
-- [ ] **Step 3: Write the schema**
+- [x] **Step 3: Write the schema**
 
 ```prisma
 enum ProductStatus  { ACTIVE ARCHIVED }
@@ -297,7 +297,7 @@ model TrackingLink {
 }
 ```
 
-- [ ] **Step 4: Add the CHECK constraints by hand**
+- [x] **Step 4: Add the CHECK constraints by hand**
 
 Prisma cannot express these. Append to the generated migration:
 
@@ -310,7 +310,7 @@ ALTER TABLE "product"
   ADD CONSTRAINT image_urls_bounded CHECK (cardinality(image_urls) <= 8);
 ```
 
-- [ ] **Step 5: Diff against Appendix A.3 and run**
+- [x] **Step 5: Diff against Appendix A.3 and run**
 
 Check specifically: `numeric(12,2)` on `price_gel`, `numeric(9,4)` on `commission_value`, `text[]` defaulting to `'{}'`, `ON DELETE RESTRICT` on `product.brand_id` but `CASCADE` on `partnership.brand_id` — the spec differs between them deliberately, and getting it backwards means either an undeletable brand or a silently vanishing catalogue.
 
@@ -320,7 +320,7 @@ pnpm db:migrate --name phase_3_catalog && pnpm db:migrate:test && pnpm test:inte
 
 Expected: PASS, 7 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add prisma src/modules/catalog src/test/fixtures
@@ -346,7 +346,7 @@ git commit -m "feat: add the catalog, partnership, and tracking link tables"
 
 Phase 4's redirect calls this on every click, so it takes a plain object and returns a plain object.
 
-- [ ] **Step 1: Write the failing table-driven test**
+- [x] **Step 1: Write the failing table-driven test**
 
 `src/modules/partnerships/domain/disable-chain.test.ts`:
 
@@ -405,7 +405,7 @@ describe("resolveLink", () => {
 });
 ```
 
-- [ ] **Step 2: Run, confirm failure, implement**
+- [x] **Step 2: Run, confirm failure, implement**
 
 ```bash
 pnpm vitest run src/modules/partnerships/domain/disable-chain.test.ts   # FAIL
@@ -452,7 +452,7 @@ export function resolveLink(state: LinkState): LinkResolution {
 }
 ```
 
-- [ ] **Step 3: Run and commit**
+- [x] **Step 3: Run and commit**
 
 ```bash
 pnpm vitest run src/modules/partnerships/domain
@@ -477,7 +477,7 @@ git commit -m "feat: resolve the four-row disable chain as a pure function"
   - `isLinkCode(value: string): boolean`
   - `linksToMint(input: { products: readonly { id: string; status: ProductStatus }[]; creators: readonly { id: string; partnershipStatus: PartnershipStatus }[]; existing: readonly { productId: string; creatorId: string }[] }): { productId: string; creatorId: string }[]`
 
-- [ ] **Step 1: Write the failing minting test**
+- [x] **Step 1: Write the failing minting test**
 
 `link-minting.test.ts` — this one function carries three of the phase's rules, so its test names them:
 
@@ -562,7 +562,7 @@ describe("linksToMint", () => {
 });
 ```
 
-- [ ] **Step 2: Run, confirm failure, implement**
+- [x] **Step 2: Run, confirm failure, implement**
 
 ```ts
 export function linksToMint(input: {
@@ -592,7 +592,7 @@ export function linksToMint(input: {
 }
 ```
 
-- [ ] **Step 3: Write and satisfy the link-code test**
+- [x] **Step 3: Write and satisfy the link-code test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -622,7 +622,7 @@ describe("link codes", () => {
 
 A code is 8 characters rather than 6 because `UNIQUE (code)` is the redirect's lookup key and a collision means a retry loop on the hot write path. 8 characters of 32-symbol alphabet is 40 bits, so collisions stay theoretical at pilot volume.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 ```bash
 pnpm vitest run src/modules/partnerships/domain
@@ -653,7 +653,7 @@ git commit -m "feat: generate link codes and decide which links to mint"
   - `createProduct(deps)(brandId, input): Promise<Result<{ id: string; mintedLinks: number }, CreateProductError>>`
   - `archiveProduct(deps)(brandId, productId): Promise<Result<void, "not_found" | "not_yours">>`
 
-- [ ] **Step 1: Write the failing rate-parsing test**
+- [x] **Step 1: Write the failing rate-parsing test**
 
 The rate field is where a brand's typo becomes a hundredfold commission error, so it is tested as if that were guaranteed to happen:
 
@@ -698,7 +698,7 @@ describe("parseProductRate", () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing image-url test**
+- [x] **Step 2: Write the failing image-url test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -733,7 +733,7 @@ describe("parseImageUrls", () => {
 });
 ```
 
-- [ ] **Step 3: Run, confirm failure, implement both**
+- [x] **Step 3: Run, confirm failure, implement both**
 
 ```bash
 pnpm vitest run src/modules/catalog/domain   # FAIL: modules not found
@@ -741,7 +741,7 @@ pnpm vitest run src/modules/catalog/domain   # FAIL: modules not found
 
 Both are small pure functions returning `Result`. `parseImageUrls` enforces the rule Appendix A.3 explicitly says a CHECK cannot express — per-element validation over an array — which is why it lives in the domain and is tested here.
 
-- [ ] **Step 4: Write the failing create-product test**
+- [x] **Step 4: Write the failing create-product test**
 
 The behaviour worth testing at the application layer is the one that surprises people: creating a product mints links.
 
@@ -800,11 +800,11 @@ describe("createProduct", () => {
 });
 ```
 
-- [ ] **Step 5: Implement, wrapping the write in one transaction**
+- [x] **Step 5: Implement, wrapping the write in one transaction**
 
 The product insert and the link inserts are one transaction. A product that exists with no links is a product whose creators silently cannot promote it, and that failure is invisible until someone asks why a creator has no link.
 
-- [ ] **Step 6: Implement archive**
+- [x] **Step 6: Implement archive**
 
 `archiveProduct` sets `status = ARCHIVED`. It **does not** touch `tracking_link`: the links stay, and `resolveLink` reports `PRODUCT_ARCHIVED` for them. That is what makes §5's "in-flight clicks stay creditable" true without any extra machinery — the click rows are untouched, and only the redirect changes behaviour.
 
@@ -822,7 +822,7 @@ it("archives without deleting or disabling any link", async () => {
 });
 ```
 
-- [ ] **Step 7: Run everything and commit**
+- [x] **Step 7: Run everything and commit**
 
 ```bash
 pnpm test:unit && pnpm test:integration
@@ -856,7 +856,7 @@ git commit -m "feat: create, edit and archive products, minting links on creatio
   - `interface ImageStoragePort { presignPut(input: { key: string; contentType: string }): Promise<string> }`
   - `createImageUploadUrl(deps)(brandId: string, productId: string, input: { contentType: string }): Promise<Result<{ uploadUrl: string; publicUrl: string }, "not_found" | "unsupported_content_type">>`
 
-- [ ] **Step 1: Add the MinIO services to `compose.yaml` and bring them up**
+- [x] **Step 1: Add the MinIO services to `compose.yaml` and bring them up**
 
 R1 §11.2's bucket is public-read, private-write — `mc anonymous set download` grants anonymous
 **read**, unlike the `mc anonymous set none` a fully private bucket would use, because product photos
@@ -915,7 +915,7 @@ pnpm storage:init
 docker compose ps       # minio healthy
 ```
 
-- [ ] **Step 2: Extend server environment validation**
+- [x] **Step 2: Extend server environment validation**
 
 Add to `serverEnvSchema` in `src/config/env.ts`, next to the Phase 0 fields:
 
@@ -947,7 +947,7 @@ pnpm vitest run src/config/env.test.ts
 
 Expected: PASS. No `?? "default"` was added anywhere — the same discipline as Phase 0 Task 2.
 
-- [ ] **Step 3: Write the failing content-type and key tests**
+- [x] **Step 3: Write the failing content-type and key tests**
 
 `image-upload.test.ts`:
 
@@ -1019,7 +1019,7 @@ describe("publicImageUrl", () => {
 });
 ```
 
-- [ ] **Step 4: Run, confirm failure, implement**
+- [x] **Step 4: Run, confirm failure, implement**
 
 ```bash
 pnpm vitest run src/modules/catalog/domain/image-upload.test.ts   # FAIL: module not found
@@ -1064,7 +1064,7 @@ export function publicImageUrl(input: {
 }
 ```
 
-- [ ] **Step 5: Write the failing application-layer test**
+- [x] **Step 5: Write the failing application-layer test**
 
 The behaviour worth testing here is ordering: an unowned product or a bad content type must be
 refused **before** a presigned URL is ever generated, so a rejected request never touches storage.
@@ -1127,7 +1127,7 @@ describe("createImageUploadUrl", () => {
 });
 ```
 
-- [ ] **Step 6: Implement**
+- [x] **Step 6: Implement**
 
 ```ts
 import type { Result } from "@/src/modules/shared";
@@ -1177,7 +1177,7 @@ export function createImageUploadUrl(deps: CreateImageUploadUrlDeps) {
 }
 ```
 
-- [ ] **Step 7: Implement the MinIO-backed storage adapter**
+- [x] **Step 7: Implement the MinIO-backed storage adapter**
 
 MinIO speaks the S3 API, so this is the AWS SDK's S3 client pointed at MinIO's endpoint with
 path-style addressing — MinIO does not support virtual-hosted-style bucket URLs by default.
@@ -1233,7 +1233,7 @@ export function createS3ImageStorage(config: {
 }
 ```
 
-- [ ] **Step 8: Write the failing HTTP-handler test**
+- [x] **Step 8: Write the failing HTTP-handler test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1311,7 +1311,7 @@ describe("createPresignHandler", () => {
 });
 ```
 
-- [ ] **Step 9: Implement the handler and wire the route**
+- [x] **Step 9: Implement the handler and wire the route**
 
 ```ts
 import { z } from "zod";
@@ -1375,7 +1375,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 ```
 
-- [ ] **Step 10: Run everything and commit**
+- [x] **Step 10: Run everything and commit**
 
 ```bash
 pnpm test:unit
@@ -1439,7 +1439,7 @@ it("refuses a duplicate in either direction", async () => {
 ```
   - `setLinkStatus(deps)(actor, linkId, status): Promise<Result<void, ...>>`
 
-- [ ] **Step 1: Write the failing decision test**
+- [x] **Step 1: Write the failing decision test**
 
 ```ts
 describe("decidePartnership", () => {
@@ -1504,11 +1504,11 @@ describe("decidePartnership", () => {
 });
 ```
 
-- [ ] **Step 2: Implement, in one transaction**
+- [x] **Step 2: Implement, in one transaction**
 
 The status change and the link inserts commit together, for the same reason as Task 4 Step 5.
 
-- [ ] **Step 3: Write the integration test that proves the point-in-time rule**
+- [x] **Step 3: Write the integration test that proves the point-in-time rule**
 
 `minting.integration.test.ts` goes through the real database, because §4.6's "links minted only for `APPROVED` partnerships" is the invariant Appendix A.6 says no constraint can express:
 
@@ -1545,7 +1545,7 @@ it("refuses two links for the same product and creator", async () => {
 });
 ```
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 ```bash
 pnpm test:unit && pnpm db:migrate:test && pnpm test:integration
@@ -1572,7 +1572,7 @@ git commit -m "feat: apply, approve and reject partnerships, minting links on ap
 - Consumes: `requireBrand` / `requireCreator` from `@/src/modules/identity`; the Phase 1 kit; `POST .../images/presign` from Task 5
 - Produces: five screens, both locales
 
-- [ ] **Step 1: Build the product form**
+- [x] **Step 1: Build the product form**
 
 Fields: SKU, title, description, price, up to 8 images, backlink URL, commission type, commission value.
 
@@ -1599,25 +1599,25 @@ The rate control is the one that needs design attention rather than a plain numb
 - A live preview reads: *"On a 250.00 ₾ sale, a creator earns 31.25 ₾"*, using `MoneyAmount`.
 - Editing an existing rate shows a `Banner` at `warning` tone stating, in both locales, that the new rate applies to clicks that have not yet converted, and that the archive-and-republish path exists (§1.2 risk 3). This is the interface making a documented risk visible rather than leaving it in a spec.
 
-- [ ] **Step 2: Build the product list**
+- [x] **Step 2: Build the product list**
 
 A `DataTable` of SKU, title, price, rate, status, and link count. Archived products stay in the list under a filter, greyed, with an `ARCHIVED` `StatusPill` — never removed, because §3.2 says archive is the only deletion and a list that hides them implies otherwise.
 
-- [ ] **Step 3: Build the partnership queue**
+- [x] **Step 3: Build the partnership queue**
 
 For the brand: pending applications with Approve and Reject. Approving states, in the confirmation, how many links it will mint — the number is the thing the brand is actually agreeing to.
 
 For the creator: a brand list with Apply, and the status of each application.
 
-- [ ] **Step 4: Build the creator link list**
+- [x] **Step 4: Build the creator link list**
 
 Per link: brand, product title, rate, status via `resolveLink`, and the full URL in a `CopyField`. When the link is not active, the `StatusPill` carries the reason from the disable chain, in the creator's locale — a creator whose link has stopped working needs to know which of the four rows failed.
 
-- [ ] **Step 5: Add every string to both catalogues**
+- [x] **Step 5: Add every string to both catalogues**
 
 Including the four disable reasons and the rate-change warning. `t()` throws on a missing key, so a missed string fails the build rather than shipping.
 
-- [ ] **Step 6: Seed and prove the journey**
+- [x] **Step 6: Seed and prove the journey**
 
 `scripts/seed-phase-03.ts` builds on the Phase 2 seed: Aromashop with 3 active products and 1 archived; Nino and Dato approved; a third creator pending. Expected end state: **6 tracking links** — 3 products × 2 approved creators, and none for the archived product or the pending creator.
 
@@ -1671,7 +1671,7 @@ Add `import { readFileSync } from "node:fs";` to `catalog.spec.ts`'s existing im
 needs `pnpm storage:up && pnpm storage:init` (Task 5 Step 1) to have run — the same real-service
 requirement Playwright already has on `postgres-test`, extended to `minio`.
 
-- [ ] **Step 7: Wire the gate and run it**
+- [x] **Step 7: Wire the gate and run it**
 
 ```json
 {
@@ -1684,7 +1684,7 @@ requirement Playwright already has on `postgres-test`, extended to `minio`.
 pnpm verify:phase-3
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add app src/modules scripts package.json src/test/e2e/catalog.spec.ts
@@ -1695,20 +1695,20 @@ git commit -m "feat: add the catalog, partnership and link screens"
 
 ## Phase 3 completion checklist
 
-- [ ] `pnpm verify:phase-3` passes.
-- [ ] `resolveLink` reports the **first** failing row for every combination, proved by the four ordering tests.
-- [ ] Approving a partnership mints exactly one link per active product; re-approving mints none.
-- [ ] A creator's application lands `PENDING` and mints nothing; a brand's invitation lands `APPROVED` and mints at once; neither can produce a duplicate row.
-- [ ] A brand cannot invite a creator an administrator has not approved.
-- [ ] Adding a product mints exactly one link per approved creator; a pending creator gets none.
-- [ ] No tracking link exists anywhere in the seeded fixture for a non-`APPROVED` partnership, checked by an integration query, not by inspection.
-- [ ] A `PERCENT` rate of `12.5` is rejected by the Zod schema **and** by the database CHECK — both proved.
-- [ ] Two brands can both own SKU `P-9`.
-- [ ] `grep -rn "\.delete(" src/modules/catalog` returns nothing against `product`.
-- [ ] Archiving a product changes `product.status` and touches no `tracking_link` row.
-- [ ] The rate editor shows the stored fraction and a worked earnings example, and warns on edit about §1.2 risk 3.
-- [ ] All four disable reasons render in Georgian and English on the creator's link list.
-- [ ] `pnpm seed:phase-3` produces exactly 6 tracking links, and is idempotent.
-- [ ] A presigned upload URL is refused for a content type outside `{image/jpeg, image/png, image/webp}`, and for a product belonging to another brand — both before any request reaches MinIO.
-- [ ] `mc anonymous set download` is applied to the product-images bucket: an anonymous `GET` on an uploaded object succeeds; a `PUT` without a valid presigned URL is refused.
-- [ ] A brand can upload a real JPEG through the presigned-URL flow in the browser and see it render as a product image, proved by the Playwright test against the running dev MinIO container.
+- [x] `pnpm verify:phase-3` passes.
+- [x] `resolveLink` reports the **first** failing row for every combination, proved by the four ordering tests.
+- [x] Approving a partnership mints exactly one link per active product; re-approving mints none.
+- [x] A creator's application lands `PENDING` and mints nothing; a brand's invitation lands `APPROVED` and mints at once; neither can produce a duplicate row.
+- [x] A brand cannot invite a creator an administrator has not approved.
+- [x] Adding a product mints exactly one link per approved creator; a pending creator gets none.
+- [x] No tracking link exists anywhere in the seeded fixture for a non-`APPROVED` partnership, checked by an integration query, not by inspection.
+- [x] A `PERCENT` rate of `12.5` is rejected by the Zod schema **and** by the database CHECK — both proved.
+- [x] Two brands can both own SKU `P-9`.
+- [x] `grep -rn "\.delete(" src/modules/catalog` returns nothing against `product`.
+- [x] Archiving a product changes `product.status` and touches no `tracking_link` row.
+- [x] The rate editor shows the stored fraction and a worked earnings example, and warns on edit about §1.2 risk 3.
+- [x] All four disable reasons render in Georgian and English on the creator's link list.
+- [x] `pnpm seed:phase-3` produces exactly 6 tracking links, and is idempotent.
+- [x] A presigned upload URL is refused for a content type outside `{image/jpeg, image/png, image/webp}`, and for a product belonging to another brand — both before any request reaches MinIO.
+- [x] `mc anonymous set download` is applied to the product-images bucket: an anonymous `GET` on an uploaded object succeeds; a `PUT` without a valid presigned URL is refused.
+- [x] A brand can upload a real JPEG through the presigned-URL flow in the browser and see it render as a product image, proved by the Playwright test against the running dev MinIO container.

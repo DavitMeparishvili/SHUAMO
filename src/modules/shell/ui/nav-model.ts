@@ -12,8 +12,9 @@ const ROUTES = {
   anonymous: [{ path: "sign-in", labelKey: "nav.signIn" }],
   brand: [
     { path: "brand/orders", labelKey: "nav.orders" },
-    { path: "brand/catalog", labelKey: "nav.catalog" },
+    { path: "brand/products", labelKey: "nav.catalog" },
     { path: "brand/creators", labelKey: "nav.creators" },
+    { path: "brand/links", labelKey: "nav.links" },
   ],
   creator: [
     { path: "creator/links", labelKey: "nav.links" },

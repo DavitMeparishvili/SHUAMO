@@ -7,6 +7,12 @@ const valid = {
   APP_URL: "https://xu.ge",
   AUTH_SECRET: "0123456789012345678901234567890123456789",
   FINGERPRINT_SECRET: "9876543210987654321098765432109876543210",
+  STORAGE_ENDPOINT: "http://localhost:9000",
+  STORAGE_PUBLIC_ENDPOINT: "http://localhost:9000",
+  STORAGE_REGION: "us-east-1",
+  STORAGE_BUCKET: "shuamo-product-images",
+  STORAGE_ACCESS_KEY_ID: "shuamo_app_key",
+  STORAGE_SECRET_ACCESS_KEY: "shuamo_app_secret_local_only",
   NODE_ENV: "test",
 };
 

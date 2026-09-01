@@ -12,6 +12,7 @@ export {
 export { requireBrand, requireCreator } from "./http/require-viewer";
 export { createBrandKeyPostHandler } from "./http/brand-key-handlers";
 export { webCryptoRandom } from "./ports/random-source";
+export type { RandomSource } from "./ports/random-source";
 export type { Viewer } from "./domain/viewer";
 export { AuthCard } from "./ui/auth-card";
 export { BrandKeyGenerator } from "./ui/brand-key-generator";

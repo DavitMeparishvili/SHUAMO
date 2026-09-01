@@ -29,6 +29,12 @@ const serverEnvSchema = z.object({
   // silently weaken the fingerprint salt in §6.1.
   AUTH_SECRET: z.string().min(40),
   FINGERPRINT_SECRET: z.string().min(40),
+  STORAGE_ENDPOINT: z.url(),
+  STORAGE_PUBLIC_ENDPOINT: z.url(),
+  STORAGE_REGION: z.string().min(1),
+  STORAGE_BUCKET: z.string().min(1),
+  STORAGE_ACCESS_KEY_ID: z.string().min(1),
+  STORAGE_SECRET_ACCESS_KEY: z.string().min(1),
   NODE_ENV: z.enum(["development", "test", "production"]),
 });
 
