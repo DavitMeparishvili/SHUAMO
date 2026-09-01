@@ -770,7 +770,7 @@ git commit -m "feat: add creator initiated product link flow"
 - Consumes: `Money` and `Rate` from `@/src/modules/shared`.
 - Produces: `CalculationInput`, `CalculationResult`, and `commissionableNet` for Task 7.
 
-- [ ] **Step 1: Write the domain types**
+- [x] **Step 1: Write the domain types**
 
 ```ts
 import type { Money, Rate } from "@/src/modules/shared";
@@ -817,7 +817,7 @@ export interface CalculationResult {
 }
 ```
 
-- [ ] **Step 2: Write the failing net tests**
+- [x] **Step 2: Write the failing net tests**
 
 Copy the exact net/VAT cases from the former Phase 5 plan, but keep the focused signature:
 
@@ -845,7 +845,7 @@ dividedByDecimal(divisor: string): Money {
 
 Its unit tests cover `Money.of("225.00").dividedByDecimal("1.18")`, zero rejection, malformed text rejection, and preservation of the unrounded exact intermediate.
 
-- [ ] **Step 3: Run and confirm failure**
+- [x] **Step 3: Run and confirm failure**
 
 ```powershell
 pnpm vitest run src/modules/attribution/domain/line-net.test.ts
@@ -853,7 +853,7 @@ pnpm vitest run src/modules/attribution/domain/line-net.test.ts
 
 Expected: FAIL because `line-net.ts` does not exist.
 
-- [ ] **Step 4: Implement the exact-decimal net**
+- [x] **Step 4: Implement the exact-decimal net**
 
 ```ts
 export function commissionableNet(input: {
@@ -881,7 +881,7 @@ export function commissionableNet(input: {
 
 Do not expose decimal.js or convert the intermediate to a JavaScript number.
 
-- [ ] **Step 5: Run and commit**
+- [x] **Step 5: Run and commit**
 
 ```powershell
 pnpm vitest run src/modules/attribution/domain/line-net.test.ts src/modules/shared/domain/money.test.ts

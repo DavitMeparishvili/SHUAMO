@@ -40,24 +40,16 @@ export class Money {
     );
   }
 
-  dividedByInteger(divisor: number): Money {
-    if (!Number.isInteger(divisor) || divisor === 0) {
-      throw new RangeError("Money.dividedByInteger takes a non-zero integer");
+  dividedByDecimal(divisor: string): Money {
+    const parsed = parseDecimalText(divisor, "Money.dividedByDecimal");
+    if (parsed.isZero()) {
+      throw new RangeError("Money.dividedByDecimal takes a non-zero divisor");
     }
-    return new Money(this.value.dividedBy(divisor));
+    return new Money(this.value.dividedBy(parsed));
   }
 
   roundToTetri(): Money {
     return new Money(this.value.toDecimalPlaces(TETRI, Decimal.ROUND_HALF_UP));
-  }
-
-  /**
-   * Floors toward zero. §6.3 floors each share rather than rounding, because
-   * rounding half-up makes the remainder negative for the 0.05-across-3 case
-   * and pays the most recent clicker less than the others.
-   */
-  floorToTetri(): Money {
-    return new Money(this.value.toDecimalPlaces(TETRI, Decimal.ROUND_DOWN));
   }
 
   negated(): Money {
@@ -89,7 +81,7 @@ export class Money {
   toStorageString(): string {
     if (this.value.decimalPlaces() > TETRI) {
       throw new RangeError(
-        `${this.value.toString()} is not exact at the tetri; round or floor it first`,
+        `${this.value.toString()} is not exact at the tetri; round it first`,
       );
     }
     assertFitsNumeric(this.value, STORAGE_PRECISION, TETRI, "Money");
