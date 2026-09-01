@@ -18,7 +18,7 @@ export function calculateAttributions(
       if (item.sku !== input.link.sku || net.isZero()) {
         return {
           sku: item.sku,
-          commissionableNet: net,
+          commissionableNet: net.roundToTetri(),
           commission: Money.ZERO,
           attribution: undefined,
         };
@@ -29,7 +29,7 @@ export function calculateAttributions(
         .roundToTetri();
       return {
         sku: item.sku,
-        commissionableNet: net,
+        commissionableNet: net.roundToTetri(),
         commission,
         attribution: {
           creatorId: input.link.creatorId,

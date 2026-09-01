@@ -114,6 +114,19 @@ describe("calculateAttributions", () => {
     expect(result.lines[0]?.commission.toStorageString()).toBe("10.00");
   });
 
+  it("applies the percent rate to exact derived net before final commission rounding", () => {
+    const result = calculateAttributions(
+      input({
+        link: { ...link, rate: Rate.percent("0.02") },
+        lineItems: [line({ unitPrice: Money.of("100.00") })],
+        brandVatRegistered: true,
+      }),
+    );
+
+    expect(result.lines[0]?.commissionableNet.toStorageString()).toBe("84.75");
+    expect(result.lines[0]?.commission.toStorageString()).toBe("1.69");
+  });
+
   it.each(["100.00", "101.00"])(
     "pays zero when the matching line discount %s leaves no positive net",
     (lineDiscount) => {

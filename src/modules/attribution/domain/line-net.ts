@@ -20,5 +20,5 @@ export function commissionableNet(input: {
       ? grossAfterDiscount.minus(grossAfterDiscount.dividedByDecimal("1.18"))
       : Money.ZERO);
   const net = grossAfterDiscount.minus(explicitOrDerivedVat);
-  return net.isNegative() ? Money.ZERO : net.roundToTetri();
+  return net.isNegative() ? Money.ZERO : net;
 }

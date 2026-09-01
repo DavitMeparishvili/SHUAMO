@@ -15,7 +15,10 @@ function net(overrides: Partial<Parameters<typeof commissionableNet>[0]> = {}) {
 
 describe("commissionableNet", () => {
   it("derives 18% VAT from the discounted gross for a VAT-registered brand", () => {
-    expect(net().toStorageString()).toBe("190.68");
+    const exact = net();
+
+    expect(exact.toString()).toBe("190.6779661016949152542372881");
+    expect(exact.roundToTetri().toStorageString()).toBe("190.68");
   });
 
   it("uses supplied line VAT instead of deriving it", () => {
