@@ -18,3 +18,121 @@ model HealthProbe {
 
   @@map("health_probe")
 }
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+/// SHUAMO's product account. Better Auth owns credentials and sessions.
+model AppUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  locale    String   @default("ka")
+  isAdmin   Boolean  @default(false) @map("is_admin")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  brand    Brand?
+  creator  Creator?
+  authUser User     @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("app_user")
+}
+
+model Brand {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String         @unique @map("user_id") @db.Uuid
+  name          String
+  vatRegistered Boolean        @default(false) @map("vat_registered")
+  keyPrefix     String         @unique @map("key_prefix")
+  keyHash       String         @map("key_hash")
+  status        ApprovalStatus @default(PENDING)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("brand")
+}
+
+model Creator {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @unique @map("user_id") @db.Uuid
+  displayName String         @map("display_name")
+  bio         String         @default("")
+  status      ApprovalStatus @default(PENDING)
+  payoutBank  String?        @map("payout_bank")
+  payoutIban  String?        @map("payout_iban")
+  payoutName  String?        @map("payout_name")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("creator")
+}
+
+// Better Auth schema. UUID ids keep User.id compatible with AppUser.id.
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  // Request-scoped transport for the atomic app_user insert trigger. The
+  // trigger clears it before the insert statement completes.
+  signupLocale  String?   @map("signup_locale")
+  sessions      Session[]
+  accounts      Account[]
+  appUser       AppUser?
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id") @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(6)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([identifier])
+  @@map("verification")
+}

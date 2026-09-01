@@ -1872,12 +1872,12 @@ git commit -m "ci: run the phase-0 gate from a frozen install"
 - [ ] `pnpm verify:phase-0` passes from a frozen install on a clean clone.
 - [ ] A migration applies to an empty PostgreSQL 17 database, and its SQL was read before it was applied.
 - [ ] `docker compose ps` shows healthy `postgres-dev` and `postgres-test`; `docker compose down` preserves only the development volume.
-- [ ] `pnpm test:integration` refuses to run when `DATABASE_URL_TEST` points at `shuamo_dev`, proved by running it once with the wrong value.
-- [ ] `pnpm verify:boundaries` fails when a Prisma import is added to a `domain/` file, proved by adding one and reverting it.
-- [ ] `Money` has no code path that produces or accepts a JavaScript `number` for an amount.
-- [ ] `Money.of("0.1").plus(Money.of("0.2")).toStorageString()` is `"0.30"`.
+- [x] `pnpm test:integration` refuses to run when `DATABASE_URL_TEST` points at `shuamo_dev`, proved by running it once with the wrong value.
+- [x] `pnpm verify:boundaries` fails when a Prisma import is added to a `domain/` file, proved by adding one and reverting it.
+- [x] `Money` has no code path that produces or accepts a JavaScript `number` for an amount.
+- [x] `Money.of("0.1").plus(Money.of("0.2")).toStorageString()` is `"0.30"`.
 - [ ] `/api/health/live` answers with PostgreSQL stopped; `/api/health/ready` returns 503 with it stopped and 200 with it running.
-- [ ] `/ka` and `/en` render with a reachable skip link on desktop and mobile; `/de` is 404.
-- [ ] The `ka` and `en` catalogues have identical key sets and every Georgian value is in Georgian script.
-- [ ] `src/config/env.ts` contains no default value for any secret, checked by reading the file.
+- [x] `/ka` and `/en` render with a reachable skip link on desktop and mobile; `/de` is 404.
+- [x] The `ka` and `en` catalogues have identical key sets and every Georgian value is in Georgian script.
+- [x] `src/config/env.ts` contains no default value for any secret, checked by reading the file.
 - [ ] `docs/development.md` reproduces the whole setup from a fresh clone with no undocumented step.

@@ -11,7 +11,13 @@ describe("navDestinationsFor", () => {
 
   it("never offers a creator a brand destination", () => {
     const destinations = navDestinationsFor(
-      { kind: "creator", displayName: "Nino" },
+      {
+        kind: "creator",
+        userId: "u1",
+        creatorId: "c1",
+        displayName: "Nino",
+        isAdmin: false,
+      },
       "en",
     );
     expect(
@@ -23,7 +29,13 @@ describe("navDestinationsFor", () => {
 
   it("never offers a brand a creator destination", () => {
     const destinations = navDestinationsFor(
-      { kind: "brand", brandName: "Aromashop" },
+      {
+        kind: "brand",
+        userId: "u1",
+        brandId: "b1",
+        brandName: "Aromashop",
+        isAdmin: false,
+      },
       "en",
     );
     expect(
@@ -35,7 +47,10 @@ describe("navDestinationsFor", () => {
 
   it("prefixes every destination with the active locale", () => {
     for (const locale of ["ka", "en"] as const) {
-      const destinations = navDestinationsFor({ kind: "admin" }, locale);
+      const destinations = navDestinationsFor(
+        { kind: "admin", userId: "u1" },
+        locale,
+      );
       expect(
         destinations.every((destination) =>
           destination.href.startsWith(`/${locale}/`),

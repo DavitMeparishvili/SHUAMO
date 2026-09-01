@@ -28,6 +28,7 @@ export default defineConfig({
     // is the only version of this that proves anything about a deployment.
     // `pnpm test:e2e` on its own therefore needs a `pnpm build` first.
     command: "pnpm start",
+    env: { E2E_TEST: "1" },
     url: `${baseURL}/api/health/live`,
     reuseExistingServer: !isCi,
   },

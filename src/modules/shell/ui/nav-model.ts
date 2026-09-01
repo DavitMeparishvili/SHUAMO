@@ -1,10 +1,7 @@
 import type { Locale } from "@/src/modules/localization";
+import type { Viewer } from "@/src/modules/identity";
 
-export type Viewer =
-  | { kind: "anonymous" }
-  | { kind: "brand"; brandName: string }
-  | { kind: "creator"; displayName: string }
-  | { kind: "admin" };
+export type { Viewer } from "@/src/modules/identity";
 
 export interface NavDestination {
   href: string;

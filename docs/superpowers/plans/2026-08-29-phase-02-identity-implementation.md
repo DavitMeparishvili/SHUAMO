@@ -1016,14 +1016,14 @@ git commit -m "feat: add guarded brand and creator workspaces"
 
 ## Phase 2 completion checklist
 
-- [ ] `pnpm verify:phase-2` passes.
-- [ ] A second `brand` row for one user is refused **by PostgreSQL**, not by application code — proved by an integration test that bypasses the application.
-- [ ] `app_user.locale` rejects `ru` at the database.
-- [ ] The brand key plaintext appears in exactly one place — the generation response — and a read-back of the row cannot reconstruct it.
-- [ ] A token with the right prefix and the wrong secret is rejected, and the comparison is constant-time.
-- [ ] A malformed token is rejected without a database query.
-- [ ] A `PENDING` and a `SUSPENDED` account both resolve to `anonymous`, and neither can reach a workspace.
-- [ ] No route reads a user, brand, or creator id from the request body, query, or a header — checked by grepping the routes.
-- [ ] `pnpm seed:phase-2` is idempotent, proved by running it twice.
-- [ ] The `Viewer` shape matches what Phase 1's `navDestinationsFor` already expects, with no adapter in between.
-- [ ] Both workspaces render in `ka` and `en` with an `EmptyState` that names what will appear there.
+- [x] `pnpm verify:phase-2` passes.
+- [x] A second `brand` row for one user is refused **by PostgreSQL**, not by application code — proved by an integration test that bypasses the application.
+- [x] `app_user.locale` rejects `ru` at the database.
+- [x] The brand key plaintext appears in exactly one place — the generation response — and a read-back of the row cannot reconstruct it.
+- [x] A token with the right prefix and the wrong secret is rejected, and the comparison is constant-time.
+- [x] A malformed token is rejected without a database query.
+- [x] A `PENDING` and a `SUSPENDED` account both resolve to `anonymous`, and neither can reach a workspace.
+- [x] No route reads a user, brand, or creator id from the request body, query, or a header — checked by grepping the routes.
+- [x] `pnpm seed:phase-2` is idempotent, proved by running it twice.
+- [x] The `Viewer` shape matches what Phase 1's `navDestinationsFor` already expects, with no adapter in between.
+- [x] Both workspaces render in `ka` and `en` with an `EmptyState` that names what will appear there.

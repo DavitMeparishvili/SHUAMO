@@ -17,7 +17,9 @@ const sourceExtensions = new Set([
 
 // The only third-party packages a domain/ folder may import. decimal.js is
 // arithmetic, not I/O; vitest only appears in domain tests.
-const DOMAIN_SAFE_PACKAGES = ["decimal.js"];
+// node:crypto's digest functions are deterministic arithmetic over bytes; they
+// perform no I/O and keep bearer-key hashing in the pure identity domain.
+const DOMAIN_SAFE_PACKAGES = ["decimal.js", "node:crypto"];
 const DOMAIN_TEST_PACKAGES = ["vitest"];
 
 // The module that holds the primitives every other domain is allowed to use.

@@ -1310,14 +1310,14 @@ git commit -m "feat: add the design kitchen sink with axe and visual baselines"
 
 ## Phase 1 completion checklist
 
-- [ ] `pnpm verify:phase-1` passes.
-- [ ] `pnpm tokens:check` fails when `app/tokens.css` is edited by hand, proved by editing it and reverting.
-- [ ] Every pair in `CONTRAST_PAIRS` meets its minimum, and the list covers every foreground/background the kitchen sink actually renders.
+- [x] `pnpm verify:phase-1` passes.
+- [x] `pnpm tokens:check` fails when `app/tokens.css` is edited by hand, proved by editing it and reverting.
+- [x] Every pair in `CONTRAST_PAIRS` meets its minimum, and the list covers every foreground/background the kitchen sink actually renders.
 - [ ] No hex value appears anywhere outside `tokens.ts` and the generated `tokens.css` — checked with `grep -rn "#[0-9A-Fa-f]\{6\}" app src --include=*.tsx --include=*.ts`.
-- [ ] Every money value on `/design` is mono and tabular, and a negative amount carries a visible sign.
-- [ ] Every status pill carries its label as text; a greyscale screenshot of the pill row is readable.
-- [ ] Every interactive element on `/design` is reachable by Tab with a visible focus ring, at both breakpoints.
-- [ ] Axe reports zero violations on `/ka/design` and `/en/design`, desktop and mobile.
-- [ ] Both visual baselines have been opened and looked at, not merely generated.
-- [ ] `DESIGN.md` frontmatter and `tokens.ts` agree value for value.
-- [ ] `navDestinationsFor` offers a creator no brand destination and a brand no creator destination.
+- [x] Every money value on `/design` is mono and tabular, and a negative amount carries a visible sign.
+- [x] Every status pill carries its label as text; a greyscale screenshot of the pill row is readable.
+- [x] Every interactive element on `/design` is reachable by Tab with a visible focus ring, at both breakpoints.
+- [x] Axe reports zero violations on `/ka/design` and `/en/design`, desktop and mobile.
+- [x] Both visual baselines have been opened and looked at, not merely generated.
+- [x] `DESIGN.md` frontmatter and `tokens.ts` agree value for value.
+- [x] `navDestinationsFor` offers a creator no brand destination and a brand no creator destination.

@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
+import { currentViewer } from "@/src/modules/identity";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -44,6 +45,7 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const viewer = await currentViewer();
 
   return (
     <html
@@ -51,7 +53,7 @@ export default async function LocaleLayout({
       lang={locale}
     >
       <body>
-        <AppShell locale={locale} viewer={{ kind: "anonymous" }}>
+        <AppShell locale={locale} viewer={viewer}>
           {children}
         </AppShell>
       </body>
