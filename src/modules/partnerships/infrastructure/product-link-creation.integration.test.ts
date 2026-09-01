@@ -23,6 +23,19 @@ function deferred() {
   return { promise, resolve };
 }
 
+async function expectBlocked<T>(operation: Promise<T>) {
+  const state = await Promise.race([
+    operation.then(
+      () => "settled" as const,
+      () => "settled" as const,
+    ),
+    new Promise<"blocked">((resolve) => {
+      setTimeout(() => resolve("blocked"), 100);
+    }),
+  ]);
+  expect(state).toBe("blocked");
+}
+
 describe("creator product link creation", () => {
   it("ATTR-002 creates one active exact-product link under concurrency", async () => {
     const { brand, creator } = await seedApprovedPartnership();
@@ -172,6 +185,101 @@ describe("creator product link creation", () => {
     ).toBe(0);
   });
 
+  it("serializes a rate update ahead of a racing stale acceptance", async () => {
+    const { brand, creator } = await seedApprovedPartnership();
+    const product = await prisma.product.create({
+      data: {
+        brandId: brand.id,
+        sku: `RACE-RATE-${crypto.randomUUID()}`,
+        title: "Racing rate offer",
+        priceGel: "100.00",
+        backlinkUrl: "https://shop.example.ge/racing-rate",
+        commissionType: "FIXED",
+        commissionValue: "8.0000",
+      },
+    });
+    const displayed = acceptance(product);
+    const changed = deferred();
+    const release = deferred();
+    const rateUpdate = prisma.$transaction(async (transaction) => {
+      await transaction.product.update({
+        where: { id: product.id },
+        data: { commissionValue: "12.0000" },
+      });
+      changed.resolve();
+      await release.promise;
+    });
+    await changed.promise;
+
+    const creation = createProductLinkForCreator(creator.id, displayed);
+    try {
+      await expectBlocked(creation);
+    } finally {
+      release.resolve();
+    }
+    await rateUpdate;
+
+    expect(await creation).toEqual({ ok: false, error: "offer_changed" });
+    expect(
+      await prisma.trackingLink.count({ where: { productId: product.id } }),
+    ).toBe(0);
+  });
+
+  it.each([
+    ["brand", "brand_not_approved"],
+    ["creator", "creator_not_approved"],
+  ] as const)(
+    "serializes %s suspension ahead of a racing link creation",
+    async (account, error) => {
+      const { brand, creator } = await seedApprovedPartnership();
+      const product = await prisma.product.create({
+        data: {
+          brandId: brand.id,
+          sku: `RACE-ACCOUNT-${crypto.randomUUID()}`,
+          title: "Racing account offer",
+          priceGel: "100.00",
+          backlinkUrl: "https://shop.example.ge/racing-account",
+          commissionType: "PERCENT",
+          commissionValue: "0.1250",
+        },
+      });
+      const changed = deferred();
+      const release = deferred();
+      const suspension = prisma.$transaction(async (transaction) => {
+        if (account === "brand") {
+          await transaction.brand.update({
+            where: { id: brand.id },
+            data: { status: "SUSPENDED" },
+          });
+        } else {
+          await transaction.creator.update({
+            where: { id: creator.id },
+            data: { status: "SUSPENDED" },
+          });
+        }
+        changed.resolve();
+        await release.promise;
+      });
+      await changed.promise;
+
+      const creation = createProductLinkForCreator(
+        creator.id,
+        acceptance(product),
+      );
+      try {
+        await expectBlocked(creation);
+      } finally {
+        release.resolve();
+      }
+      await suspension;
+
+      expect(await creation).toEqual({ ok: false, error });
+      expect(
+        await prisma.trackingLink.count({ where: { productId: product.id } }),
+      ).toBe(0);
+    },
+  );
+
   it("serializes partnership revocation ahead of a racing link creation", async () => {
     const { brand, creator, partnership } = await seedApprovedPartnership();
     const product = await prisma.product.create({
@@ -201,7 +309,11 @@ describe("creator product link creation", () => {
       creator.id,
       acceptance(product),
     );
-    release.resolve();
+    try {
+      await expectBlocked(creation);
+    } finally {
+      release.resolve();
+    }
     await revocation;
 
     expect(await creation).toEqual({
