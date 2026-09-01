@@ -31,10 +31,13 @@ export {
   createPrismaLinkRepository,
   listResolvedLinksForBrand,
   listResolvedLinksForCreator,
+  listLinkOffersForCreator,
   prismaLinkRepository,
 } from "./infrastructure/prisma-link-repository";
 export { CreatorBrandList, PartnershipQueue } from "./ui/partnership-queue";
 export { BrandLinkList, LinkList } from "./ui/link-list";
+export { LinkOfferList, type CreatorProductOffer } from "./ui/link-offer-list";
+export { createProductLinkHandler } from "./http/link-handlers";
 export {
   createApplyHandler,
   createDecisionHandler,

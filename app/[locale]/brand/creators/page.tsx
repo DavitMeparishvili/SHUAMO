@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { Button, EmptyState } from "@/src/modules/design-system";
-import { prismaProductRepository } from "@/src/modules/catalog";
 import {
   currentViewer,
   requireBrand,
@@ -23,10 +22,9 @@ export default async function BrandCreatorsPage({
   if (!isLocale(locale)) notFound();
   const allowed = requireBrand(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
-  const [partnerships, candidates, activeProducts] = await Promise.all([
+  const [partnerships, candidates] = await Promise.all([
     listPartnershipsForBrand(allowed.value.brandId),
     listApprovedCreatorsForBrand(allowed.value.brandId),
-    prismaProductRepository.listActiveForBrand(allowed.value.brandId),
   ]);
   const messages = getMessages(locale);
   return (
@@ -42,7 +40,6 @@ export default async function BrandCreatorsPage({
           </h2>
           <PartnershipQueue
             partnerships={partnerships}
-            activeProductCount={activeProducts.length}
             decideAction={decideAction.bind(null, locale)}
             copy={{
               emptyTitle: t(messages, "partnership.empty.title"),
@@ -52,7 +49,7 @@ export default async function BrandCreatorsPage({
               pending: t(messages, "partnership.status.pending"),
               approved: t(messages, "partnership.status.approved"),
               rejected: t(messages, "partnership.status.rejected"),
-              mintNotice: t(messages, "partnership.mintNotice"),
+              approvalNotice: t(messages, "partnership.approvalNotice"),
               remove: t(messages, "partnership.remove"),
               removeNotice: t(messages, "partnership.removeNotice"),
               restore: t(messages, "partnership.restore"),

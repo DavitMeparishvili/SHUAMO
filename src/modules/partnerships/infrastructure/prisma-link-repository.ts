@@ -81,6 +81,38 @@ export async function listResolvedLinksForCreator(creatorId: string) {
   });
 }
 
+export async function listLinkOffersForCreator(creatorId: string) {
+  const products = await prisma.product.findMany({
+    where: {
+      status: "ACTIVE",
+      brand: {
+        status: "APPROVED",
+        partnerships: {
+          some: { creatorId, status: "APPROVED" },
+        },
+      },
+      links: {
+        none: { creatorId, status: "ACTIVE" },
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      commissionType: true,
+      commissionValue: true,
+      brand: { select: { name: true } },
+    },
+    orderBy: [{ brand: { name: "asc" } }, { title: "asc" }],
+  });
+  return products.map((product) => ({
+    productId: product.id,
+    title: product.title,
+    brandName: product.brand.name,
+    commissionType: product.commissionType,
+    commissionValue: product.commissionValue.toFixed(4),
+  }));
+}
+
 export async function listResolvedLinksForBrand(brandId: string) {
   return prisma.trackingLink.findMany({
     where: { product: { brandId } },

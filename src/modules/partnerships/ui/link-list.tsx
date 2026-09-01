@@ -15,12 +15,12 @@ export function LinkList({
   links: readonly {
     id: string;
     code: string;
+    commissionType: "PERCENT" | "FIXED";
+    commissionValue: { toString(): string };
     status: "ACTIVE" | "DISABLED";
     product: {
       title: string;
       status: "ACTIVE" | "ARCHIVED";
-      commissionType: "PERCENT" | "FIXED";
-      commissionValue: { toString(): string };
       brand: {
         id: string;
         name: string;
@@ -62,9 +62,9 @@ export function LinkList({
           linkStatus: link.status,
         });
         const rate =
-          link.product.commissionType === "PERCENT"
-            ? `${new Decimal(link.product.commissionValue.toString()).times(100).toString()}%`
-            : `${link.product.commissionValue.toString()} ₾`;
+          link.commissionType === "PERCENT"
+            ? `${new Decimal(link.commissionValue.toString()).times(100).toString()}%`
+            : `${link.commissionValue.toString()} ₾`;
         return (
           <article
             className="grid gap-5 rounded-md border border-slate-200 bg-paper p-5 sm:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)]"
@@ -106,6 +106,8 @@ export function LinkList({
 type ResolvedLinkRow = {
   id: string;
   code: string;
+  commissionType: "PERCENT" | "FIXED";
+  commissionValue: { toString(): string };
   status: "ACTIVE" | "DISABLED";
   product: {
     title: string;

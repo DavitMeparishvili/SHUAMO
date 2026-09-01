@@ -8,8 +8,11 @@ import {
 import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
   LinkList,
+  LinkOfferList,
+  listLinkOffersForCreator,
   listResolvedLinksForCreator,
 } from "@/src/modules/partnerships";
+import { createProductLinkAction } from "./actions";
 
 export default async function CreatorLinksPage({
   params,
@@ -20,9 +23,10 @@ export default async function CreatorLinksPage({
   if (!isLocale(locale)) notFound();
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
-  const [messages, links] = await Promise.all([
+  const [messages, links, offers] = await Promise.all([
     Promise.resolve(getMessages(locale)),
     listResolvedLinksForCreator(allowed.value.creatorId),
+    listLinkOffersForCreator(allowed.value.creatorId),
   ]);
   return (
     <WorkspaceShell
@@ -30,26 +34,37 @@ export default async function CreatorLinksPage({
       title={t(messages, "links.title")}
       intro={t(messages, "links.intro")}
     >
-      <LinkList
-        links={links}
-        baseUrl={serverEnv().APP_URL}
-        copy={{
-          emptyTitle: t(messages, "links.emptyTitle"),
-          emptyBody: t(messages, "links.emptyBody"),
-          active: t(messages, "links.active"),
-          link: t(messages, "links.link"),
-          rate: t(messages, "links.rate"),
-          copy: t(messages, "design.copy.copy"),
-          copied: t(messages, "design.copy.copied"),
-          copyError: t(messages, "design.copy.error"),
-          reasons: {
-            BRAND_DISABLED: t(messages, "links.reason.BRAND_DISABLED"),
-            CREATOR_REMOVED: t(messages, "links.reason.CREATOR_REMOVED"),
-            PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
-            LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
-          },
-        }}
-      />
+      <div className="grid gap-10">
+        <LinkOfferList
+          offers={offers}
+          createAction={createProductLinkAction.bind(null, locale)}
+          copy={{
+            title: t(messages, "links.offersTitle"),
+            empty: t(messages, "links.offersEmpty"),
+            create: t(messages, "links.createAtRate"),
+          }}
+        />
+        <LinkList
+          links={links}
+          baseUrl={serverEnv().APP_URL}
+          copy={{
+            emptyTitle: t(messages, "links.emptyTitle"),
+            emptyBody: t(messages, "links.emptyBody"),
+            active: t(messages, "links.active"),
+            link: t(messages, "links.link"),
+            rate: t(messages, "links.rate"),
+            copy: t(messages, "design.copy.copy"),
+            copied: t(messages, "design.copy.copied"),
+            copyError: t(messages, "design.copy.error"),
+            reasons: {
+              BRAND_DISABLED: t(messages, "links.reason.BRAND_DISABLED"),
+              CREATOR_REMOVED: t(messages, "links.reason.CREATOR_REMOVED"),
+              PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
+              LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
+            },
+          }}
+        />
+      </div>
     </WorkspaceShell>
   );
 }

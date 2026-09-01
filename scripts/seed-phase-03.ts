@@ -100,31 +100,46 @@ for (const [index, creator] of creators.entries()) {
   });
 }
 
-const activeProducts = productFixtures.filter(
-  ({ status }) => status === "ACTIVE",
-);
-const approvedCreators = creators.filter(({ status }) => status === "APPROVED");
-for (const [productIndex, product] of activeProducts.entries()) {
-  for (const [creatorIndex, creator] of approvedCreators.entries()) {
-    const code = `P${productIndex + 1}C${creatorIndex + 1}X000`;
-    await prisma.trackingLink.upsert({
-      where: { code },
-      create: {
-        productId: product.id,
-        creatorId: creator.id,
-        code,
-        commissionType: product.commissionType,
-        commissionValue: product.commissionValue,
-      },
-      update: { status: "ACTIVE" },
-    });
-  }
+const linkFixtures = [
+  {
+    code: "P1C1X000",
+    product: productFixtures[0]!,
+    creator: creators[0]!,
+  },
+  {
+    code: "P2C1X000",
+    product: productFixtures[1]!,
+    creator: creators[0]!,
+  },
+  {
+    code: "P3C1X000",
+    product: productFixtures[2]!,
+    creator: creators[0]!,
+  },
+  {
+    code: "P1C2X000",
+    product: productFixtures[0]!,
+    creator: creators[1]!,
+  },
+] as const;
+
+for (const fixture of linkFixtures) {
+  await prisma.trackingLink.upsert({
+    where: { code: fixture.code },
+    create: {
+      productId: fixture.product.id,
+      creatorId: fixture.creator.id,
+      code: fixture.code,
+      commissionType: fixture.product.commissionType,
+      commissionValue: fixture.product.commissionValue,
+    },
+    update: { status: "ACTIVE" },
+  });
 }
 
 const intendedLinks = await prisma.trackingLink.findMany({
   where: {
-    productId: { in: activeProducts.map(({ id }) => id) },
-    creatorId: { in: approvedCreators.map(({ id }) => id) },
+    code: { in: linkFixtures.map(({ code }) => code) },
   },
   select: {
     productId: true,
@@ -141,7 +156,7 @@ const intendedLinks = await prisma.trackingLink.findMany({
   },
 });
 if (
-  intendedLinks.length !== 6 ||
+  intendedLinks.length !== linkFixtures.length ||
   intendedLinks.some(
     (link) =>
       link.product.status !== "ACTIVE" ||
@@ -149,7 +164,7 @@ if (
   )
 ) {
   throw new Error(
-    `Phase 3 seed expected 6 valid intended links, found ${intendedLinks.length}`,
+    `Phase 3 seed expected ${linkFixtures.length} valid intended links, found ${intendedLinks.length}`,
   );
 }
 

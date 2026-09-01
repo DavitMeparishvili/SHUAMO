@@ -3,6 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 
 const BRAND = { email: "brand@aromashop.ge", password: "seeded-password-01" };
 const CREATOR = { email: "nino@creators.ge", password: "seeded-password-01" };
+const RUN_ID = Date.now();
+
+function creatorOfferTitle(projectName: string, kind: "chosen" | "untouched") {
+  return `${kind === "chosen" ? "Chosen" : "Untouched"} creator offer ${projectName}-${RUN_ID}`;
+}
 
 async function signIn(page: Page, locale: "ka" | "en", user: typeof BRAND) {
   await page.goto(`/${locale}/sign-in`);
@@ -16,21 +21,54 @@ async function signIn(page: Page, locale: "ka" | "en", user: typeof BRAND) {
   await page.waitForURL(new RegExp(`/${locale}/(brand|creator)$`));
 }
 
-test("@phase-3 brand publishes a product and both creators get a link", async ({
+test("@phase-3 brand publishes a product without creating creator links", async ({
   page,
 }, testInfo) => {
   await signIn(page, "en", BRAND);
-  await page.goto("/en/brand/products/new");
-  await page
-    .getByLabel("SKU")
-    .fill(`P-E2E-${testInfo.project.name}-${Date.now()}`);
-  await page.getByLabel("Title").fill("New product");
-  await page.getByLabel("Price").fill("100.00");
-  await page.getByLabel("Backlink URL").fill("https://aromashop.ge/p/new");
-  await page.getByRole("radio", { name: "%" }).check();
-  await page.getByLabel(/commission value/i).fill("10");
-  await page.getByRole("button", { name: /publish product/i }).click();
-  await expect(page.getByText(/2 links were minted/i)).toBeVisible();
+  for (const kind of ["chosen", "untouched"] as const) {
+    await page.goto("/en/brand/products/new");
+    await page
+      .getByLabel("SKU")
+      .fill(`P-E2E-${kind}-${testInfo.project.name}-${RUN_ID}`);
+    await page
+      .getByLabel("Title")
+      .fill(creatorOfferTitle(testInfo.project.name, kind));
+    await page.getByLabel("Price").fill("100.00");
+    await page
+      .getByLabel("Backlink URL")
+      .fill(`https://aromashop.ge/p/${kind}`);
+    await page.getByRole("radio", { name: "%" }).check();
+    await page.getByLabel(/commission value/i).fill("10");
+    await page.getByRole("button", { name: /publish product/i }).click();
+    await expect(
+      page.getByText(/approved creators can now choose it/i),
+    ).toBeVisible();
+  }
+});
+
+test("@phase-3 a creator explicitly accepts one product rate", async ({
+  page,
+}, testInfo) => {
+  const chosenProduct = creatorOfferTitle(testInfo.project.name, "chosen");
+  const otherProduct = creatorOfferTitle(testInfo.project.name, "untouched");
+  const agreedRate = "10%";
+
+  await signIn(page, "en", CREATOR);
+  await page.goto("/en/creator/links");
+  const chosenOffer = page
+    .locator("article")
+    .filter({ hasText: chosenProduct });
+  await expect(chosenOffer).toContainText(agreedRate);
+  await chosenOffer
+    .getByRole("button", { name: "Create link at this rate" })
+    .click();
+
+  const agreedLink = page.locator("article").filter({ hasText: chosenProduct });
+  await expect(agreedLink.getByRole("button", { name: "Copy" })).toBeVisible();
+  await expect(agreedLink).toContainText(agreedRate);
+  await expect(
+    page.locator("article").filter({ hasText: otherProduct }),
+  ).toContainText("Create link at this rate");
 });
 
 test("@phase-3 archiving preserves links and reports PRODUCT_ARCHIVED", async ({
@@ -51,14 +89,6 @@ test("@phase-3 archiving preserves links and reports PRODUCT_ARCHIVED", async ({
   await signIn(page, "ka", CREATOR);
   await page.goto("/ka/creator/links");
   await expect(page.getByText("პროდუქტი დაარქივებულია").first()).toBeVisible();
-});
-
-test("@phase-3 a creator sees a copyable link code", async ({ page }) => {
-  await signIn(page, "en", CREATOR);
-  await page.goto("/en/creator/links");
-  await expect(
-    page.getByRole("button", { name: /^Copy$/ }).first(),
-  ).toBeVisible();
 });
 
 test("@phase-3 presign routes require a real owned product", async ({
@@ -91,7 +121,7 @@ test("@phase-3 a brand uploads a product photo through the presigned MinIO flow"
   await page.getByLabel(/commission value/i).fill("10");
   await expect(page.getByLabel(/add image/i)).toHaveCount(0);
   await page.getByRole("button", { name: /publish product/i }).click();
-  await expect(page).toHaveURL(/\/en\/brand\/products\/[^?]+\?created=2/);
+  await expect(page).toHaveURL(/\/en\/brand\/products\/[^?]+\?created=1/);
 
   await page.getByLabel(/add image/i).setInputFiles({
     name: "perfume.jpg",

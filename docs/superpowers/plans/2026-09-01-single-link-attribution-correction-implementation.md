@@ -666,7 +666,7 @@ git commit -m "feat: let approved creators create immutable product links"
 - Consumes: Task 4's `createProductLinkForCreator` service.
 - Produces: authenticated creator action and UI for choosing one active product at its offered rate.
 
-- [ ] **Step 1: Write the route-contract tests**
+- [x] **Step 1: Write the route-contract tests**
 
 ```ts
 it("creates one link for the authenticated creator and selected product", async () => {
@@ -689,7 +689,7 @@ it.each([
 });
 ```
 
-- [ ] **Step 2: Run and confirm failure**
+- [x] **Step 2: Run and confirm failure**
 
 ```powershell
 pnpm vitest run src/modules/partnerships/http/link-handlers.test.ts src/modules/partnerships/ui/link-offer-list.test.tsx
@@ -697,7 +697,7 @@ pnpm vitest run src/modules/partnerships/http/link-handlers.test.ts src/modules/
 
 Expected: FAIL because the handler and offer component do not exist.
 
-- [ ] **Step 3: Implement the server action and offer query**
+- [x] **Step 3: Implement the server action and offer query**
 
 Add `listLinkOffersForCreator(creatorId)` returning active products from approved partnerships with no active link:
 
@@ -713,17 +713,17 @@ interface CreatorProductOffer {
 
 The server action obtains `creatorId` only from `requireCreator(currentViewer())`, accepts only `productId` from form data, invokes the service, and revalidates the creator and brand link pages.
 
-- [ ] **Step 4: Render explicit acceptance**
+- [x] **Step 4: Render explicit acceptance**
 
 Each offer card must display brand, product, and formatted rate next to a button whose localized meaning is “Create link at this rate.” Existing link cards must display `link.commissionType` and `link.commissionValue`, not the product's current rate.
 
 Add matching real Georgian and English keys and rely on the existing catalogue parity test.
 
-- [ ] **Step 5: Update deterministic seeds**
+- [x] **Step 5: Update deterministic seeds**
 
 Seeds may create explicit intended links, but each row must include its immutable rate snapshot. Use link `id` or `code` for upsert. Do not recreate the former product × approved-creator loop as production behavior; fixture loops are allowed only to establish named test data.
 
-- [ ] **Step 6: Add the browser proof**
+- [x] **Step 6: Add the browser proof**
 
 The Phase 3 Playwright test must prove:
 
@@ -734,7 +734,7 @@ approved creator opens available products
 → another active product still has no link
 ```
 
-- [ ] **Step 7: Run UI and Phase 3 verification**
+- [x] **Step 7: Run UI and Phase 3 verification**
 
 ```powershell
 pnpm test:unit
@@ -746,7 +746,7 @@ pnpm test:e2e --grep @phase-3
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add app src scripts

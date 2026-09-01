@@ -2,7 +2,6 @@ import { Button, EmptyState, StatusPill } from "@/src/modules/design-system";
 
 export function PartnershipQueue({
   partnerships,
-  activeProductCount,
   decideAction,
   copy,
 }: {
@@ -11,7 +10,6 @@ export function PartnershipQueue({
     status: "PENDING" | "APPROVED" | "REJECTED";
     creator: { displayName: string };
   }[];
-  activeProductCount: number;
   decideAction: (
     partnershipId: string,
     decision: "APPROVE" | "REJECT",
@@ -24,7 +22,7 @@ export function PartnershipQueue({
     | "pending"
     | "approved"
     | "rejected"
-    | "mintNotice"
+    | "approvalNotice"
     | "remove"
     | "removeNotice"
     | "restore",
@@ -64,7 +62,7 @@ export function PartnershipQueue({
             </div>
             {partnership.status === "PENDING" ? (
               <p className="m-0 type-small text-slate-600">
-                {copy.mintNotice.replace("{count}", String(activeProductCount))}
+                {copy.approvalNotice}
               </p>
             ) : partnership.status === "APPROVED" ? (
               <p className="m-0 max-w-[65ch] type-small text-slate-600">
