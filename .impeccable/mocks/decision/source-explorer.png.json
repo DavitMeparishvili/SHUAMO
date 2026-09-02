@@ -1,0 +1,8 @@
+{
+  "promptFile": "source-explorer.prompt.txt",
+  "useCase": "ui-mockup",
+  "source": "built-in image_gen",
+  "referenceImage": "creator-links-gallery.png",
+  "referenceRole": "identity only",
+  "approved": false
+}

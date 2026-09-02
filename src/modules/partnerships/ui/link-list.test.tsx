@@ -15,6 +15,13 @@ const copy = {
   copy: "Copy",
   copied: "Copied",
   copyError: "Copy failed",
+  last30Days: "Last 30 days",
+  clicks: "clicks",
+  converted: "converted",
+  orders: "orders",
+  confirmed: "confirmed",
+  noActivity: "No activity",
+  viewPerformance: "View performance",
   reasons: {
     BRAND_DISABLED: "Brand unavailable",
     CREATOR_REMOVED: "Creator removed",
@@ -48,6 +55,13 @@ describe("LinkList", () => {
           copyError: "Copy failed",
           productTypes,
           reasons: copy.reasons,
+          last30Days: copy.last30Days,
+          clicks: copy.clicks,
+          converted: copy.converted,
+          orders: copy.orders,
+          confirmed: copy.confirmed,
+          noActivity: copy.noActivity,
+          viewPerformance: copy.viewPerformance,
         }}
         links={[
           {
@@ -89,6 +103,7 @@ describe("BrandLinkList", () => {
     const html = renderToStaticMarkup(
       <BrandLinkList
         baseUrl="https://shuamo.test"
+        locale="en"
         copy={copy}
         links={[
           {
@@ -127,6 +142,7 @@ describe("BrandLinkList", () => {
     const html = renderToStaticMarkup(
       <BrandLinkList
         baseUrl="https://shuamo.test"
+        locale="en"
         copy={copy}
         links={[]}
         setStatusAction={() => undefined}

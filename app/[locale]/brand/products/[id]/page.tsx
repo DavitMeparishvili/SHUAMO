@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { serverEnv } from "@/src/config/env";
 import { Banner } from "@/src/modules/design-system";
+import { brandLinkPerformanceSnapshots } from "@/src/modules/conversions";
 import { getProductForBrand, ProductForm } from "@/src/modules/catalog";
 import {
   currentViewer,
@@ -33,6 +34,10 @@ export default async function EditProductPage({
     listResolvedLinksForBrandProduct(allowed.value.brandId, id),
   ]);
   if (!product) notFound();
+  const performance = await brandLinkPerformanceSnapshots(
+    allowed.value.brandId,
+    links.map((link) => link.id),
+  );
   return (
     <WorkspaceShell
       name={allowed.value.brandName}
@@ -102,6 +107,7 @@ export default async function EditProductPage({
           </div>
           <BrandLinkList
             baseUrl={serverEnv().APP_URL}
+            locale={locale}
             copy={{
               emptyTitle: t(messages, "catalog.creatorLinks.emptyTitle"),
               emptyBody: t(messages, "catalog.creatorLinks.emptyBody"),
@@ -120,8 +126,16 @@ export default async function EditProductPage({
                 PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
                 LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
               },
+              last30Days: t(messages, "performance.period.30d"),
+              clicks: t(messages, "performance.metric.clicks"),
+              converted: t(messages, "performance.metric.convertedClicks"),
+              orders: t(messages, "performance.metric.orders"),
+              confirmed: t(messages, "performance.metric.confirmed"),
+              noActivity: t(messages, "performance.link.noActivity"),
+              viewPerformance: t(messages, "performance.link.view"),
             }}
             links={links}
+            performance={performance}
             setStatusAction={setLinkStatusAction.bind(null, locale)}
             showProduct={false}
           />

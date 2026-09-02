@@ -2,17 +2,21 @@ import Decimal from "decimal.js";
 import Image from "next/image";
 import Link from "next/link";
 import type { ProductTypeValue } from "@/src/modules/catalog";
+import type { LinkPerformanceRow } from "@/src/modules/conversions";
 import {
   Button,
   CopyField,
   EmptyState,
+  MoneyAmount,
   StatusPill,
 } from "@/src/modules/design-system";
+import { Money } from "@/src/modules/shared";
 import { resolveLink, type DisableReason } from "../domain/disable-chain";
 
 export function LinkList({
   locale,
   links,
+  performance,
   baseUrl,
   copy,
 }: {
@@ -45,6 +49,7 @@ export function LinkList({
       }[];
     };
   }[];
+  performance?: ReadonlyMap<string, LinkPerformanceRow>;
   baseUrl: string;
   copy: {
     emptyTitle: string;
@@ -61,6 +66,13 @@ export function LinkList({
     copyError: string;
     productTypes: Record<ProductTypeValue, string>;
     reasons: Record<DisableReason, string>;
+    last30Days: string;
+    clicks: string;
+    converted: string;
+    orders: string;
+    confirmed: string;
+    noActivity: string;
+    viewPerformance: string;
   };
 }) {
   if (links.length === 0)
@@ -68,6 +80,7 @@ export function LinkList({
   return (
     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {links.map((link) => {
+        const metrics = performance?.get(link.id);
         const partnership = link.creator.partnerships.find(
           ({ brandId }) => brandId === link.product.brand.id,
         );
@@ -191,6 +204,54 @@ export function LinkList({
                 truncateValue
               />
             </div>
+            <div className="grid gap-3 border-t border-slate-200 bg-slate-50 p-4">
+              <p className="m-0 type-caption font-semibold text-slate-600">
+                {copy.last30Days}
+              </p>
+              {metrics &&
+              (metrics.clicks > 0 ||
+                metrics.orders > 0 ||
+                metrics.confirmed !== "0.00") ? (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 type-small text-ink">
+                  <span>
+                    <span className="type-mono font-semibold">
+                      {metrics.clicks}
+                    </span>{" "}
+                    {copy.clicks}
+                  </span>
+                  <span>
+                    <span className="type-mono font-semibold">
+                      {metrics.convertedClicks}
+                    </span>{" "}
+                    {copy.converted}
+                  </span>
+                  <span>
+                    <span className="type-mono font-semibold">
+                      {metrics.orders}
+                    </span>{" "}
+                    {copy.orders}
+                  </span>
+                  <span>
+                    <MoneyAmount
+                      size="sm"
+                      tone="settled"
+                      value={Money.of(metrics.confirmed)}
+                    />{" "}
+                    {copy.confirmed}
+                  </span>
+                </div>
+              ) : (
+                <p className="m-0 type-small text-slate-600">
+                  {copy.noActivity}
+                </p>
+              )}
+              <Link
+                className="inline-flex min-h-11 w-fit items-center type-small font-semibold text-signal"
+                href={`/${locale}/creator/earnings?link=${link.id}&view=links#breakdown`}
+              >
+                {copy.viewPerformance}
+              </Link>
+            </div>
           </article>
         );
       })}
@@ -237,13 +298,17 @@ function resolutionFor(link: ResolvedLinkRow) {
 }
 
 export function BrandLinkList({
+  locale,
   links,
+  performance,
   baseUrl,
   setStatusAction,
   copy,
   showProduct = true,
 }: {
+  locale: string;
   links: readonly ResolvedLinkRow[];
+  performance?: ReadonlyMap<string, LinkPerformanceRow>;
   baseUrl: string;
   setStatusAction: (
     linkId: string,
@@ -262,6 +327,13 @@ export function BrandLinkList({
     copied: string;
     copyError: string;
     reasons: Record<DisableReason, string>;
+    last30Days: string;
+    clicks: string;
+    converted: string;
+    orders: string;
+    confirmed: string;
+    noActivity: string;
+    viewPerformance: string;
   };
   showProduct?: boolean;
 }) {
@@ -272,6 +344,7 @@ export function BrandLinkList({
   return (
     <div className="grid gap-4">
       {links.map((link) => {
+        const metrics = performance?.get(link.id);
         const resolution = resolutionFor(link);
         const nextStatus = link.status === "ACTIVE" ? "DISABLED" : "ACTIVE";
         const rate =
@@ -280,7 +353,7 @@ export function BrandLinkList({
             : `${link.commissionValue.toString()} ₾`;
         return (
           <article
-            className="grid gap-5 rounded-md border border-slate-200 bg-paper p-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)_auto] lg:items-center"
+            className="grid gap-5 rounded-md border border-slate-200 bg-paper p-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,1fr)_minmax(220px,auto)_auto] lg:items-center"
             key={link.id}
           >
             <div className="grid min-w-0 gap-2">
@@ -318,6 +391,45 @@ export function BrandLinkList({
               copiedLabel={copy.copied}
               copyErrorLabel={copy.copyError}
             />
+            <div className="grid gap-2">
+              <p className="m-0 type-caption font-semibold text-slate-600">
+                {copy.last30Days}
+              </p>
+              {metrics &&
+              (metrics.clicks > 0 ||
+                metrics.orders > 0 ||
+                metrics.confirmed !== "0.00") ? (
+                <p className="m-0 type-small text-ink">
+                  <span className="type-mono font-semibold">
+                    {metrics.clicks}
+                  </span>{" "}
+                  {copy.clicks} ·{" "}
+                  <span className="type-mono font-semibold">
+                    {metrics.convertedClicks}
+                  </span>{" "}
+                  {copy.converted} ·{" "}
+                  <span className="type-mono font-semibold">
+                    {metrics.orders}
+                  </span>{" "}
+                  {copy.orders} ·{" "}
+                  <MoneyAmount
+                    size="sm"
+                    tone="settled"
+                    value={Money.of(metrics.confirmed)}
+                  />
+                </p>
+              ) : (
+                <p className="m-0 type-small text-slate-600">
+                  {copy.noActivity}
+                </p>
+              )}
+              <Link
+                className="inline-flex min-h-11 w-fit items-center type-small font-semibold text-signal"
+                href={`/${locale}/brand/performance?link=${link.id}&view=links#breakdown`}
+              >
+                {copy.viewPerformance}
+              </Link>
+            </div>
             <form action={setStatusAction.bind(null, link.id, nextStatus)}>
               <Button
                 type="submit"

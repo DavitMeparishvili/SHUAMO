@@ -57,6 +57,7 @@ export default async function LocaleLayout({
   return (
     <html
       className={`${GeistSans.variable} ${GeistMono.variable}`}
+      data-scroll-behavior="smooth"
       lang={locale}
     >
       <body>

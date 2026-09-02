@@ -57,6 +57,10 @@ describe("navDestinationsFor", () => {
         (destination) => !destination.href.includes("/brand/"),
       ),
     ).toBe(true);
+    expect(destinations).toContainEqual({
+      href: "/en/creator/earnings",
+      labelKey: "nav.performance",
+    });
   });
 
   it("never offers a brand a creator destination", () => {
@@ -75,6 +79,10 @@ describe("navDestinationsFor", () => {
         (destination) => !destination.href.includes("/creator/"),
       ),
     ).toBe(true);
+    expect(destinations).toContainEqual({
+      href: "/en/brand/performance",
+      labelKey: "nav.performance",
+    });
   });
 
   it("prefixes every destination with the active locale", () => {

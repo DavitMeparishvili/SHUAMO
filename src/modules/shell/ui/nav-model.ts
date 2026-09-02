@@ -18,6 +18,7 @@ const ROUTES = {
   ],
   brand: [
     { path: "brand/orders", labelKey: "nav.orders" },
+    { path: "brand/performance", labelKey: "nav.performance" },
     { path: "brand/products", labelKey: "nav.catalog" },
     { path: "products", labelKey: "nav.discoverProducts" },
     { path: "brand/creators", labelKey: "nav.creators" },
@@ -27,7 +28,7 @@ const ROUTES = {
   creator: [
     { path: "products", labelKey: "nav.discoverProducts" },
     { path: "creator/links", labelKey: "nav.links" },
-    { path: "creator/earnings", labelKey: "nav.earnings" },
+    { path: "creator/earnings", labelKey: "nav.performance" },
     { path: "creator/brands", labelKey: "nav.brands" },
     { path: "creator/profile", labelKey: "nav.profile" },
   ],

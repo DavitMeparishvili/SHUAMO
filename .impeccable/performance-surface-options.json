@@ -1,0 +1,46 @@
+{
+  "title": "Choose the performance workspace",
+  "question": "All three preserve SHUAMO’s paper-and-ink identity. Choose the structure that makes link activity and earnings easiest to understand.",
+  "options": [
+    {
+      "id": "performance-pulse",
+      "label": "Performance Pulse",
+      "kicker": "THE ROLL",
+      "lineage": "financial instrument timeline",
+      "thesis": "A plain-language result statement leads into one selectable trend and a ranked source table.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#E3F3EC", "#FFF4DE"],
+      "materials": ["paper", "hairline rules", "tabular ink"],
+      "viewport": "Period controls and one decisive performance sentence lead; a restrained metric rail, single trend, and brand/product/link breakdown follow.",
+      "risk": "The trend can dominate unless the source table remains visibly primary.",
+      "comp": ".impeccable/mocks/decision/performance-pulse.png"
+    },
+    {
+      "id": "brand-books",
+      "label": "Brand Books",
+      "lineage": "account books grouped by commercial relationship",
+      "thesis": "Each brand becomes a compact performance chapter that opens from total to product to link.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#EFF1F5", "#E3F3EC"],
+      "materials": ["ledger paper", "section tabs", "product imagery"],
+      "viewport": "A creator total is followed by brand chapters with earnings, clicks, orders, and expandable product rows.",
+      "risk": "Cross-brand comparison takes more scanning than a single ranked table.",
+      "comp": ".impeccable/mocks/decision/brand-books.png"
+    },
+    {
+      "id": "source-explorer",
+      "label": "Source Explorer",
+      "lineage": "master-detail provenance workbench",
+      "thesis": "A ranked source list and persistent inspector make every aggregate immediately auditable.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#F7F8FA", "#FBE9E7"],
+      "materials": ["instrument panel", "source rows", "mono identifiers"],
+      "viewport": "Totals and filters sit above a wide source table; selecting a row opens its link funnel and recent earning records beside it.",
+      "risk": "The split view is powerful on desktop but must serialize carefully on phones.",
+      "comp": ".impeccable/mocks/decision/source-explorer.png"
+    }
+  ],
+  "reroll": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  },
+  "steer": true
+}

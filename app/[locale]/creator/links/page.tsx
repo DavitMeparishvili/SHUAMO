@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { serverEnv } from "@/src/config/env";
 import { Button, Field, Select } from "@/src/modules/design-system";
+import { creatorLinkPerformanceSnapshots } from "@/src/modules/conversions";
 import {
   CatalogPagination,
   isProductType,
@@ -159,6 +160,10 @@ export default async function CreatorLinksPage({
     }),
     listCreatorLinkBrands(allowed.value.creatorId),
   ]);
+  const performance = await creatorLinkPerformanceSnapshots(
+    allowed.value.creatorId,
+    catalog.items.map((link) => link.id),
+  );
   const productTypes = Object.fromEntries(
     PRODUCT_TYPES.map((type) => [
       type,
@@ -254,6 +259,7 @@ export default async function CreatorLinksPage({
         <LinkList
           locale={locale}
           links={catalog.items}
+          performance={performance}
           baseUrl={serverEnv().APP_URL}
           copy={{
             emptyTitle: t(
@@ -281,6 +287,13 @@ export default async function CreatorLinksPage({
               PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
               LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
             },
+            last30Days: t(messages, "performance.period.30d"),
+            clicks: t(messages, "performance.metric.clicks"),
+            converted: t(messages, "performance.metric.convertedClicks"),
+            orders: t(messages, "performance.metric.orders"),
+            confirmed: t(messages, "performance.metric.confirmed"),
+            noActivity: t(messages, "performance.link.noActivity"),
+            viewPerformance: t(messages, "performance.link.view"),
           }}
         />
         <CatalogPagination
