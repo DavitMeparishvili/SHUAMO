@@ -111,6 +111,15 @@ of server time. The handler reports this as `Server-Timing: total`; network time
 is excluded. Re-run the same command before considering a redirect cache, and
 compare its p95 with the 50ms budget.
 
+### Conversions latency baseline
+
+Phase 6 established the exact-link conversion baseline on 2026-09-02 with
+`pnpm measure:conversions`: 200 sequential distinct orders against the built
+application and local PostgreSQL measured p50 **15.51ms**, p95 **19.61ms**, and
+p99 **24.26ms** of server time. The handler reports this as
+`Server-Timing: total`; network time is excluded. The p95 is below the 200ms
+budget without a cache or queue.
+
 Browsers install once per machine:
 
 ```bash

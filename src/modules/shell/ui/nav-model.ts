@@ -6,6 +6,7 @@ export type { Viewer } from "@/src/modules/identity";
 export interface NavDestination {
   href: string;
   labelKey: string;
+  pending?: { count: number; oldestDays: number };
 }
 
 const ROUTES = {
@@ -32,9 +33,16 @@ const ROUTES = {
 export function navDestinationsFor(
   viewer: Viewer,
   locale: Locale,
+  pendingOrders?: { count: number; oldestDays: number },
 ): NavDestination[] {
   return ROUTES[viewer.kind].map(({ path, labelKey }) => ({
     href: `/${locale}/${path}`,
     labelKey,
+    ...(viewer.kind === "brand" &&
+    path === "brand/orders" &&
+    pendingOrders !== undefined &&
+    pendingOrders.count > 0
+      ? { pending: pendingOrders }
+      : {}),
   }));
 }

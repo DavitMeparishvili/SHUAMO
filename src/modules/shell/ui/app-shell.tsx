@@ -9,10 +9,12 @@ import { UtilityStrip } from "./utility-strip";
 export function AppShell({
   locale,
   viewer,
+  pendingOrders,
   children,
 }: {
   locale: Locale;
   viewer: Viewer;
+  pendingOrders?: { count: number; oldestDays: number } | undefined;
   children: ReactNode;
 }) {
   const messages = getMessages(locale);
@@ -26,10 +28,20 @@ export function AppShell({
         {t(messages, "nav.skipToContent")}
       </a>
       <UtilityStrip locale={locale} messages={messages} />
-      <SiteHeader locale={locale} messages={messages} viewer={viewer} />
+      <SiteHeader
+        locale={locale}
+        messages={messages}
+        viewer={viewer}
+        pendingOrders={pendingOrders}
+      />
       <main id="main">{children}</main>
       <SiteFooter locale={locale} messages={messages} />
-      <MobileTabBar locale={locale} messages={messages} viewer={viewer} />
+      <MobileTabBar
+        locale={locale}
+        messages={messages}
+        viewer={viewer}
+        pendingOrders={pendingOrders}
+      />
     </>
   );
 }

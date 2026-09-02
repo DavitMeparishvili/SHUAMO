@@ -6,6 +6,7 @@ import { GeistSans } from "geist/font/sans";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 import { currentViewer } from "@/src/modules/identity";
+import { pendingOrderSummary } from "@/src/modules/conversions";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -46,6 +47,10 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
+  const pendingOrders =
+    viewer.kind === "brand"
+      ? await pendingOrderSummary(viewer.brandId, new Date())
+      : undefined;
 
   return (
     <html
@@ -53,7 +58,7 @@ export default async function LocaleLayout({
       lang={locale}
     >
       <body>
-        <AppShell locale={locale} viewer={viewer}>
+        <AppShell locale={locale} viewer={viewer} pendingOrders={pendingOrders}>
           {children}
         </AppShell>
       </body>

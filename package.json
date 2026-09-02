@@ -33,7 +33,10 @@
     "seed:phase-2": "tsx scripts/seed-phase-02.ts",
     "seed:phase-3": "tsx scripts/seed-phase-03.ts",
     "seed:phase-4": "tsx scripts/seed-phase-04.ts",
+    "seed:phase-6": "tsx scripts/seed-phase-06.ts",
     "measure:redirect": "tsx scripts/measure-redirect-latency.ts",
+    "measure:conversions": "tsx scripts/measure-conversions-latency.ts",
+    "post:conversion": "tsx scripts/post-conversion.ts",
     "approve": "tsx scripts/approve-account.ts",
     "brand:key": "tsx scripts/regenerate-brand-key.ts",
     "verify:phase-0": "pnpm format:check && pnpm lint && pnpm verify:boundaries && pnpm typecheck && pnpm test:unit && pnpm test:integration && pnpm build && pnpm test:e2e --grep-invert \"@phase-\"",
@@ -42,7 +45,9 @@
     "verify:phase-3": "pnpm verify:phase-2 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm storage:up && pnpm storage:init && pnpm db:migrate:deploy && pnpm seed:phase-3 && pnpm test:e2e --grep @phase-3",
     "verify:phase-4": "pnpm verify:phase-3 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm seed:phase-4 && pnpm test:e2e --grep @phase-4",
     "verify:attribution-model": "node scripts/verify-single-link-attribution.mjs",
-    "verify:attribution-correction": "pnpm verify:phase-4 && pnpm verify:attribution-model && pnpm test:coverage"
+    "verify:attribution-correction": "pnpm verify:phase-4 && pnpm verify:attribution-model && pnpm test:coverage",
+    "verify:phase-5": "pnpm verify:attribution-correction",
+    "verify:phase-6": "pnpm verify:phase-5 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm seed:phase-6 && pnpm test:e2e --grep @phase-6"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",

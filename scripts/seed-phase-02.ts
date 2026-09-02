@@ -114,6 +114,8 @@ for (const fixture of fixtures) {
         name: fixture.name,
         status: fixture.status,
         vatRegistered: fixture.vatRegistered,
+        keyPrefix: fixture.userId.endsWith("1") ? key.prefix : "xu_sk_SUSPEND0",
+        keyHash: fixture.userId.endsWith("1") ? key.hash : "suspended",
       },
     });
   } else {

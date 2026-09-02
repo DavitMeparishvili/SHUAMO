@@ -79,3 +79,28 @@ The API is complete when replay safety, exact-click resolution, immutable
 amounts, lifecycle transitions, PostgreSQL invariants, route contracts, and
 the end-to-end click-to-conversion journey pass without querying any other
 visitor activity.
+
+## Completion checklist
+
+- [x] `pnpm verify:phase-6` passes, including every inherited phase gate.
+- [x] Bearer authentication, `Origin` rejection, payload/timestamp validation,
+      and every documented response status have route-contract coverage.
+- [x] The immutable request fingerprint makes identical sequential and
+      concurrent retries free while changed payloads, including `clickId`,
+      return 409 independently of later brand VAT changes.
+- [x] Exact submitted-click resolution covers absent, unknown, cross-brand,
+      future, expired, disabled-link, and non-creditable cases.
+- [x] Mixed carts commission only matching SKUs at the link's immutable rate;
+      stored money is asserted as exact decimal strings.
+- [x] Conversion, items, attributions, and the click's first `converted_at` are
+      persisted atomically, with at most one attribution per item and immutable
+      commission amounts.
+- [x] Confirmation and cancellation obey the whole-order state table and write
+      an audit event in the same transaction without recalculating money.
+- [x] Both locales expose the brand queue, unattributed orders, pending-age
+      escalation, and creator earnings; desktop and mobile Playwright journeys
+      pass with zero WCAG 2.2 AA axe violations.
+- [x] The 200-request conversion latency check passes: p95 **19.61ms** against
+      the **200ms** budget on 2026-09-02.
+- [x] Independent review and closure review report no remaining critical, high,
+      or medium findings.
