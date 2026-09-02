@@ -28,9 +28,9 @@ export function SiteHeader({
           className="flex items-center gap-2 max-[639px]:hidden"
           aria-label={t(messages, "nav.primary")}
         >
-          {destinations.map((destination, index) => (
+          {destinations.map((destination) => (
             <a
-              className={`inline-flex min-h-[44px] items-center rounded-pill px-4 type-small font-semibold no-underline ${viewer.kind === "anonymous" && index === 0 ? "bg-signal text-paper hover:bg-signal-hover active:bg-signal-active" : "text-slate-700 hover:bg-slate-100"}`}
+              className={`inline-flex min-h-[44px] items-center rounded-pill px-4 type-small font-semibold no-underline ${viewer.kind === "anonymous" && destination.href.endsWith("/sign-in") ? "bg-signal text-paper hover:bg-signal-hover active:bg-signal-active" : "text-slate-700 hover:bg-slate-100"}`}
               href={destination.href}
               key={destination.href}
             >

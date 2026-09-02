@@ -25,6 +25,11 @@ enum ApprovalStatus {
   SUSPENDED
 }
 
+enum ProfileStatus {
+  DRAFT
+  PUBLISHED
+}
+
 /// SHUAMO's product account. Better Auth owns credentials and sessions.
 model AppUser {
   id        String   @id @default(uuid()) @db.Uuid
@@ -56,6 +61,7 @@ model Brand {
   partnerships Partnership[]
   clicks       Click[]
   conversions  Conversion[]
+  profile      BrandProfile?
 
   @@map("brand")
 }
@@ -75,8 +81,64 @@ model Creator {
   partnerships Partnership[]
   links        TrackingLink[]
   attributions Attribution[]
+  profile      CreatorProfile?
 
   @@map("creator")
+}
+
+model BrandProfile {
+  id                     String        @id @default(uuid()) @db.Uuid
+  brandId                String        @unique @map("brand_id") @db.Uuid
+  slug                   String?       @unique
+  status                 ProfileStatus @default(DRAFT)
+  taglineKa              String        @default("") @map("tagline_ka")
+  taglineEn              String        @default("") @map("tagline_en")
+  descriptionKa          String        @default("") @map("description_ka")
+  descriptionEn          String        @default("") @map("description_en")
+  locationKa             String        @default("") @map("location_ka")
+  locationEn             String        @default("") @map("location_en")
+  logoUrl                 String        @default("") @map("logo_url")
+  heroImageUrl            String        @default("") @map("hero_image_url")
+  categories              String[]      @default([])
+  whatWeMake              Json          @default("[]") @map("what_we_make")
+  collaborationInterests Json          @default("[]") @map("collaboration_interests")
+  socialLinks             Json          @default("[]") @map("social_links")
+  featuredProductIds      Json          @default("[]") @map("featured_product_ids")
+  publishedAt             DateTime?     @map("published_at") @db.Timestamptz(6)
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
+
+  @@index([status, slug], map: "brand_profile_public_idx")
+  @@map("brand_profile")
+}
+
+model CreatorProfile {
+  id                 String        @id @default(uuid()) @db.Uuid
+  creatorId          String        @unique @map("creator_id") @db.Uuid
+  slug               String?       @unique
+  status             ProfileStatus @default(DRAFT)
+  taglineKa          String        @default("") @map("tagline_ka")
+  taglineEn          String        @default("") @map("tagline_en")
+  descriptionKa      String        @default("") @map("description_ka")
+  descriptionEn      String        @default("") @map("description_en")
+  locationKa         String        @default("") @map("location_ka")
+  locationEn         String        @default("") @map("location_en")
+  heroImageUrl       String        @default("") @map("hero_image_url")
+  categories         String[]      @default([])
+  languages          String[]      @default([])
+  contentFormats     String[]      @default([]) @map("content_formats")
+  socialLinks        Json          @default("[]") @map("social_links")
+  featuredWork       Json          @default("[]") @map("featured_work")
+  publishedAt        DateTime?     @map("published_at") @db.Timestamptz(6)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+
+  @@index([status, slug], map: "creator_profile_public_idx")
+  @@map("creator_profile")
 }
 
 enum ProductStatus {

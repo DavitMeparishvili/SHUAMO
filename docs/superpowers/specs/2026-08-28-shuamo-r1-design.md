@@ -79,6 +79,8 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 - One user per brand
 - Product catalog: title, description, price, up to 8 uploaded images, backlink URL, commission rate
 - Brand-side image upload via presigned URL, direct to self-hosted object storage (§11.2)
+- Public brand and creator profiles, public directories, and profile media, as
+  specified by the approved Phase 6.5 public-profiles design
 - Brand ↔ creator partnership: Apply / Invite with Approve / Reject
 - Creator-initiated product links after partnership approval
 - Redirect service with the disable chain
@@ -111,7 +113,7 @@ Two product decisions survive the cut because they define what SHUAMO *is*:
 | Click country, parsed device (OS, browser, form factor)                  | Salted IP+UA hash, for deduplication only                  | R3         |
 | Platform fee, VAT invoicing, accrual ledger, month-close                 | CSV export                                                 | R2         |
 | Creator payout accounts with admin verification, payout batches          | Three nullable columns on the creator, unused              | R2         |
-| Email, `ru` locale, bot filtering, HMAC signing, public directories      | —                                                          | R3         |
+| Email, `ru` locale, bot filtering, HMAC signing                          | —                                                          | R3         |
 | Card payments, PSP, bank APIs, multi-currency, buyer accounts            | —                                                          | Never      |
 
 Approvals happen by seed script and direct database access. There is no admin UI. This is workable
@@ -181,7 +183,8 @@ only because the MVP targets a pilot of 1–2 brands.
 | Stack              | Next.js (App Router) · PostgreSQL · MinIO · Prisma · Caddy · Docker Compose on a self-hosted VPS |
 
 **PostgreSQL and a self-hosted, S3-compatible object store (MinIO) are the only stateful services.**
-No Redis, no queue. Object storage backs product images only (§11.2) — the redirect and the
+No Redis, no queue. Object storage backs public product and profile images only (§11.2 and the
+Phase 6.5 public-profiles design) — the redirect and the
 attribution calculator, the two components with a latency budget, still touch nothing but Postgres
 (§6.1, §6.3). The redirect reads and writes Postgres synchronously and the worker is a scheduler.
 Redis is the designed answer to scale, not a dependency the pilot carries in advance (§11.1). No edge
@@ -768,9 +771,9 @@ a future release, not a silent omission.
 
 | Release | Contents                                                                                                                                                                                                     |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **MVP** | This document. Catalog with rates, brand↔creator partnerships, explicit per-product links, redirect, click tracking, exact-link attribution, conversions API, confirm/cancel, CSV export                     |
+| **MVP** | This document plus the approved Phase 6.5 profile design. Public profiles/directories, catalog with rates, brand↔creator partnerships, per-product links, tracking, attribution, conversions, confirmation, and CSV export |
 | **R2**  | Campaigns and campaign-scoped rates (§4.7), domain verification, brand teams, pixel path, key rotation, self-test, delivery log, rate history — and the money stack: accrual ledger, platform fee, VAT invoicing, month close, payout batches, admin console |
-| **R3**  | Email, `ru` locale, bot filtering, anomaly alerts, HMAC signing, creator social proof, public directories                                                                                                    |
+| **R3**  | Email, `ru` locale, bot filtering, anomaly alerts, HMAC signing, creator social ownership proof and audience analytics                                                                                       |
 | **R4**  | Compliance and automation: licensing position, KYC/AML depth, bank statement import                                                                                                                          |
 
 The MVP exists first because attribution is the component that can fail silently, and there is no

@@ -2,6 +2,7 @@ export { authenticateBrandKey } from "./application/authenticate-brand-key";
 export { generateBrandKey } from "./application/generate-brand-key";
 export { resolveViewer } from "./application/resolve-viewer";
 export { mintApiKey } from "./domain/api-key";
+export { safeProfileReturnTo } from "./domain/profile-return-to";
 export { currentViewer } from "./infrastructure/auth";
 export { auth } from "./infrastructure/auth";
 export {

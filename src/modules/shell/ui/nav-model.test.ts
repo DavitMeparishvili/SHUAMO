@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { navDestinationsFor } from "./nav-model";
 
 describe("navDestinationsFor", () => {
-  it("offers an anonymous viewer nothing but sign-in", () => {
+  it("offers anonymous public discovery before sign-in", () => {
     const destinations = navDestinationsFor({ kind: "anonymous" }, "ka");
     expect(destinations.map((destination) => destination.href)).toEqual([
+      "/ka/creators",
+      "/ka/brands",
       "/ka/sign-in",
     ]);
   });

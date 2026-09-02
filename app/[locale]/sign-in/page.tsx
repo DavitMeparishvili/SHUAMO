@@ -1,16 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
-import { AuthCard, SignInForm } from "@/src/modules/identity";
+import {
+  AuthCard,
+  safeProfileReturnTo,
+  SignInForm,
+} from "@/src/modules/identity";
 
 export default async function SignInPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ returnTo?: string | string[] }>;
 }) {
-  const { locale } = await params;
+  const [{ locale }, query] = await Promise.all([params, searchParams]);
   if (!isLocale(locale)) notFound();
   const messages = getMessages(locale);
+  const returnTo = safeProfileReturnTo(locale, query.returnTo);
   return (
     <AuthCard
       title={t(messages, "identity.signIn.title")}
@@ -27,6 +34,7 @@ export default async function SignInPage({
       <SignInForm
         locale={locale}
         mode="sign-in"
+        returnTo={returnTo}
         copy={{
           email: t(messages, "identity.field.email"),
           password: t(messages, "identity.field.password"),

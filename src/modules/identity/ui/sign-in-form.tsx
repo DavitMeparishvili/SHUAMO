@@ -17,10 +17,12 @@ export interface AuthFormCopy {
 export function SignInForm({
   locale,
   mode,
+  returnTo,
   copy,
 }: {
   locale: Locale;
   mode: "sign-in" | "sign-up";
+  returnTo?: string | undefined;
   copy: AuthFormCopy;
 }) {
   const [pending, setPending] = useState(false);
@@ -51,7 +53,7 @@ export function SignInForm({
         setError(true);
         return;
       }
-      window.location.assign(`/${locale}/workspace`);
+      window.location.assign(returnTo ?? `/${locale}/workspace`);
     } catch {
       setError(true);
     } finally {

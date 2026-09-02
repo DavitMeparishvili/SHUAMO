@@ -29,6 +29,9 @@ Brands maintain a brand-wide catalogue, archive rather than delete products, app
 - One tracking link identifies one creator and product and preserves its accepted commission terms.
 - Percent commissions are stored as exact fractions no greater than 1; fixed commissions are exact GEL per unit.
 - Product images upload directly to S3-compatible storage with presigned PUT URLs, with at most eight JPEG, PNG, or WebP images.
+- Approved brands and creators can publish distinct, bilingual public profiles
+  with owner-scoped media and validated external links; public discovery never
+  implies ranking or social-performance verification.
 - Link availability resolves brand, partnership, product, then link status in that exact order.
 - Disabling is forward-looking; existing click attribution remains intact.
 - Money and rates use exact decimal values.

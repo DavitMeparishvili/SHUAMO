@@ -8,7 +8,11 @@ export function PartnershipQueue({
   partnerships: readonly {
     id: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
-    creator: { displayName: string };
+    creator: {
+      displayName: string;
+      profile?: { slug: string | null; status: string } | null;
+      profileHref?: string;
+    };
   }[];
   decideAction: (
     partnershipId: string,
@@ -40,7 +44,16 @@ export function PartnershipQueue({
         >
           <div className="grid gap-2">
             <h2 className="m-0 type-h3 text-ink">
-              {partnership.creator.displayName}
+              {partnership.creator.profileHref ? (
+                <a
+                  className="text-inherit"
+                  href={partnership.creator.profileHref}
+                >
+                  {partnership.creator.displayName}
+                </a>
+              ) : (
+                partnership.creator.displayName
+              )}
             </h2>
             <div>
               <StatusPill
@@ -109,6 +122,8 @@ export function CreatorBrandList({
     id: string;
     name: string;
     status?: "PENDING" | "APPROVED" | "REJECTED" | undefined;
+    profile?: { slug: string | null; status: string } | null;
+    profileHref?: string;
   }[];
   applyAction: (brandId: string) => void | Promise<void>;
   copy: Record<
@@ -126,7 +141,15 @@ export function CreatorBrandList({
           key={brand.id}
         >
           <div className="grid gap-2">
-            <h2 className="m-0 type-h3 text-ink">{brand.name}</h2>
+            <h2 className="m-0 type-h3 text-ink">
+              {brand.profileHref ? (
+                <a className="text-inherit" href={brand.profileHref}>
+                  {brand.name}
+                </a>
+              ) : (
+                brand.name
+              )}
+            </h2>
             {brand.status ? (
               <div>
                 <StatusPill

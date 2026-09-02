@@ -4,7 +4,7 @@
 
 **Goal:** Deliver SHUAMO as a sequence of independently testable releases — first the tracking spine that proves a click can be tied to a sale and priced correctly (R1), then the accounting stack that invoices brands, collects, and pays creators (R2).
 
-**Architecture:** A Next.js App Router modular monolith of vertical slices. Each module owns `domain` (framework-free, no ORM, no I/O), `application` (use cases over ports), `ports` (interfaces), `infrastructure` (Prisma adapters), `http` (dependency-injected handler factories), and `ui` (React). `app/` holds thin route wrappers only. PostgreSQL is the transactional datastore and every commercial invariant is a transaction or a test, never a convention; MinIO (from Phase 3) is scoped to product images alone and touches no commercial invariant.
+**Architecture:** A Next.js App Router modular monolith of vertical slices. Each module owns `domain` (framework-free, no ORM, no I/O), `application` (use cases over ports), `ports` (interfaces), `infrastructure` (Prisma adapters), `http` (dependency-injected handler factories), and `ui` (React). `app/` holds thin route wrappers only. PostgreSQL is the transactional datastore and every commercial invariant is a transaction or a test, never a convention; MinIO (from Phase 3) stores public product and profile media and touches no commercial invariant.
 
 **Tech Stack:** Node.js 24 LTS · pnpm · Next.js 16 (App Router) · React 19 · strict TypeScript · PostgreSQL 17 · MinIO (S3-compatible object storage) · Prisma 7 · Better Auth · Zod 4 · Tailwind CSS 4 · Vitest 4 (unit + integration projects) · Playwright · Docker Compose · Caddy.
 
@@ -12,8 +12,9 @@
 
 - `docs/superpowers/specs/2026-08-28-shuamo-r1-design.md` — the tracking spine. Bare section references (§6.3, §7.2) point here.
 - `docs/superpowers/specs/2026-08-29-shuamo-r2-accounting-design.md` — the money stack. References written `R2 §n`.
+- `docs/superpowers/specs/2026-09-02-public-profiles-design.md` — public brand and creator profiles, discovery, publication, and trust boundaries.
 
-Both specs travel with this roadmap. Every phase plan argues from them; where a plan and a spec disagree, the spec wins unless the disagreement is listed in "Recorded deviations" below.
+These specs travel with this roadmap. Every phase plan argues from them; where a plan and a spec disagree, the spec wins unless the disagreement is listed in "Recorded deviations" below.
 
 ---
 
@@ -67,11 +68,12 @@ Phase 0  Engineering foundation
           -> Single-link attribution correction
             -> Phase 5  Exact-link commission calculator
               -> Phase 6  Conversion webhook & order lifecycle
-              -> Phase 7  Reporting, CSV, worker & deploy   = R1 / MVP
-                -> Phase 8  Billing periods & creator ledger
-                  -> Phase 9  Invoicing & the close job
-                    -> Phase 10 Payment orders, release & payouts
-                      -> Phase 11 Money views, admin console & reconciliation = R2
+                -> Phase 6.5  Public profiles & discovery
+                  -> Phase 7  Reporting, CSV, worker & deploy   = R1 / MVP
+                    -> Phase 8  Billing periods & creator ledger
+                      -> Phase 9  Invoicing & the close job
+                        -> Phase 10 Payment orders, release & payouts
+                          -> Phase 11 Money views, admin console & reconciliation = R2
 ```
 
 No phase starts until the previous phase's verify command, demo journey, migration rehearsal, and exit checklist all pass. Each phase leaves `main` releasable.
@@ -340,6 +342,55 @@ Three, all deliberate. Anything else that diverges is a bug in the plan.
 - Phase command: `pnpm verify:phase-6`.
 
 **Execution plan:** `2026-08-29-phase-06-conversions-api-implementation.md`
+
+---
+
+## Phase 6.5 — Public profiles & discovery
+
+**Outcome:** Approved brands and creators can publish distinct, shareable
+profiles that introduce them to each other and start the existing partnership
+flow; anyone can browse published profiles without seeing private data.
+
+**Scope**
+
+- Separate brand Collaboration Passport and creator Proof Ledger public
+  compositions, following the approved profile design references.
+- Draft, preview, publish, unpublish, stable role-local slug, localized content,
+  account-scoped media upload, and explicit locale fallback.
+- Public `/brands`, `/brands/[slug]`, `/creators`, and `/creators/[slug]`
+  surfaces in both locales, with deterministic text/category/location filters.
+- Public partnership actions reuse the existing apply/invite use cases and show
+  viewer-specific state without exposing another account's relationship.
+- Existing private brand/creator marketplace cards link to published profiles.
+- “SHUAMO approved” means marketplace approval only. Social ownership, reach,
+  engagement, performance, and all private commercial data remain unverified
+  and non-public.
+
+**Deliverable:** The Phase 6 seed accounts publish and share one role-specific
+profile each; an anonymous visitor can discover both, and each approved
+opposite-role account can create exactly one partnership from the public page.
+
+**Automated proof**
+
+- `PROFILE-001`–`PROFILE-010` unit, integration, route, and browser coverage.
+- Draft, suspended, unknown, and unpublished profiles are indistinguishable
+  public 404s; only the owner can preview a draft.
+- Media presign and save validation refuse wrong role, wrong owner, arbitrary
+  origin, unsupported type, and non-profile keys before storage mutation.
+- Public response assertions exclude email, API keys, payout data, money,
+  rates, clicks, conversions, and private partnership rows.
+- Desktop and mobile Playwright journeys cover both roles and locales with zero
+  axe WCAG 2.2 AA violations.
+
+**Exit criteria**
+
+- Both approved compositions survive real content, empty optional fields, and
+  maximum supported content without losing their hierarchy.
+- Social and work claims are labelled as owner supplied; only account approval
+  is attributed to SHUAMO.
+- Phase command: `pnpm verify:phase-6.5`.
+
+**Execution plan:** `2026-09-02-phase-06-5-public-profiles-implementation.md`
 
 ---
 

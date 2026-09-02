@@ -47,6 +47,19 @@ a {
   text-underline-offset: 0.2em;
 }
 
+.profile-rule {
+  margin-top: 2rem;
+  border-top: 1px solid var(--color-slate-200);
+  padding-top: 1.25rem;
+}
+
+.profile-rule > h2 {
+  margin: 0 0 1rem;
+  color: var(--color-ink);
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-leading);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

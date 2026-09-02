@@ -31,7 +31,12 @@ export default async function CreatorBrandsPage({
       intro={t(messages, "partnership.creator.intro")}
     >
       <CreatorBrandList
-        brands={brands}
+        brands={brands.map((brand) => ({
+          ...brand,
+          ...(brand.profile?.status === "PUBLISHED" && brand.profile.slug
+            ? { profileHref: `/${locale}/brands/${brand.profile.slug}` }
+            : {}),
+        }))}
         applyAction={applyAction.bind(null, locale)}
         copy={{
           emptyTitle: t(messages, "partnership.brands.emptyTitle"),

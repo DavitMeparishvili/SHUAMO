@@ -10,7 +10,10 @@ export function UtilityStrip({
   messages: Messages;
 }) {
   return (
-    <div className="bg-ink text-on-inverse">
+    <aside
+      aria-label={t(messages, "shell.statement")}
+      className="bg-ink text-on-inverse"
+    >
       <div className="mx-auto flex min-h-8 max-w-[var(--layout-column)] items-center justify-between gap-4 px-[var(--layout-gutter)] max-[1179px]:px-[var(--layout-gutter-md)] max-[639px]:px-[var(--layout-gutter-sm)]">
         <p className="m-0 py-2 type-caption">
           {t(messages, "shell.statement")}
@@ -25,6 +28,6 @@ export function UtilityStrip({
           <LocaleSwitch locale={locale} label={t(messages, "nav.locale")} />
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

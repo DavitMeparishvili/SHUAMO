@@ -39,7 +39,18 @@ export default async function BrandCreatorsPage({
             {t(messages, "partnership.applications")}
           </h2>
           <PartnershipQueue
-            partnerships={partnerships}
+            partnerships={partnerships.map((partnership) => ({
+              ...partnership,
+              creator: {
+                ...partnership.creator,
+                ...(partnership.creator.profile?.status === "PUBLISHED" &&
+                partnership.creator.profile.slug
+                  ? {
+                      profileHref: `/${locale}/creators/${partnership.creator.profile.slug}`,
+                    }
+                  : {}),
+              },
+            }))}
             decideAction={decideAction.bind(null, locale)}
             copy={{
               emptyTitle: t(messages, "partnership.empty.title"),
@@ -73,7 +84,17 @@ export default async function BrandCreatorsPage({
                   key={creator.id}
                 >
                   <h3 className="m-0 type-h3 text-ink">
-                    {creator.displayName}
+                    {creator.profile?.status === "PUBLISHED" &&
+                    creator.profile.slug ? (
+                      <a
+                        className="text-inherit"
+                        href={`/${locale}/creators/${creator.profile.slug}`}
+                      >
+                        {creator.displayName}
+                      </a>
+                    ) : (
+                      creator.displayName
+                    )}
                   </h3>
                   <form action={inviteAction.bind(null, locale, creator.id)}>
                     <Button type="submit">

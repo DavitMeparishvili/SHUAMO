@@ -7,6 +7,7 @@ import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 import { currentViewer } from "@/src/modules/identity";
 import { pendingOrderSummary } from "@/src/modules/conversions";
+import { serverEnv } from "@/src/config/env";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -32,6 +33,7 @@ export async function generateMetadata({
   const messages = getMessages(locale);
 
   return {
+    metadataBase: new URL(serverEnv().APP_URL),
     title: t(messages, "meta.title"),
     description: t(messages, "meta.description"),
   };
@@ -58,6 +60,10 @@ export default async function LocaleLayout({
       lang={locale}
     >
       <body>
+        <span
+          data-profile-direction="phase-06-5-passport-proof-ledger"
+          hidden
+        />
         <AppShell locale={locale} viewer={viewer} pendingOrders={pendingOrders}>
           {children}
         </AppShell>
