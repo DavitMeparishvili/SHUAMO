@@ -63,7 +63,8 @@ export interface PersistConversionInput {
 
 export type CreateConversionResult =
   | { readonly kind: "created"; readonly view: ConversionView }
-  | { readonly kind: "existing"; readonly existing: ExistingConversion };
+  | { readonly kind: "existing"; readonly existing: ExistingConversion }
+  | { readonly kind: "click_conflict" };
 
 export interface ConversionRepository {
   findByOrder(

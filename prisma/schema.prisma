@@ -288,6 +288,12 @@ enum ConversionStatus {
   UNATTRIBUTED
 }
 
+enum AttributionStatus {
+  CANONICAL
+  NONCANONICAL
+  MANUAL_REVIEW
+}
+
 model Conversion {
   id                 String           @id @default(uuid()) @db.Uuid
   brandId            String           @map("brand_id") @db.Uuid
@@ -327,21 +333,26 @@ model ConversionItem {
 /// The submitted click is the sole source of creator, product and immutable
 /// commission terms. commissionAmount is immutable after insert.
 model Attribution {
-  id               String   @id @default(uuid()) @db.Uuid
-  conversionItemId String   @unique @map("conversion_item_id") @db.Uuid
-  clickId          String   @map("click_id")
-  creatorId        String   @map("creator_id") @db.Uuid
-  productId        String   @map("product_id") @db.Uuid
-  commissionAmount Decimal  @map("commission_amount") @db.Decimal(12, 2)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                     String            @id @default(uuid()) @db.Uuid
+  conversionItemId       String            @unique @map("conversion_item_id") @db.Uuid
+  clickId                String?           @unique(map: "attribution_click_id_key") @map("click_id")
+  historicalClickId      String?           @map("historical_click_id")
+  canonicalAttributionId String?           @map("canonical_attribution_id") @db.Uuid
+  creatorId              String            @map("creator_id") @db.Uuid
+  productId              String            @map("product_id") @db.Uuid
+  commissionAmount       Decimal           @map("commission_amount") @db.Decimal(12, 2)
+  status                 AttributionStatus @default(CANONICAL)
+  resolutionNote         String?           @map("resolution_note")
+  createdAt              DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
 
   conversionItem ConversionItem @relation(fields: [conversionItemId], references: [id], onDelete: Cascade)
-  click          Click          @relation(fields: [clickId], references: [id], onDelete: Restrict)
+  click          Click?         @relation(fields: [clickId], references: [id], onDelete: Restrict)
   creator        Creator        @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   product        Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([creatorId], map: "attribution_creator_idx")
-  @@index([clickId], map: "attribution_click_idx")
+  @@index([historicalClickId], map: "attribution_historical_click_idx")
+  @@index([canonicalAttributionId], map: "attribution_canonical_idx")
   @@map("attribution")
 }
 

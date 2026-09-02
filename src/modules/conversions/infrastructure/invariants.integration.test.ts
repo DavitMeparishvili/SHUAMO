@@ -101,7 +101,7 @@ describe("Phase 6 database constraints", () => {
     ).rejects.toThrow();
   });
 
-  it("allows at most one attribution per conversion item and no negative amount", async () => {
+  it("allows at most one attribution per conversion item and recorded click", async () => {
     const { brand, creator, product, link } = await seedLink();
     const click = await prisma.click.create({
       data: {
@@ -151,9 +151,28 @@ describe("Phase 6 database constraints", () => {
     });
     await expect(
       prisma.attribution.create({
+        data: { ...data, conversionItemId: otherItem.id },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects negative attribution amounts", async () => {
+    const { brand, creator, product, link } = await seedLink();
+    const click = await prisma.click.create({
+      data: {
+        id: `ck_${crypto.randomUUID()}`,
+        trackingLinkId: link.id,
+        brandId: brand.id,
+      },
+    });
+    const { item } = await seedConversionItem();
+    await expect(
+      prisma.attribution.create({
         data: {
-          ...data,
-          conversionItemId: otherItem.id,
+          conversionItemId: item.id,
+          clickId: click.id,
+          creatorId: creator.id,
+          productId: product.id,
           commissionAmount: "-0.01",
         },
       }),

@@ -54,6 +54,19 @@ describe("single-link attribution properties", () => {
     });
 
     expect(result.lines).toHaveLength(lineItems.length);
+    const attributed = result.lines.filter(
+      (calculated) => calculated.attribution !== undefined,
+    );
+    expect(attributed).toHaveLength(1);
+    const totalCommission = result.lines.reduce(
+      (total, calculated) => total.plus(calculated.commission),
+      Money.ZERO,
+    );
+    expect(attributed[0]?.attribution?.creatorId).toBe(link.creatorId);
+    expect(attributed[0]?.attribution?.clickId).toBe(link.clickId);
+    expect(attributed[0]?.attribution?.amount.toStorageString()).toBe(
+      totalCommission.toStorageString(),
+    );
     for (const calculated of result.lines) {
       if (
         calculated.sku !== link.sku ||
@@ -61,12 +74,6 @@ describe("single-link attribution properties", () => {
       ) {
         expect(calculated.attribution).toBeUndefined();
         expect(calculated.commission.toStorageString()).toBe("0.00");
-      } else {
-        expect(calculated.attribution?.creatorId).toBe(link.creatorId);
-        expect(calculated.attribution?.clickId).toBe(link.clickId);
-        expect(calculated.attribution?.amount.toStorageString()).toBe(
-          calculated.commission.toStorageString(),
-        );
       }
     }
   });

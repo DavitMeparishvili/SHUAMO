@@ -37,7 +37,9 @@ function viewOf(record: ConversionRecord): ConversionView {
       lineVat: item.lineVat.toFixed(2),
       commissionableNet: item.commissionableNet.toFixed(2),
       attribution:
-        item.attribution === null
+        item.attribution === null ||
+        item.attribution.status !== "CANONICAL" ||
+        item.attribution.clickId === null
           ? undefined
           : {
               clickId: item.attribution.clickId,
@@ -87,77 +89,127 @@ export function createPrismaConversionRepository(
     },
 
     async create(input) {
-      return database.$transaction(async (transaction) => {
-        await transaction.$executeRaw(
-          Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.brandId}:${input.payload.orderId}`}, 0))`,
+      const attributionClickIds = [
+        ...new Set(
+          input.lines.flatMap((line) =>
+            line.attribution === undefined ? [] : [line.attribution.clickId],
+          ),
+        ),
+      ];
+      if (attributionClickIds.length > 1) {
+        throw new Error(
+          "one conversion cannot contain multiple click attributions",
         );
-        const existing = await transaction.conversion.findUnique({
-          where: {
-            brandId_orderId: {
+      }
+      const attributionClickId = attributionClickIds[0];
+
+      try {
+        return await database.$transaction(async (transaction) => {
+          await transaction.$executeRaw(
+            Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.brandId}:${input.payload.orderId}`}, 0))`,
+          );
+          const existing = await transaction.conversion.findUnique({
+            where: {
+              brandId_orderId: {
+                brandId: input.brandId,
+                orderId: input.payload.orderId,
+              },
+            },
+            include: conversionInclude,
+          });
+          if (existing !== null) {
+            return {
+              kind: "existing",
+              existing: existingOf(existing),
+            } as const;
+          }
+
+          if (attributionClickId !== undefined) {
+            await transaction.$executeRaw(
+              Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${`attribution:${attributionClickId}`}, 0))`,
+            );
+            const existingAttribution =
+              await transaction.attribution.findUnique({
+                where: { clickId: attributionClickId },
+                select: { id: true },
+              });
+            if (existingAttribution !== null) {
+              return { kind: "click_conflict" } as const;
+            }
+          }
+
+          const created = await transaction.conversion.create({
+            data: {
               brandId: input.brandId,
               orderId: input.payload.orderId,
-            },
-          },
-          include: conversionInclude,
-        });
-        if (existing !== null) {
-          return { kind: "existing", existing: existingOf(existing) } as const;
-        }
-
-        const created = await transaction.conversion.create({
-          data: {
-            brandId: input.brandId,
-            orderId: input.payload.orderId,
-            requestFingerprint: input.requestFingerprint,
-            occurredAt: input.payload.occurredAt,
-            status: input.status,
-            items: {
-              create: input.lines.map((line) => ({
-                sku: line.input.sku,
-                qty: line.input.qty,
-                unitPrice: line.input.unitPrice.toStorageString(),
-                lineDiscount: line.input.lineDiscount.toStorageString(),
-                lineVat: line.lineVat.toStorageString(),
-                commissionableNet: line.commissionableNet.toStorageString(),
-                ...(line.attribution === undefined
-                  ? {}
-                  : {
-                      attribution: {
-                        create: {
-                          clickId: line.attribution.clickId,
-                          creatorId: line.attribution.creatorId,
-                          productId: line.attribution.productId,
-                          commissionAmount:
-                            line.attribution.commissionAmount.toStorageString(),
+              requestFingerprint: input.requestFingerprint,
+              occurredAt: input.payload.occurredAt,
+              status: input.status,
+              items: {
+                create: input.lines.map((line) => ({
+                  sku: line.input.sku,
+                  qty: line.input.qty,
+                  unitPrice: line.input.unitPrice.toStorageString(),
+                  lineDiscount: line.input.lineDiscount.toStorageString(),
+                  lineVat: line.lineVat.toStorageString(),
+                  commissionableNet: line.commissionableNet.toStorageString(),
+                  ...(line.attribution === undefined
+                    ? {}
+                    : {
+                        attribution: {
+                          create: {
+                            clickId: line.attribution.clickId,
+                            creatorId: line.attribution.creatorId,
+                            productId: line.attribution.productId,
+                            commissionAmount:
+                              line.attribution.commissionAmount.toStorageString(),
+                          },
                         },
-                      },
-                    }),
-              })),
+                      }),
+                })),
+              },
             },
-          },
-          select: { id: true },
-        });
-
-        const earningClickIds = [
-          ...new Set(
-            input.lines.flatMap((line) =>
-              line.attribution === undefined ? [] : [line.attribution.clickId],
-            ),
-          ),
-        ];
-        if (earningClickIds.length > 0) {
-          await transaction.click.updateMany({
-            where: { id: { in: earningClickIds }, convertedAt: null },
-            data: { convertedAt: input.payload.occurredAt },
+            select: { id: true },
           });
-        }
 
-        const record = await transaction.conversion.findUniqueOrThrow({
-          where: { id: created.id },
-          include: conversionInclude,
+          const earningClickIds = [
+            ...new Set(
+              input.lines.flatMap((line) =>
+                line.attribution === undefined
+                  ? []
+                  : [line.attribution.clickId],
+              ),
+            ),
+          ];
+          if (earningClickIds.length > 0) {
+            await transaction.click.updateMany({
+              where: { id: { in: earningClickIds }, convertedAt: null },
+              data: { convertedAt: input.payload.occurredAt },
+            });
+          }
+
+          const record = await transaction.conversion.findUniqueOrThrow({
+            where: { id: created.id },
+            include: conversionInclude,
+          });
+          return { kind: "created", view: viewOf(record) } as const;
         });
-        return { kind: "created", view: viewOf(record) } as const;
-      });
+      } catch (error) {
+        if (
+          attributionClickId !== undefined &&
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          const existingAttribution = await database.attribution.findUnique({
+            where: { clickId: attributionClickId },
+            select: { id: true },
+          });
+          if (existingAttribution !== null) {
+            return { kind: "click_conflict" } as const;
+          }
+        }
+        throw error;
+      }
     },
 
     async decide(input) {
@@ -248,7 +300,7 @@ export async function pendingOrderSummary(brandId: string, now: Date) {
 
 export async function listEarningsForCreator(creatorId: string) {
   const rows = await prisma.attribution.findMany({
-    where: { creatorId },
+    where: { creatorId, status: "CANONICAL" },
     select: {
       id: true,
       commissionAmount: true,

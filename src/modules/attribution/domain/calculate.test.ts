@@ -69,7 +69,7 @@ describe("calculateAttributions", () => {
     );
   });
 
-  it("ATTR-005 creates at most one full attribution for each matching line", () => {
+  it("ATTR-005 creates one order attribution containing all matching-line commission", () => {
     const result = calculateAttributions(
       input({
         lineItems: [
@@ -84,7 +84,10 @@ describe("calculateAttributions", () => {
     ).toEqual(["12.00", "6.00"]);
     expect(
       result.lines.map(({ attribution }) => attribution?.creatorId),
-    ).toEqual(["c1", "c1"]);
+    ).toEqual(["c1", undefined]);
+    expect(result.lines[0]?.attribution?.amount.toStorageString()).toBe(
+      "18.00",
+    );
   });
 
   it("ATTR-005 multiplies a fixed agreed rate by matching quantity", () => {

@@ -18,7 +18,8 @@ export type IntakeResult =
       readonly kind: "accepted" | "replay" | "unattributed";
       readonly conversion: ConversionView;
     }
-  | { readonly kind: "conflict" }
+  | { readonly kind: "order_conflict" }
+  | { readonly kind: "click_conflict" }
   | { readonly kind: "timestamp_invalid" };
 
 export function intakeConversion(dependencies: {
@@ -38,7 +39,7 @@ export function intakeConversion(dependencies: {
     if (existing !== undefined) {
       return existing.requestFingerprint === fingerprint
         ? { kind: "replay", conversion: existing.view }
-        : { kind: "conflict" };
+        : { kind: "order_conflict" };
     }
 
     if (!isTimestampAcceptable(payload.occurredAt, dependencies.clock.now())) {
@@ -84,7 +85,8 @@ export function intakeConversion(dependencies: {
             };
           });
 
-    const status = link === undefined ? "UNATTRIBUTED" : "PENDING";
+    const hasAttribution = lines.some((line) => line.attribution !== undefined);
+    const status = hasAttribution ? "PENDING" : "UNATTRIBUTED";
     const created = await dependencies.conversions.create({
       brandId: brand.id,
       payload,
@@ -96,8 +98,9 @@ export function intakeConversion(dependencies: {
     if (created.kind === "existing") {
       return created.existing.requestFingerprint === fingerprint
         ? { kind: "replay", conversion: created.existing.view }
-        : { kind: "conflict" };
+        : { kind: "order_conflict" };
     }
+    if (created.kind === "click_conflict") return created;
     return {
       kind: status === "UNATTRIBUTED" ? "unattributed" : "accepted",
       conversion: created.view,

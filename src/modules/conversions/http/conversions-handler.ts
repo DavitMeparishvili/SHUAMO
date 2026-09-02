@@ -79,8 +79,16 @@ export function createConversionsHandler(dependencies: {
       },
       payload.value,
     );
-    if (result.kind === "conflict") {
+    if (result.kind === "order_conflict") {
       return respond({ error: "order_conflict" }, 409);
+    }
+    if (result.kind === "click_conflict") {
+      dependencies.log?.({
+        event: "attribution_conflict",
+        reason: "click_already_attributed",
+        path: new URL(request.url).pathname,
+      });
+      return respond({ error: "click_already_attributed" }, 409);
     }
     if (result.kind === "timestamp_invalid") {
       return respond({ error: "timestamp_out_of_range" }, 422);

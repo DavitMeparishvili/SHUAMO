@@ -17,18 +17,27 @@ export async function measureConversionsLatency(
     requests?: number;
     appUrl?: string;
     key?: string;
-    clickId?: string;
     sku?: string;
   } = {},
 ): Promise<ConversionsLatency> {
   const requests = input.requests ?? 200;
   const appUrl = input.appUrl ?? process.env.APP_URL ?? "http://localhost:3000";
   const key = input.key ?? "xu_sk_BBBBBBBB_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-  const clickId = input.clickId ?? "ck_phase6_seeded";
   const sku = input.sku ?? "PHASE4-ACTIVE-1";
   const samples: number[] = [];
 
   for (let index = 0; index < requests; index += 1) {
+    const redirect = await fetch(new URL("/r/P4ACTV01", appUrl), {
+      redirect: "manual",
+    });
+    const location = redirect.headers.get("location");
+    if (redirect.status !== 302 || location === null) {
+      throw new Error("conversion probe could not mint a recorded click");
+    }
+    const clickId = new URL(location, appUrl).searchParams.get("xu");
+    if (clickId === null) {
+      throw new Error("conversion probe redirect omitted its click ID");
+    }
     const response = await fetch(new URL("/v1/conversions", appUrl), {
       method: "POST",
       headers: {

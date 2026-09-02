@@ -58,7 +58,8 @@ function setup(
         kind: "accepted" | "replay" | "unattributed";
         conversion: ConversionView;
       }
-    | { kind: "conflict" }
+    | { kind: "order_conflict" }
+    | { kind: "click_conflict" }
     | { kind: "timestamp_invalid" } = {
     kind: "accepted",
     conversion: view,
@@ -139,10 +140,26 @@ describe("POST /v1/conversions", () => {
   });
 
   it.each([
-    [{ kind: "conflict" } as const, 409],
-    [{ kind: "timestamp_invalid" } as const, 422],
-  ])("maps intake failure %#", async (result, status) => {
+    [{ kind: "order_conflict" } as const, 409, "order_conflict"],
+    [{ kind: "click_conflict" } as const, 409, "click_already_attributed"],
+    [{ kind: "timestamp_invalid" } as const, 422, "timestamp_out_of_range"],
+  ])("maps intake failure %#", async (result, status, error) => {
     const { handler } = setup(result);
-    expect((await handler(request())).status).toBe(status);
+    const response = await handler(request());
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual({ error });
+  });
+
+  it("logs a click conflict without click, order, or credential data", async () => {
+    const { handler, log } = setup({ kind: "click_conflict" });
+    await handler(request());
+    expect(log).toHaveBeenCalledWith({
+      event: "attribution_conflict",
+      reason: "click_already_attributed",
+      path: "/v1/conversions",
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(
+      /ck_a91f|1234|xu_sk_|secret/,
+    );
   });
 });

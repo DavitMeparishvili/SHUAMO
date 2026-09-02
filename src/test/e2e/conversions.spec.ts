@@ -29,12 +29,18 @@ test("@phase-6 a posted exact-link order appears, confirms and reaches creator e
   request,
 }, testInfo) => {
   const orderId = `E2E-${testInfo.project.name}-${Date.now()}`;
+  const redirect = await request.get("/r/P4ACTV01", { maxRedirects: 0 });
+  expect(redirect.status()).toBe(302);
+  const location = redirect.headers().location;
+  if (location === undefined) throw new Error("redirect omitted Location");
+  const clickId = new URL(location).searchParams.get("xu");
+  expect(clickId).toMatch(/^ck_[0-9a-f]{12}$/);
   const response = await request.post("/v1/conversions", {
     headers: { authorization: `Bearer ${KEY}` },
     data: {
       orderId,
       occurredAt: new Date().toISOString(),
-      clickId: "ck_phase6_seeded",
+      clickId,
       items: [
         {
           sku: "PHASE4-ACTIVE-1",
@@ -64,7 +70,9 @@ test("@phase-6 a posted exact-link order appears, confirms and reaches creator e
   await page.context().clearCookies();
   await signIn(page, "en", CREATOR);
   await page.goto("/en/creator/earnings");
-  const earning = page.getByRole("article").filter({ hasText: `#${orderId}` });
+  const earning = page
+    .locator("tr:visible, article:visible")
+    .filter({ hasText: `#${orderId}` });
   await expect(earning.getByText("10.00 ₾")).toBeVisible();
   await expect(earning.getByText("Confirmed")).toBeVisible();
   await expectNoAccessibilityViolations(page);

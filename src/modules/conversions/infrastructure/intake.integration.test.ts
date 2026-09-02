@@ -6,6 +6,7 @@ import { intakeConversion } from "../application/intake-conversion";
 import type { ConversionPayload } from "../domain/payload";
 import { prismaClickResolver } from "./prisma-click-resolver";
 import { prismaConversionRepository } from "./prisma-conversion-repository";
+import { creatorPerformanceReport } from "./prisma-performance-repository";
 import { seedBrand, seedLink } from "@/src/test/fixtures/accounts";
 
 const NOW = new Date("2026-09-02T08:00:00Z");
@@ -97,6 +98,55 @@ describe("single-link conversion intake", () => {
     expect(first.conversion).toEqual(replay.conversion);
   });
 
+  it("rejects a second order for an already attributed click without financial or analytics effects", async () => {
+    const { brand, creator, product, click } = await fixture();
+    const first = await intake(
+      { id: brand.id, vatRegistered: false },
+      payload(click.id, product.sku, { orderId: "FIRST-ORDER" }),
+    );
+    const rejected = await intake(
+      { id: brand.id, vatRegistered: false },
+      payload(click.id, product.sku, { orderId: "SECOND-ORDER" }),
+    );
+
+    expect(first.kind).toBe("accepted");
+    expect(rejected).toEqual({ kind: "click_conflict" });
+    expect(await prisma.conversion.count()).toBe(1);
+    expect(await prisma.attribution.count()).toBe(1);
+
+    const report = await creatorPerformanceReport(
+      creator.id,
+      { period: "30d" },
+      NOW,
+    );
+    expect(report.totals).toMatchObject({
+      convertedClicks: 1,
+      orders: 1,
+      pending: "10.00",
+    });
+  });
+
+  it("allows exactly one of two concurrent orders to claim a click", async () => {
+    const { brand, product, click } = await fixture();
+    const results = await Promise.all([
+      intake(
+        { id: brand.id, vatRegistered: false },
+        payload(click.id, product.sku, { orderId: "CONCURRENT-A" }),
+      ),
+      intake(
+        { id: brand.id, vatRegistered: false },
+        payload(click.id, product.sku, { orderId: "CONCURRENT-B" }),
+      ),
+    ]);
+
+    expect(results.map((result) => result.kind).sort()).toEqual([
+      "accepted",
+      "click_conflict",
+    ]);
+    expect(await prisma.conversion.count()).toBe(1);
+    expect(await prisma.attribution.count()).toBe(1);
+  });
+
   it("rejects a changed click ID instead of replaying an unattributed order", async () => {
     const { brand, product, click } = await fixture();
     const firstPayload = payload(undefined, product.sku);
@@ -109,7 +159,7 @@ describe("single-link conversion intake", () => {
       { ...firstPayload, clickId: click.id },
     );
     expect(first.kind).toBe("unattributed");
-    expect(changed).toEqual({ kind: "conflict" });
+    expect(changed).toEqual({ kind: "order_conflict" });
     expect(await prisma.conversion.count()).toBe(1);
     expect(await prisma.attribution.count()).toBe(0);
   });
@@ -193,7 +243,7 @@ describe("single-link conversion intake", () => {
     ]);
     expect(results.map((result) => result.kind).sort()).toEqual([
       "accepted",
-      "conflict",
+      "order_conflict",
     ]);
     expect(await prisma.conversion.count()).toBe(1);
     expect(await prisma.attribution.count()).toBe(1);
@@ -292,6 +342,60 @@ describe("single-link conversion intake", () => {
     expect(bySku.get(product.sku)?.attribution?.commissionAmount).toBe("20.00");
   });
 
+  it("treats multiple matching line items and other products as one attributed order", async () => {
+    const { brand, creator, product, click } = await fixture();
+    const result = await intake(
+      { id: brand.id, vatRegistered: false },
+      payload(click.id, product.sku, {
+        orderId: "MULTI-PRODUCT-ORDER",
+        items: [
+          {
+            sku: product.sku,
+            qty: 1,
+            unitPrice: Money.of("100.00"),
+            lineDiscount: Money.ZERO,
+            lineVat: Money.ZERO,
+          },
+          {
+            sku: "OTHER",
+            qty: 4,
+            unitPrice: Money.of("25.00"),
+            lineDiscount: Money.ZERO,
+            lineVat: Money.ZERO,
+          },
+          {
+            sku: product.sku,
+            qty: 2,
+            unitPrice: Money.of("50.00"),
+            lineDiscount: Money.ZERO,
+            lineVat: Money.ZERO,
+          },
+        ],
+      }),
+    );
+
+    expect(result.kind).toBe("accepted");
+    if (!("conversion" in result)) throw new Error("expected conversion");
+    expect(result.conversion.commissionAmount).toBe("30.00");
+    expect(
+      result.conversion.items.filter((item) => item.attribution !== undefined),
+    ).toHaveLength(1);
+    expect(await prisma.attribution.count()).toBe(1);
+
+    const report = await creatorPerformanceReport(
+      creator.id,
+      { period: "30d" },
+      NOW,
+    );
+    expect(report.totals).toMatchObject({
+      convertedClicks: 1,
+      orders: 1,
+      units: 3,
+      sales: "200.00",
+      pending: "30.00",
+    });
+  });
+
   it("uses the link snapshot after the product offer rate changes", async () => {
     const { brand, product, click } = await fixture();
     await prisma.product.update({
@@ -318,13 +422,14 @@ describe("single-link conversion intake", () => {
       where: { id: click.id },
       select: { convertedAt: true },
     });
-    await intake(
+    const rejected = await intake(
       { id: brand.id, vatRegistered: false },
       payload(click.id, product.sku, {
         orderId: crypto.randomUUID(),
         occurredAt: new Date(NOW.getTime() + 60_000),
       }),
     );
+    expect(rejected).toEqual({ kind: "click_conflict" });
     expect(
       (await prisma.click.findUniqueOrThrow({ where: { id: click.id } }))
         .convertedAt,
