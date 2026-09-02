@@ -1,0 +1,5 @@
+Use case: ui-mockup
+Asset type: high-fidelity desktop web creator links catalog decision comp
+Primary request: Create SHUAMO's Tracking links page as Product Link Passports. Keep the workspace rail, page heading, product category band, search, Brand, Status and Sort filters, result count, four generous product-link cards in a two-column grid, and pagination. Each passport joins editorial product photography, brand, category, prominent title, exact commission, worded link status, visible tracking URL, Copy, and View product in one complete object. Product navigation and Copy must remain distinct.
+Identity reference: Preserve only the reference screenshot's paper-white ground, ink typography, signal indigo #4436F5, Geist-like sans, mono figures, fine neutral rules, restrained elevation and calm operational character. Do not copy its content.
+Constraints: working desktop product UI, accessible contrast, one signal accent, no gradients, glass, fake metrics, browser chrome or watermark.

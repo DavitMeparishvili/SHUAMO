@@ -10,6 +10,7 @@ const acceptance: ProductLinkAcceptance = {
   productId: "p1",
   commissionType: "PERCENT",
   commissionValue: "0.1250",
+  termsVersion: 1,
 };
 
 function deps(

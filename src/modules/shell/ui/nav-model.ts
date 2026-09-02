@@ -23,6 +23,7 @@ const ROUTES = {
     { path: "brand/profile", labelKey: "nav.profile" },
   ],
   creator: [
+    { path: "creator/products", labelKey: "nav.discoverProducts" },
     { path: "creator/links", labelKey: "nav.links" },
     { path: "creator/earnings", labelKey: "nav.earnings" },
     { path: "creator/brands", labelKey: "nav.brands" },

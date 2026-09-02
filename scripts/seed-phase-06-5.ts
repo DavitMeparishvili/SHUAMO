@@ -19,7 +19,7 @@ const imageKeys: Record<string, string> = {
   "hidden.jpg": `profiles/brands/${suspendedBrandId}/brand-hero/00000000-0000-4000-8000-000000000501.jpg`,
   "product-one.jpg": `products/${brandId}/32000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000601.jpg`,
   "product-two.jpg": `products/${brandId}/32000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000602.jpg`,
-  "product-three.jpg": `products/${brandId}/32000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000603.jpg`,
+  "product-candle.png": `products/${brandId}/32000000-0000-4000-8000-000000000003/00000000-0000-4000-8000-000000000603.png`,
 };
 const endpoint = process.env.STORAGE_ENDPOINT!,
   publicEndpoint = process.env.STORAGE_PUBLIC_ENDPOINT!,
@@ -33,16 +33,19 @@ const client = new S3Client({
     secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY!,
   },
 });
-const body = await readFile(
+const perfumeBody = await readFile(
   path.join(process.cwd(), "src", "test", "fixtures", "perfume.jpg"),
 );
-for (const key of Object.values(imageKeys))
+const candleBody = await readFile(
+  path.join(process.cwd(), "src", "test", "fixtures", "candle.png"),
+);
+for (const [name, key] of Object.entries(imageKeys))
   await client.send(
     new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      Body: body,
-      ContentType: "image/jpeg",
+      Body: name === "product-candle.png" ? candleBody : perfumeBody,
+      ContentType: name === "product-candle.png" ? "image/png" : "image/jpeg",
     }),
   );
 const image = (name: string) =>
@@ -202,7 +205,7 @@ await Promise.all(
     [
       ["32000000-0000-4000-8000-000000000001", "product-one.jpg"],
       ["32000000-0000-4000-8000-000000000002", "product-two.jpg"],
-      ["32000000-0000-4000-8000-000000000003", "product-three.jpg"],
+      ["32000000-0000-4000-8000-000000000003", "product-candle.png"],
     ] as const
   ).map(([id, name]) =>
     prisma.product.update({

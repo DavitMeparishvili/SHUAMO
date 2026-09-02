@@ -15,6 +15,7 @@ export async function createProductLinkAction(
     productId: formData.get("productId"),
     commissionType: formData.get("commissionType"),
     commissionValue: formData.get("commissionValue"),
+    termsVersion: formData.get("termsVersion"),
   });
   if (acceptance === undefined) throw new Error("invalid_product_offer");
   const result = await createProductLinkForCreator(
@@ -23,5 +24,7 @@ export async function createProductLinkAction(
   );
   if (!result.ok) throw new Error(result.error);
   revalidatePath(`/${locale}/creator/links`);
+  revalidatePath(`/${locale}/creator/products`);
+  revalidatePath(`/${locale}/creator/products/${acceptance.productId}`);
   revalidatePath(`/${locale}/brand/links`);
 }

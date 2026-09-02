@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-02T15:52:23.6515869Z",
+  "title": "SHUAMO design language",
+  "extensions": {
+    "colorMeta": {
+      "signal": { "role": "primary", "displayName": "Signal indigo", "canonical": "#4436F5", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-hover": { "role": "primary", "displayName": "Signal indigo hover", "canonical": "#3628D6", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-active": { "role": "primary", "displayName": "Signal indigo active", "canonical": "#2A1FAD", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-50": { "role": "primary", "displayName": "Signal wash 50", "canonical": "#F0EEFF", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-100": { "role": "primary", "displayName": "Signal wash 100", "canonical": "#DEDAFE", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-200": { "role": "primary", "displayName": "Signal wash 200", "canonical": "#C0B8FC", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "signal-700": { "role": "primary", "displayName": "Signal indigo 700", "canonical": "#2A1FAD", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#111318", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#FFFFFF"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#FFFFFF", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#FFFFFF"] },
+      "slate-50": { "role": "neutral", "displayName": "Slate 50", "canonical": "#F7F8FA", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-100": { "role": "neutral", "displayName": "Slate 100", "canonical": "#EFF1F5", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-200": { "role": "neutral", "displayName": "Slate 200 hairline", "canonical": "#8E95A3", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-300": { "role": "neutral", "displayName": "Slate 300 control border", "canonical": "#858C99", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-400": { "role": "neutral", "displayName": "Slate 400", "canonical": "#7F8694", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-500": { "role": "neutral", "displayName": "Slate 500 muted", "canonical": "#6F7686", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-600": { "role": "neutral", "displayName": "Slate 600", "canonical": "#535A69", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-700": { "role": "neutral", "displayName": "Slate 700 body", "canonical": "#3B414D", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "slate-800": { "role": "neutral", "displayName": "Slate 800", "canonical": "#252A33", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "on-inverse": { "role": "neutral", "displayName": "On inverse", "canonical": "#F3F4F7", "tonalRamp": ["#111318", "#252A33", "#3B414D", "#535A69", "#6F7686", "#8E95A3", "#EFF1F5", "#F7F8FA"] },
+      "accrued": { "role": "semantic", "displayName": "Accrued amber", "canonical": "#8A5A00", "tonalRamp": ["#362300", "#5B3A00", "#8A5A00", "#B97900", "#E4A329", "#F3C46C", "#FFF4DE", "#FFF9EF"] },
+      "accrued-soft": { "role": "semantic", "displayName": "Accrued amber soft", "canonical": "#FFF4DE", "tonalRamp": ["#362300", "#5B3A00", "#8A5A00", "#B97900", "#E4A329", "#F3C46C", "#FFF4DE", "#FFF9EF"] },
+      "settled": { "role": "semantic", "displayName": "Settled green", "canonical": "#0B6B4F", "tonalRamp": ["#033D2D", "#07513D", "#0B6B4F", "#178265", "#49A786", "#8ED0B8", "#E3F3EC", "#F3FAF7"] },
+      "settled-soft": { "role": "semantic", "displayName": "Settled green soft", "canonical": "#E3F3EC", "tonalRamp": ["#033D2D", "#07513D", "#0B6B4F", "#178265", "#49A786", "#8ED0B8", "#E3F3EC", "#F3FAF7"] },
+      "reversed": { "role": "semantic", "displayName": "Reversed red", "canonical": "#A32A22", "tonalRamp": ["#3D0C09", "#5E120E", "#731A16", "#8E211B", "#A32A22", "#CD665F", "#F0B4AE", "#FBE9E7"] },
+      "reversed-hover": { "role": "semantic", "displayName": "Reversed red hover", "canonical": "#8E211B", "tonalRamp": ["#3D0C09", "#5E120E", "#731A16", "#8E211B", "#A32A22", "#CD665F", "#F0B4AE", "#FBE9E7"] },
+      "reversed-active": { "role": "semantic", "displayName": "Reversed red active", "canonical": "#731A16", "tonalRamp": ["#3D0C09", "#5E120E", "#731A16", "#8E211B", "#A32A22", "#CD665F", "#F0B4AE", "#FBE9E7"] },
+      "reversed-soft": { "role": "semantic", "displayName": "Reversed red soft", "canonical": "#FBE9E7", "tonalRamp": ["#3D0C09", "#5E120E", "#731A16", "#8E211B", "#A32A22", "#CD665F", "#F0B4AE", "#FBE9E7"] },
+      "focus-ring": { "role": "primary", "displayName": "Signal focus ring", "canonical": "rgb(68 54 245 / 0.28)", "tonalRamp": ["#171052", "#22187D", "#2A1FAD", "#3628D6", "#4436F5", "#7A6FFC", "#C0B8FC", "#F0EEFF"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Rare product-level or public-profile statements." },
+      "h1": { "displayName": "Page title", "purpose": "Primary workspace and product titles." },
+      "h2": { "displayName": "Section title", "purpose": "Offer passport, terms, and major form sections." },
+      "h3": { "displayName": "Card title", "purpose": "Product names and compact management headings." },
+      "body": { "displayName": "Body", "purpose": "Primary explanatory and descriptive copy." },
+      "small": { "displayName": "Small interface", "purpose": "Controls, labels, and compact operational copy." },
+      "caption": { "displayName": "Caption", "purpose": "Metadata and dense catalog labels." },
+      "overline": { "displayName": "Overline", "purpose": "Rare compact categorical labels." },
+      "figure-lg": { "displayName": "Large figure", "purpose": "Prominent exact financial values." },
+      "figure": { "displayName": "Figure", "purpose": "Offer-passport money and rate values." },
+      "mono": { "displayName": "Mono", "purpose": "GEL amounts, commission rates, SKUs, versions, and compact comparable figures." }
+    },
+    "shadows": [
+      { "name": "xs", "value": "0 1px 2px rgb(17 19 24 / 0.05)", "purpose": "Resting cards, creator offers, and offer passports." },
+      { "name": "sm", "value": "0 2px 6px rgb(17 19 24 / 0.06), 0 1px 2px rgb(17 19 24 / 0.04)", "purpose": "Linked-card hover and sticky action bars." },
+      { "name": "md", "value": "0 8px 24px rgb(17 19 24 / 0.08), 0 2px 6px rgb(17 19 24 / 0.05)", "purpose": "Modals and the mobile filter sheet only." }
+    ],
+    "motion": [
+      { "name": "control-state", "value": "150ms ease-out", "purpose": "Button, border, focus, and linked-card state changes." },
+      { "name": "editorial-crop", "value": "300ms ease-out", "purpose": "Subtle 1.025 crop shift on a linked creator offer; never reveals information." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "workspace-stack", "value": "1024px" },
+      { "name": "column-gutter", "value": "1180px" },
+      { "name": "catalog-three-column", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Signal Button",
+      "kind": "button",
+      "description": "The single primary action on a decision surface, with a persistent pending label.",
+      "html": "<button class=\"ds-btn-signal\" type=\"button\">Create link at this rate</button>",
+      "css": ".ds-btn-signal { min-height:44px; display:inline-flex; align-items:center; justify-content:center; padding:0 20px; border:0; border-radius:999px; background:var(--color-signal,#4436F5); color:var(--color-paper,#FFFFFF); font:600 14px/1.5 var(--font-geist-sans),system-ui,sans-serif; box-shadow:var(--shadow-xs,0 1px 2px rgb(17 19 24 / .05)); transition:background-color 150ms ease-out; } .ds-btn-signal:hover { background:var(--color-signal-hover,#3628D6); } .ds-btn-signal:active { background:var(--color-signal-active,#2A1FAD); } .ds-btn-signal:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:3px; box-shadow:0 0 0 4px var(--color-focus-ring,rgb(68 54 245 / .28)); }"
+    },
+    {
+      "name": "Labelled Field",
+      "kind": "input",
+      "description": "A 44px native control with visible label, hint, and repairable focus and error states.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Search</span><input class=\"ds-field-input\" placeholder=\"Product, SKU, brand, or keyword\"><span class=\"ds-field-hint\">Searches visible catalog facts.</span></label>",
+      "css": ".ds-field { display:grid; gap:8px; color:var(--color-ink,#111318); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-field-label { font-size:14px; line-height:1.5; font-weight:600; } .ds-field-input { min-height:44px; border:1px solid var(--color-slate-300,#858C99); border-radius:8px; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); padding:0 12px; font:400 16px/1.6 var(--font-geist-sans),system-ui,sans-serif; } .ds-field-input:hover { border-color:var(--color-slate-600,#535A69); } .ds-field-input:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:2px; box-shadow:0 0 0 4px var(--color-focus-ring,rgb(68 54 245 / .28)); } .ds-field-hint { color:var(--color-slate-600,#535A69); font-size:12px; line-height:1.4; }"
+    },
+    {
+      "name": "Product Type Navigation",
+      "kind": "nav",
+      "description": "Fixed product types organize discovery with a flat underline, leaving detailed criteria to filters.",
+      "html": "<nav class=\"ds-product-types\" aria-label=\"Product type\"><a class=\"ds-product-type\" aria-current=\"page\" href=\"#\">All products</a><a class=\"ds-product-type\" href=\"#\">Beauty / Fragrance</a><a class=\"ds-product-type\" href=\"#\">Fashion / Clothing</a></nav>",
+      "css": ".ds-product-types { display:flex; gap:4px; overflow-x:auto; border-bottom:1px solid var(--color-slate-200,#8E95A3); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-product-type { flex:0 0 auto; padding:12px 16px 10px; border-bottom:2px solid transparent; color:var(--color-slate-600,#535A69); text-decoration:none; font-size:14px; line-height:1.5; font-weight:600; } .ds-product-type:hover { color:var(--color-ink,#111318); } .ds-product-type[aria-current=\"page\"] { border-bottom-color:var(--color-signal,#4436F5); color:var(--color-ink,#111318); } .ds-product-type:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:-2px; }"
+    },
+    {
+      "name": "Creator Offer Card",
+      "kind": "card",
+      "description": "Photography leads creator discovery while exact offer terms remain visible without hover.",
+      "html": "<a class=\"ds-offer-card\" href=\"#\"><span class=\"ds-offer-media\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path d=\"M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z M5 16l4-4 3 3 2-2 5 5\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"/></svg></span><span class=\"ds-offer-body\"><span class=\"ds-offer-meta\"><span>Aromashop</span><span>Beauty / Fragrance</span></span><strong class=\"ds-offer-title\">Amber perfume 100ml</strong><span class=\"ds-offer-facts\"><span>Price<br><b>250.00 ₾</b></span><span>Commission<br><b>12.5%</b></span></span><span class=\"ds-offer-foot\"><span>30 days cookie window</span><b>View offer →</b></span></span></a>",
+      "css": ".ds-offer-card { display:block; overflow:hidden; border-radius:12px; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); text-decoration:none; box-shadow:var(--shadow-xs,0 1px 2px rgb(17 19 24 / .05)); font-family:var(--font-geist-sans),system-ui,sans-serif; transition:box-shadow 150ms ease-out; } .ds-offer-card:hover { box-shadow:var(--shadow-sm,0 2px 6px rgb(17 19 24 / .06)); } .ds-offer-card:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:3px; } .ds-offer-media { aspect-ratio:4/3; display:grid; place-items:center; background:var(--color-slate-100,#EFF1F5); color:var(--color-slate-500,#6F7686); } .ds-offer-media svg { width:36px; } .ds-offer-body { display:grid; gap:12px; padding:20px; } .ds-offer-meta,.ds-offer-facts,.ds-offer-foot { display:flex; justify-content:space-between; gap:16px; color:var(--color-slate-600,#535A69); font-size:12px; line-height:1.4; } .ds-offer-title { font-size:20px; line-height:1.3; } .ds-offer-facts,.ds-offer-foot { padding-top:16px; border-top:1px solid var(--color-slate-200,#8E95A3); } .ds-offer-facts b,.ds-offer-foot b { color:var(--color-ink,#111318); font-family:var(--font-geist-mono),ui-monospace,monospace; font-variant-numeric:tabular-nums; } .ds-offer-foot b { color:var(--color-signal,#4436F5); font-family:inherit; }"
+    },
+    {
+      "name": "Brand Catalog Row",
+      "kind": "custom",
+      "description": "The same product and offer truth at management density, with one clear management action.",
+      "html": "<article class=\"ds-catalog-row\"><span class=\"ds-row-thumb\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path d=\"M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg></span><span class=\"ds-row-main\"><span class=\"ds-row-meta\">Beauty / Fragrance · AROMA-100 <em>Active</em></span><strong>Amber perfume 100ml</strong><span class=\"ds-row-facts\">Price <b>250.00 ₾</b> · Commission <b>12.5%</b> · cookie window <b>30 days</b> · Links <b>2</b></span></span><a class=\"ds-row-action\" href=\"#\">Manage product</a></article>",
+      "css": ".ds-catalog-row { display:grid; grid-template-columns:96px minmax(0,1fr) auto; align-items:center; gap:16px; padding:16px; border-radius:12px; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); box-shadow:var(--shadow-xs,0 1px 2px rgb(17 19 24 / .05)); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-row-thumb { aspect-ratio:1; display:grid; place-items:center; border-radius:8px; background:var(--color-slate-100,#EFF1F5); color:var(--color-slate-500,#6F7686); } .ds-row-thumb svg { width:28px; } .ds-row-main { min-width:0; display:grid; gap:6px; } .ds-row-meta,.ds-row-facts { color:var(--color-slate-600,#535A69); font-size:12px; line-height:1.4; } .ds-row-meta em { display:inline-flex; margin-left:8px; padding:4px 12px; border-radius:999px; background:var(--color-settled-soft,#E3F3EC); color:var(--color-settled,#0B6B4F); font-style:normal; } .ds-row-main strong { font-size:20px; line-height:1.3; } .ds-row-facts b { color:var(--color-ink,#111318); font-family:var(--font-geist-mono),ui-monospace,monospace; font-variant-numeric:tabular-nums; } .ds-row-action { min-height:44px; display:inline-flex; align-items:center; padding:0 20px; border:1px solid var(--color-slate-300,#858C99); border-radius:999px; color:var(--color-ink,#111318); text-decoration:none; font-size:14px; font-weight:600; } .ds-row-action:hover { border-color:var(--color-ink,#111318); } .ds-row-action:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:3px; } @media (max-width:639px) { .ds-catalog-row { grid-template-columns:1fr; } .ds-row-action { justify-content:center; } }"
+    },
+    {
+      "name": "Offer Passport",
+      "kind": "custom",
+      "description": "A calm decision panel that keeps exact commission, estimates, eligibility, and acceptance provenance together.",
+      "html": "<aside class=\"ds-passport\"><span class=\"ds-passport-meta\">Aromashop · AROMA-100</span><h2>Affiliate offer</h2><dl><div><dt>Price · estimate</dt><dd>250.00 ₾</dd></div><div><dt>Commission</dt><dd>12.5%</dd></div><div><dt>Creator earnings · estimate</dt><dd>31.25 ₾</dd></div><div><dt>cookie window</dt><dd>30 days</dd></div></dl><label class=\"ds-accept\"><input type=\"checkbox\"> I accept affiliate terms version 1</label><button type=\"button\">Create link at this rate</button></aside>",
+      "css": ".ds-passport { display:grid; gap:20px; padding:24px; border-radius:12px; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); box-shadow:var(--shadow-xs,0 1px 2px rgb(17 19 24 / .05)); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-passport-meta,.ds-passport dt { color:var(--color-slate-600,#535A69); font-size:14px; line-height:1.5; } .ds-passport h2 { margin:0; font-size:26px; line-height:1.2; } .ds-passport dl { margin:0; display:grid; grid-template-columns:1fr 1fr; gap:16px; } .ds-passport dl div { padding-top:16px; border-top:1px solid var(--color-slate-200,#8E95A3); } .ds-passport dd { margin:4px 0 0; font:600 20px/1.2 var(--font-geist-mono),ui-monospace,monospace; font-variant-numeric:tabular-nums; } .ds-accept { display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:8px; background:var(--color-slate-50,#F7F8FA); color:var(--color-slate-700,#3B414D); font-size:14px; line-height:1.5; } .ds-accept input { accent-color:var(--color-signal,#4436F5); } .ds-passport button { min-height:44px; border:0; border-radius:999px; background:var(--color-signal,#4436F5); color:var(--color-paper,#FFFFFF); font-weight:600; } .ds-passport button:hover { background:var(--color-signal-hover,#3628D6); } .ds-passport button:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:3px; }"
+    },
+    {
+      "name": "Mobile Filter Sheet",
+      "kind": "custom",
+      "description": "Below 640px, a counted outline trigger opens the same URL-backed filters in a bottom dialog.",
+      "html": "<button class=\"ds-filter-trigger\" type=\"button\" aria-haspopup=\"dialog\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path d=\"M4 7h16M7 12h10M10 17h4\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"1.7\"/></svg>Filters <span>2</span></button><section class=\"ds-filter-sheet\" role=\"dialog\" aria-label=\"Filters\"><header><h2>Filters</h2><button type=\"button\">Close</button></header><div><label>Product type<select><option>Any product type</option></select></label><label>Sort by<select><option>Newest</option></select></label></div></section>",
+      "css": ".ds-filter-trigger { min-height:44px; display:inline-flex; align-items:center; gap:8px; padding:0 16px; border:1px solid var(--color-slate-300,#858C99); border-radius:999px; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); font:600 14px/1.5 var(--font-geist-sans),system-ui,sans-serif; } .ds-filter-trigger svg { width:16px; } .ds-filter-trigger span { min-width:20px; padding:1px 6px; border-radius:999px; background:var(--color-signal,#4436F5); color:var(--color-paper,#FFFFFF); } .ds-filter-trigger:focus-visible,.ds-filter-sheet button:focus-visible,.ds-filter-sheet select:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:2px; } .ds-filter-sheet { margin-top:16px; overflow:hidden; border-radius:20px 20px 0 0; background:var(--color-paper,#FFFFFF); color:var(--color-ink,#111318); box-shadow:var(--shadow-md,0 8px 24px rgb(17 19 24 / .08)); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-filter-sheet header { min-height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; border-bottom:1px solid var(--color-slate-200,#8E95A3); } .ds-filter-sheet h2 { margin:0; font-size:20px; } .ds-filter-sheet header button { min-height:44px; border:0; border-radius:999px; background:transparent; font-weight:600; } .ds-filter-sheet>div { display:grid; gap:16px; padding:16px; } .ds-filter-sheet label { display:grid; gap:8px; font-size:14px; font-weight:600; } .ds-filter-sheet select { min-height:44px; border:1px solid var(--color-slate-300,#858C99); border-radius:8px; background:var(--color-paper,#FFFFFF); padding:0 12px; }"
+    },
+    {
+      "name": "Catalog Pagination",
+      "kind": "nav",
+      "description": "Bounded URL navigation with explicit previous and next controls and one signal current page.",
+      "html": "<nav class=\"ds-pagination\" aria-label=\"Catalog pages\"><a href=\"#\">Previous</a><span class=\"ds-pages\"><a aria-current=\"page\" href=\"#\">1</a><a href=\"#\">2</a><span>…</span><a href=\"#\">12</a></span><span class=\"ds-page-summary\">Page <strong>1</strong> of 12</span><a href=\"#\">Next</a></nav>",
+      "css": ".ds-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:20px; border-top:1px solid var(--color-slate-200,#8E95A3); font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-pagination>a { min-height:44px; display:inline-flex; align-items:center; padding:0 16px; border:1px solid var(--color-slate-300,#858C99); border-radius:999px; color:var(--color-ink,#111318); text-decoration:none; font-size:14px; font-weight:600; } .ds-pages { display:flex; align-items:center; gap:4px; } .ds-pages a { width:44px; height:44px; display:grid; place-items:center; border-radius:8px; color:var(--color-slate-700,#3B414D); text-decoration:none; font-size:14px; font-weight:600; } .ds-pages a[aria-current=\"page\"] { background:var(--color-signal,#4436F5); color:var(--color-paper,#FFFFFF); } .ds-pagination a:hover { border-color:var(--color-ink,#111318); } .ds-pagination a:focus-visible { outline:2px solid var(--color-signal,#4436F5); outline-offset:2px; } .ds-page-summary { display:none; color:var(--color-slate-600,#535A69); font-size:14px; } .ds-page-summary strong { color:var(--color-ink,#111318); } @media (max-width:639px) { .ds-pages { display:none; } .ds-page-summary { display:inline; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Provenance",
+    "overview": "SHUAMO exists to answer one question about money: where did this number come from? The interface is built as an instrument, not a dashboard. Every aggregate is a link to the rows beneath it, every forward-looking figure is labelled an estimate, and every amount is set in tabular mono so two numbers in a column can be compared by eye. Ink and paper carry the page. One electric signal marks the single thing to do next. Three state tones — accrued, settled, reversed — carry money's only three conditions, and they are always accompanied by words.",
+    "keyCharacteristics": [],
+    "rules": [
+      { "name": "The White-On-Signal Rule", "body": "Text on `signal` is always `paper`. Ink on indigo fails contrast and is never used, including hover and active.", "section": "colors" },
+      { "name": "The Money-Is-Mono Rule", "body": "Every GEL amount — anywhere, at any size — is set in Geist Mono with `font-variant-numeric: tabular-nums`. Prose numbers are not money.", "section": "typography" },
+      { "name": "The Provenance Rule", "body": "Every aggregate figure links to the rows that produced it. A total the user cannot open is a total the user cannot check.", "section": "components" },
+      { "name": "The Estimate Rule", "body": "A forward-looking number carries the word “estimate” in its visible label, in both locales. Catalogue price is display-only and the real commission always comes from the postback.", "section": "typography" },
+      { "name": "The Single-Signal Rule", "body": "One indigo element owns each decision surface. Two competing signals means one of them is wrong.", "section": "colors" },
+      { "name": "The State-Needs-Words Rule", "body": "Status is never colour alone. Every pill carries its label; a screenshot in greyscale must still be readable.", "section": "components" },
+      { "name": "The Equal-Script Rule", "body": "Georgian may wrap earlier than English, but it is never given a smaller size, a lighter weight, or a truncation English does not get.", "section": "typography" },
+      { "name": "The Dead-Link Rule", "body": "The offer-ended page is a designed page, not an error page. A buyer who lands there was sent by a creator, and both of them deserve an explanation rather than a stack trace.", "section": "components" },
+      { "name": "The Exact-Offer Rule", "body": "Product-offer surfaces show commission type and value exactly, keep every GEL figure in tabular mono, and label catalogue price and calculated creator earnings as estimates. Percent values may be entered for people as percentages, but their stored fraction remains visible to brands where a rate is authored or changed.", "section": "components" },
+      { "name": "The Terms-Before-Acceptance Rule", "body": "A creator sees the full current affiliate terms, their version, and their effective date before explicitly accepting an offer. Once a tracking link exists, the decision control becomes a visible notice that the link preserves the accepted version; later edits never masquerade as the original agreement.", "section": "components" }
+    ],
+    "dos": [],
+    "donts": []
+  }
+}

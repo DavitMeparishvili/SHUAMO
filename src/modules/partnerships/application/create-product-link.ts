@@ -34,6 +34,7 @@ export function createProductLink(deps: {
         code: generateLinkCode(deps.random),
         acceptedCommissionType: acceptance.commissionType,
         acceptedCommissionValue: acceptance.commissionValue,
+        acceptedTermsVersion: acceptance.termsVersion,
       });
       return {
         ok: true,

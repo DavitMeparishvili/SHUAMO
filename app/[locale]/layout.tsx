@@ -61,6 +61,10 @@ export default async function LocaleLayout({
     >
       <body>
         <span
+          data-catalog-direction-contract="THESIS: fixed product types organize an image-led offer catalog without hiding exact affiliate terms. OWN-WORLD: SHUAMO paper, ink, signal indigo, editorial product crops, fine rules, mono money, and restrained depth. STORY: creators filter products, inspect a gallery and full versioned terms, then explicitly accept; brands manage the same truth at denser list scale. FIRST VIEWPORT: product-type navigation, practical search and filters, then a responsive photography-led gallery with price and commission visible. FORM: Category Gallery, sixth grounded structure, seed 3709064c. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md"
+          hidden
+        />
+        <span
           data-profile-direction="phase-06-5-passport-proof-ledger"
           hidden
         />

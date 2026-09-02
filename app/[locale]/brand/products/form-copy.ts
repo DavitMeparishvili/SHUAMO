@@ -1,4 +1,12 @@
-import type { ProductFormCopy } from "@/src/modules/catalog";
+import {
+  AFFILIATE_CHANNELS,
+  PAYOUT_TIMINGS,
+  PRODUCT_TYPES,
+  PROHIBITED_PROMOTION_METHODS,
+  productTypeMessageKey,
+  type ProductFormCopy,
+  type ProductTypeValue,
+} from "@/src/modules/catalog";
 import { t, type Messages } from "@/src/modules/localization";
 
 export function formCopy(messages: Messages): ProductFormCopy {
@@ -6,16 +14,64 @@ export function formCopy(messages: Messages): ProductFormCopy {
     sku: t(messages, "catalog.field.sku"),
     title: t(messages, "catalog.field.title"),
     description: t(messages, "catalog.field.description"),
+    sectionProduct: t(messages, "catalog.form.productSection"),
+    sectionProductIntro: t(messages, "catalog.form.productIntro"),
+    sectionOffer: t(messages, "catalog.form.offerSection"),
+    sectionTerms: t(messages, "catalog.terms.title"),
+    sectionTermsIntro: t(messages, "catalog.form.termsIntro"),
+    productType: t(messages, "catalog.filter.productType"),
+    productTypes: Object.fromEntries(
+      PRODUCT_TYPES.map((value) => [
+        value,
+        t(messages, productTypeMessageKey(value)),
+      ]),
+    ) as Record<ProductTypeValue, string>,
     price: t(messages, "catalog.field.price"),
     backlink: t(messages, "catalog.field.backlink"),
     rateType: t(messages, "catalog.field.rateType"),
     percent: t(messages, "catalog.rate.percent"),
     fixed: t(messages, "catalog.rate.fixed"),
     commission: t(messages, "catalog.field.commission"),
+    cookieWindow: t(messages, "catalog.terms.cookieWindow"),
+    days: t(messages, "catalog.terms.days"),
+    payoutTiming: t(messages, "catalog.terms.payoutTiming"),
+    payoutTimings: Object.fromEntries(
+      PAYOUT_TIMINGS.map((value) => [
+        value,
+        t(messages, `catalog.payoutTiming.${value}`),
+      ]),
+    ) as ProductFormCopy["payoutTimings"],
+    allowedChannels: t(messages, "catalog.terms.allowedChannels"),
+    channelLabels: Object.fromEntries(
+      AFFILIATE_CHANNELS.map((value) => [
+        value,
+        t(messages, `catalog.channel.${value}`),
+      ]),
+    ) as ProductFormCopy["channelLabels"],
+    prohibitedMethods: t(messages, "catalog.terms.prohibitedMethods"),
+    prohibitedLabels: Object.fromEntries(
+      PROHIBITED_PROMOTION_METHODS.map((value) => [
+        value,
+        t(messages, `catalog.prohibited.${value}`),
+      ]),
+    ) as ProductFormCopy["prohibitedLabels"],
+    regions: t(messages, "catalog.terms.regions"),
+    regionsHint: t(messages, "catalog.form.regionsHint"),
+    couponPolicy: t(messages, "catalog.terms.couponPolicy"),
+    returnPolicy: t(messages, "catalog.terms.returnPolicy"),
+    contentRequirements: t(messages, "catalog.terms.contentRequirements"),
+    specialTerms: t(messages, "catalog.terms.specialTerms"),
+    offerStartsAt: t(messages, "catalog.terms.offerStartsAt"),
+    offerEndsAt: t(messages, "catalog.terms.offerEndsAt"),
+    optional: t(messages, "catalog.form.optional"),
     storedFraction: t(messages, "catalog.rate.storedFraction"),
     estimateSale: t(messages, "catalog.rate.estimateSale"),
     estimateEarnings: t(messages, "catalog.rate.estimateEarnings"),
     addImage: t(messages, "catalog.image.add"),
+    primaryImage: t(messages, "catalog.image.primary"),
+    moveEarlier: t(messages, "catalog.image.moveEarlier"),
+    moveLater: t(messages, "catalog.image.moveLater"),
+    removeImage: t(messages, "catalog.image.remove"),
     imageTypes: t(messages, "catalog.image.types"),
     imageAfterPublishTitle: t(messages, "catalog.image.afterPublishTitle"),
     imageAfterPublishBody: t(messages, "catalog.image.afterPublishBody"),

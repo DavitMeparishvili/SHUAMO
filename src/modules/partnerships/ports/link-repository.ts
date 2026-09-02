@@ -17,6 +17,7 @@ export interface ProductLinkAcceptance {
   productId: string;
   commissionType: "PERCENT" | "FIXED";
   commissionValue: string;
+  termsVersion: number;
 }
 
 export interface ProductLinkWrite {
@@ -25,6 +26,7 @@ export interface ProductLinkWrite {
   code: string;
   acceptedCommissionType: "PERCENT" | "FIXED";
   acceptedCommissionValue: string;
+  acceptedTermsVersion: number;
 }
 
 export interface LinkRepository {

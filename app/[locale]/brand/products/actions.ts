@@ -15,10 +15,15 @@ function value(formData: FormData, key: string): string {
 }
 
 function input(formData: FormData) {
+  const regions = value(formData, "availableRegions")
+    .split(",")
+    .map((region) => region.trim())
+    .filter(Boolean);
   return {
     sku: value(formData, "sku"),
     title: value(formData, "title"),
     description: value(formData, "description"),
+    productType: value(formData, "productType"),
     priceGel: value(formData, "priceGel"),
     imageUrls: formData
       .getAll("imageUrls")
@@ -29,6 +34,21 @@ function input(formData: FormData) {
         ? ("FIXED" as const)
         : ("PERCENT" as const),
     commissionValue: value(formData, "commissionValue"),
+    cookieWindowDays: value(formData, "cookieWindowDays"),
+    payoutTiming: value(formData, "payoutTiming"),
+    allowedChannels: formData
+      .getAll("allowedChannels")
+      .filter((item): item is string => typeof item === "string"),
+    prohibitedPromotionMethods: formData
+      .getAll("prohibitedPromotionMethods")
+      .filter((item): item is string => typeof item === "string"),
+    availableRegions: regions,
+    couponPolicy: value(formData, "couponPolicy"),
+    returnPolicy: value(formData, "returnPolicy"),
+    contentRequirements: value(formData, "contentRequirements"),
+    specialTerms: value(formData, "specialTerms"),
+    offerStartsAt: value(formData, "offerStartsAt"),
+    offerEndsAt: value(formData, "offerEndsAt"),
   };
 }
 

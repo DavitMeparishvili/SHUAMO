@@ -9,17 +9,37 @@ import type { ProductRepository } from "../ports/product-repository";
 import type { ProductImageUrlError } from "../domain/image-upload";
 import type { Result } from "@/src/modules/shared";
 import { parseProductRate } from "../domain/product-rate";
+import {
+  AFFILIATE_CHANNELS,
+  PAYOUT_TIMINGS,
+  PROHIBITED_PROMOTION_METHODS,
+} from "../domain/affiliate-terms";
+import { PRODUCT_TYPES } from "../domain/product-taxonomy";
 
 export const productBodySchema = z
   .object({
     sku: z.string(),
     title: z.string(),
     description: z.string().optional(),
+    productType: z.enum(PRODUCT_TYPES).optional(),
     priceGel: z.string(),
     imageUrls: z.array(z.string()).optional(),
     backlinkUrl: z.string(),
     commissionType: z.enum(["PERCENT", "FIXED"]),
     commissionValue: z.string(),
+    cookieWindowDays: z.string().optional(),
+    payoutTiming: z.enum(PAYOUT_TIMINGS).optional(),
+    allowedChannels: z.array(z.enum(AFFILIATE_CHANNELS)).optional(),
+    prohibitedPromotionMethods: z
+      .array(z.enum(PROHIBITED_PROMOTION_METHODS))
+      .optional(),
+    availableRegions: z.array(z.string()).optional(),
+    couponPolicy: z.string().optional(),
+    returnPolicy: z.string().optional(),
+    contentRequirements: z.string().optional(),
+    specialTerms: z.string().optional(),
+    offerStartsAt: z.string().optional(),
+    offerEndsAt: z.string().optional(),
   })
   .superRefine((input, context) => {
     const rate = parseProductRate({

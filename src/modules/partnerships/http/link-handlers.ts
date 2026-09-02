@@ -15,6 +15,7 @@ const bodySchema = z
       .min(1)
       .max(16)
       .regex(/^\d+(?:\.\d{1,4})?$/),
+    termsVersion: z.coerce.number().int().positive(),
   })
   .strict();
 

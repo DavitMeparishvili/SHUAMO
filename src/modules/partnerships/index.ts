@@ -36,12 +36,22 @@ export {
   listResolvedLinksForBrand,
   listResolvedLinksForBrandProduct,
   listResolvedLinksForCreator,
+  listCreatorLinkCatalog,
+  listCreatorLinkBrands,
   listLinkOffersForCreator,
+  listProductOffersForCreator,
+  getProductOfferForCreator,
+  type CreatorOfferCatalogQuery,
+  type CreatorLinkCatalogQuery,
   prismaLinkRepository,
 } from "./infrastructure/prisma-link-repository";
 export { CreatorBrandList, PartnershipQueue } from "./ui/partnership-queue";
 export { BrandLinkList, LinkList } from "./ui/link-list";
 export { LinkOfferList, type CreatorProductOffer } from "./ui/link-offer-list";
+export {
+  ProductOfferGallery,
+  type CatalogProductOffer,
+} from "./ui/product-offer-gallery";
 export {
   createProductLinkHandler,
   parseProductLinkAcceptance,

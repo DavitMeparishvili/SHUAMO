@@ -7,11 +7,25 @@ const current = {
   sku: "P-1",
   title: "Product",
   description: "",
+  productType: "OTHER" as const,
   priceGel: "100.00",
   imageUrls: [],
   backlinkUrl: "https://example.ge",
   commissionType: "FIXED" as const,
   commissionValue: "10",
+  cookieWindowDays: 30,
+  payoutTiming: "AFTER_CONFIRMED_CONVERSION" as const,
+  allowedChannels: [],
+  prohibitedPromotionMethods: [],
+  availableRegions: [],
+  couponPolicy: "",
+  returnPolicy: "",
+  contentRequirements: "",
+  specialTerms: "",
+  offerStartsAt: null,
+  offerEndsAt: null,
+  termsVersion: 1,
+  termsUpdatedAt: new Date(0),
   status: "ACTIVE" as const,
 };
 
@@ -33,6 +47,9 @@ describe("updateProduct image ownership", () => {
       }),
     })("b1", "p1", {
       ...current,
+      cookieWindowDays: "30",
+      offerStartsAt: "",
+      offerEndsAt: "",
       imageUrls: ["https://attacker.example/forged.jpg"],
     });
 

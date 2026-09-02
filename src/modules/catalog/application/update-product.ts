@@ -3,6 +3,7 @@ import type { ProductRepository } from "../ports/product-repository";
 import type { ProductImageUrlError } from "../domain/image-upload";
 import type { ProductInput, ProductInputError } from "./product-input";
 import { validateProductInput } from "./product-input";
+import { affiliateTermsChanged } from "../domain/affiliate-terms";
 
 export function updateProduct(deps: {
   products: Pick<ProductRepository, "findOwned" | "findBrandSku" | "update">;
@@ -39,17 +40,11 @@ export function updateProduct(deps: {
     if (duplicate && duplicate.id !== productId) {
       return { ok: false, error: "duplicate_sku" };
     }
-    const write = {
-      sku: parsed.value.sku,
-      title: parsed.value.title,
-      description: parsed.value.description,
-      priceGel: parsed.value.priceGel,
-      imageUrls: parsed.value.imageUrls,
-      backlinkUrl: parsed.value.backlinkUrl,
-      commissionType: parsed.value.commissionType,
-      commissionValue: parsed.value.commissionValue,
-    };
-    const updated = await deps.products.update(productId, write);
+    const { brandId: _brandId, ...write } = parsed.value;
+    void _brandId;
+    const updated = await deps.products.update(productId, write, {
+      termsChanged: affiliateTermsChanged(current, parsed.value),
+    });
     return { ok: true, value: { id: updated.id } };
   };
 }

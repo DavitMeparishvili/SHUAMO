@@ -8,11 +8,13 @@ function acceptance(product: {
   id: string;
   commissionType: "PERCENT" | "FIXED";
   commissionValue: { toFixed(decimalPlaces: number): string };
+  termsVersion: number;
 }) {
   return {
     productId: product.id,
     commissionType: product.commissionType,
     commissionValue: product.commissionValue.toFixed(4),
+    termsVersion: product.termsVersion,
   };
 }
 
@@ -117,6 +119,11 @@ describe("creator product link creation", () => {
         backlinkUrl: "https://shop.example.ge/terms",
         commissionType: "FIXED",
         commissionValue: "8.0000",
+        cookieWindowDays: 45,
+        payoutTiming: "MONTHLY",
+        allowedChannels: ["INSTAGRAM", "YOUTUBE"],
+        availableRegions: ["GE", "AM"],
+        couponPolicy: "Only brand-issued coupon codes are permitted.",
       },
     });
     const oldResult = await createProductLinkForCreator(
@@ -125,6 +132,24 @@ describe("creator product link creation", () => {
     );
     expect(oldResult.ok).toBe(true);
     if (!oldResult.ok) return;
+    expect(
+      await prisma.trackingLink.findUniqueOrThrow({
+        where: { id: oldResult.value.linkId },
+        select: { acceptedTerms: true, termsAcceptedAt: true },
+      }),
+    ).toMatchObject({
+      acceptedTerms: {
+        version: product.termsVersion,
+        commissionType: "FIXED",
+        commissionValue: "8.0000",
+        cookieWindowDays: 45,
+        payoutTiming: "MONTHLY",
+        allowedChannels: ["INSTAGRAM", "YOUTUBE"],
+        availableRegions: ["GE", "AM"],
+        couponPolicy: "Only brand-issued coupon codes are permitted.",
+      },
+      termsAcceptedAt: expect.any(Date),
+    });
     await prisma.trackingLink.update({
       where: { id: oldResult.value.linkId },
       data: { status: "DISABLED" },

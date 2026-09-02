@@ -5,6 +5,7 @@ const acceptedBody = {
   productId: "p1",
   commissionType: "FIXED",
   commissionValue: "8.0000",
+  termsVersion: 1,
 } as const;
 
 describe("creator product link handler", () => {

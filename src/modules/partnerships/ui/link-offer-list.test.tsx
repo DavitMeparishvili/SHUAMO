@@ -11,23 +11,24 @@ describe("LinkOfferList", () => {
             productId: "p1",
             title: "Amber candle",
             brandName: "Aroma",
+            imageUrls: [],
             commissionType: "FIXED",
             commissionValue: "8.0000",
           },
         ]}
-        createAction={() => undefined}
+        locale="en"
         copy={{
           title: "Available products",
           empty: "No offers",
-          create: "Create link at this rate",
+          browse: "Browse all products",
+          view: "View offer",
         }}
       />,
     );
     expect(html).toContain("Amber candle");
     expect(html).toContain("Aroma");
-    expect(html).toContain("8.0000 ₾");
-    expect(html).toContain("Create link at this rate");
-    expect(html).toContain('name="commissionType" value="FIXED"');
-    expect(html).toContain('name="commissionValue" value="8.0000"');
+    expect(html).toContain("8.00 ₾");
+    expect(html).toContain("View offer");
+    expect(html).toContain('href="/en/creator/products/p1"');
   });
 });

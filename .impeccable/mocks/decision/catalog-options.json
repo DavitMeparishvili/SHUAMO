@@ -1,0 +1,46 @@
+{
+  "title": "Choose the SHUAMO catalog structure",
+  "question": "All three keep SHUAMO's ink, paper and signal-indigo visual system. Choose how creators should browse products and understand the complete affiliate offer.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Product Passports",
+      "kicker": "THE ROLL",
+      "lineage": "product passport and commercial offer sheet",
+      "thesis": "Every product reads as a complete, trustworthy offer before a creator opens it.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#EFF1F5"],
+      "materials": ["large product photography", "hairline dividers", "tabular term summaries"],
+      "viewport": "Wide image-led rows pair category, description and brand with a right-aligned commission and terms snapshot; the detail page becomes a gallery-led product passport with a sticky offer panel.",
+      "risk": "Rows are taller than a table, so brand management needs a compact-density toggle for large catalogs.",
+      "comp": ".impeccable/mocks/decision/product-passports.png"
+    },
+    {
+      "id": "split-view",
+      "label": "Deal Desk",
+      "lineage": "professional media browser with a live inspector",
+      "thesis": "Creators compare products without losing their place, while full details remain one selection away.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#F7F8FA"],
+      "materials": ["compact list", "large live preview", "structured terms inspector"],
+      "viewport": "A searchable product list occupies the left, a large active photograph the center, and commission, eligibility and actions form a persistent inspector on the right; phones transition cleanly from list to detail.",
+      "risk": "The three-pane desktop is highly efficient but requires careful focus management and a simpler mobile navigation model.",
+      "comp": ".impeccable/mocks/decision/deal-desk.png"
+    },
+    {
+      "id": "category-gallery",
+      "label": "Category Gallery",
+      "lineage": "curated retail collection with rigorous offer metadata",
+      "thesis": "Fixed product types become the primary way to explore a visually rich marketplace.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#DEDAFE"],
+      "materials": ["editorial product crops", "category bands", "clean filter sheets"],
+      "viewport": "A strong category navigator leads into a responsive image grid; each card shows brand, product type, price and commission, while the detail page opens into an immersive gallery with the full terms below a sticky summary.",
+      "risk": "This is the most attractive browsing experience but slower than the other options for bulk comparison and brand operations.",
+      "comp": ".impeccable/mocks/decision/category-gallery.png"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  }
+}

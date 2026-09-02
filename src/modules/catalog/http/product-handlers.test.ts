@@ -6,7 +6,13 @@ describe("product post handler", () => {
     const handler = createProductPostHandler({
       products: {
         findBrandSku: async () => undefined,
-        create: async (input) => ({ id: "p1", status: "ACTIVE", ...input }),
+        create: async (input) => ({
+          id: "p1",
+          status: "ACTIVE",
+          termsVersion: 1,
+          termsUpdatedAt: new Date(0),
+          ...input,
+        }),
       },
     });
     const response = await handler(
@@ -30,7 +36,13 @@ describe("product post handler", () => {
     const handler = createProductPostHandler({
       products: {
         findBrandSku: async () => undefined,
-        create: async (input) => ({ id: "p1", status: "ACTIVE", ...input }),
+        create: async (input) => ({
+          id: "p1",
+          status: "ACTIVE",
+          termsVersion: 1,
+          termsUpdatedAt: new Date(0),
+          ...input,
+        }),
       },
     });
     const response = await handler(

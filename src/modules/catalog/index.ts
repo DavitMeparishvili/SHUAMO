@@ -20,10 +20,26 @@ export {
 export { parseImageUrls } from "./domain/image-urls";
 export { parseProductRate } from "./domain/product-rate";
 export {
+  PRODUCT_TYPES,
+  PRODUCT_TYPE_GROUPS,
+  isProductType,
+  productTypeMessageKey,
+  type ProductTypeValue,
+} from "./domain/product-taxonomy";
+export {
+  AFFILIATE_CHANNELS,
+  PAYOUT_TIMINGS,
+  PROHIBITED_PROMOTION_METHODS,
+  type AffiliateChannel,
+  type AffiliatePayoutTimingValue,
+  type ProhibitedPromotionMethod,
+} from "./domain/affiliate-terms";
+export {
   createPrismaProductRepository,
   getProductForBrand,
   listProductsForBrand,
   prismaProductRepository,
+  type ProductCatalogQuery,
 } from "./infrastructure/prisma-product-repository";
 export { createS3ImageStorage } from "./infrastructure/s3-image-storage";
 export { createPresignHandler } from "./http/image-upload-handlers";
@@ -40,3 +56,6 @@ export {
   type ProductFormValue,
 } from "./ui/product-form";
 export { ProductList } from "./ui/product-list";
+export { CatalogPagination } from "./ui/catalog-pagination";
+export { MobileFilterSheet } from "./ui/mobile-filter-sheet";
+export { ProductImageGallery } from "./ui/product-image-gallery";

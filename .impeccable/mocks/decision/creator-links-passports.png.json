@@ -1,0 +1,8 @@
+{
+  "promptFile": "creator-links-passports.prompt.txt",
+  "useCase": "ui-mockup",
+  "source": "built-in image_gen",
+  "referenceImage": "src/test/e2e/design-system.spec.ts-snapshots/design-en-desktop-chromium-win32.png",
+  "referenceRole": "identity only",
+  "approved": false
+}

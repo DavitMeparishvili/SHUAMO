@@ -1,0 +1,48 @@
+{
+  "title": "Choose the creator links design",
+  "question": "All three make the linked product unmistakable. Choose the composition that should define the creator Links page.",
+  "options": [
+    {
+      "id": "active-product-gallery",
+      "label": "Active Product Gallery",
+      "kicker": "THE ROLL",
+      "lineage": "visual product catalog with an operational link footer",
+      "thesis": "Creators recognize products from imagery first, then copy or manage the exact link beneath each one.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#EFF1F5"],
+      "materials": ["editorial product crops", "quiet paper cards", "indigo link action bars"],
+      "viewport": "A category band and compact filter row lead into a three-column gallery; every product card ends with a clearly separated tracking-link strip and Copy action.",
+      "risk": "Beautiful and familiar, but it shows fewer links per viewport than the list-based option.",
+      "comp": ".impeccable/mocks/decision/creator-links-gallery.png"
+    },
+    {
+      "id": "editorial-link-ledger",
+      "label": "Editorial Link Ledger",
+      "lineage": "premium commerce list crossed with a precise link register",
+      "thesis": "Each link becomes one calm product row whose image, identity, terms, status, and URL read in a single scan.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#F7F8FA"],
+      "materials": ["wide product rows", "sparse hairlines", "tabular link utilities"],
+      "viewport": "A product-type navigator and search filters sit above full-width image-led rows; product identity dominates the left and a restrained link utility rail anchors the right.",
+      "risk": "The most efficient and professional option, but it relies on excellent spacing to avoid feeling table-like.",
+      "comp": ".impeccable/mocks/decision/creator-links-ledger.png"
+    },
+    {
+      "id": "product-link-passports",
+      "label": "Product Link Passports",
+      "lineage": "product passport cards with a creator-owned link identity",
+      "thesis": "Every product and its tracking link are presented as one complete, self-contained object.",
+      "palette": ["#FFFFFF", "#111318", "#4436F5", "#DEDAFE"],
+      "materials": ["two-column passport cards", "structured metadata blocks", "prominent copy controls"],
+      "viewport": "Filters lead into a two-column grid of generous passport cards with product photography, brand and category, exact commission, status, visible URL, Copy, and a clear product-detail destination.",
+      "risk": "It gives every link exceptional clarity, but long URLs and Georgian labels need disciplined responsive handling.",
+      "comp": ".impeccable/mocks/decision/creator-links-passports.png"
+    }
+  ],
+  "reroll": {
+    "registers": ["safer", "bolder"]
+  },
+  "steer": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  }
+}

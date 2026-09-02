@@ -21,7 +21,7 @@ export default async function EditProductPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; saved?: string }>;
 }) {
   const [{ locale, id }, query] = await Promise.all([params, searchParams]);
   if (!isLocale(locale)) notFound();
@@ -50,6 +50,13 @@ export default async function EditProductPage({
             )}
           />
         ) : null}
+        {query.saved !== undefined ? (
+          <Banner
+            tone="info"
+            title={t(messages, "catalog.savedTitle")}
+            body={t(messages, "catalog.savedBody")}
+          />
+        ) : null}
         <ProductForm
           action={updateProductAction.bind(null, locale, id)}
           copy={formCopy(messages)}
@@ -58,11 +65,23 @@ export default async function EditProductPage({
             sku: product.sku,
             title: product.title,
             description: product.description,
+            productType: product.productType,
             priceGel: product.priceGel.toString(),
             imageUrls: product.imageUrls,
             backlinkUrl: product.backlinkUrl,
             commissionType: product.commissionType,
             commissionValue: product.commissionValue.toString(),
+            cookieWindowDays: product.cookieWindowDays,
+            payoutTiming: product.payoutTiming,
+            allowedChannels: product.allowedChannels,
+            prohibitedPromotionMethods: product.prohibitedPromotionMethods,
+            availableRegions: product.availableRegions,
+            couponPolicy: product.couponPolicy,
+            returnPolicy: product.returnPolicy,
+            contentRequirements: product.contentRequirements,
+            specialTerms: product.specialTerms,
+            offerStartsAt: product.offerStartsAt,
+            offerEndsAt: product.offerEndsAt,
           }}
           {...(product.status === "ACTIVE"
             ? { archiveAction: archiveProductAction.bind(null, locale, id) }

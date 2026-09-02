@@ -15,7 +15,13 @@ describe("createProduct", () => {
     const result = await createProduct({
       products: {
         findBrandSku: async () => undefined,
-        create: async (input) => ({ id: "p1", status: "ACTIVE", ...input }),
+        create: async (input) => ({
+          id: "p1",
+          status: "ACTIVE",
+          termsVersion: 1,
+          termsUpdatedAt: new Date(0),
+          ...input,
+        }),
       },
     })("b1", valid);
     expect(result).toEqual({ ok: true, value: { id: "p1" } });
@@ -40,7 +46,13 @@ describe("createProduct", () => {
         findBrandSku: async () => undefined,
         create: async (input) => {
           created = true;
-          return { id: "p1", status: "ACTIVE", ...input };
+          return {
+            id: "p1",
+            status: "ACTIVE",
+            termsVersion: 1,
+            termsUpdatedAt: new Date(0),
+            ...input,
+          };
         },
       },
     })("b1", { ...valid, imageUrls: ["https://attacker.example/image.jpg"] });

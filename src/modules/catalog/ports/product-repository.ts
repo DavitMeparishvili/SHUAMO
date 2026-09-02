@@ -5,16 +5,30 @@ export interface ProductWriteInput {
   sku: string;
   title: string;
   description: string;
+  productType: import("../domain/product-taxonomy").ProductTypeValue;
   priceGel: string;
   imageUrls: string[];
   backlinkUrl: string;
   commissionType: "PERCENT" | "FIXED";
   commissionValue: string;
+  cookieWindowDays: number;
+  payoutTiming: import("../domain/affiliate-terms").AffiliatePayoutTimingValue;
+  allowedChannels: string[];
+  prohibitedPromotionMethods: string[];
+  availableRegions: string[];
+  couponPolicy: string;
+  returnPolicy: string;
+  contentRequirements: string;
+  specialTerms: string;
+  offerStartsAt: Date | null;
+  offerEndsAt: Date | null;
 }
 
 export interface ProductRecord extends ProductWriteInput {
   id: string;
   status: ProductStatusValue;
+  termsVersion: number;
+  termsUpdatedAt: Date;
 }
 
 export interface ProductRepository {
@@ -31,6 +45,7 @@ export interface ProductRepository {
   update(
     id: string,
     input: Omit<ProductWriteInput, "brandId">,
+    options?: { termsChanged: boolean },
   ): Promise<ProductRecord>;
   findBrandSku(
     brandId: string,

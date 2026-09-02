@@ -1,4 +1,7 @@
 import Decimal from "decimal.js";
+import Image from "next/image";
+import Link from "next/link";
+import type { ProductTypeValue } from "@/src/modules/catalog";
 import {
   Button,
   CopyField,
@@ -8,18 +11,26 @@ import {
 import { resolveLink, type DisableReason } from "../domain/disable-chain";
 
 export function LinkList({
+  locale,
   links,
   baseUrl,
   copy,
 }: {
+  locale: string;
   links: readonly {
     id: string;
     code: string;
     commissionType: "PERCENT" | "FIXED";
     commissionValue: { toString(): string };
     status: "ACTIVE" | "DISABLED";
+    acceptedTerms?: unknown;
+    termsAcceptedAt?: Date;
     product: {
+      id: string;
       title: string;
+      sku: string;
+      productType: ProductTypeValue;
+      imageUrls: readonly string[];
       status: "ACTIVE" | "ARCHIVED";
       brand: {
         id: string;
@@ -41,16 +52,21 @@ export function LinkList({
     active: string;
     link: string;
     rate: string;
+    status: string;
+    viewProduct: string;
+    imageFallback: string;
+    acceptedTerms: string;
     copy: string;
     copied: string;
     copyError: string;
+    productTypes: Record<ProductTypeValue, string>;
     reasons: Record<DisableReason, string>;
   };
 }) {
   if (links.length === 0)
     return <EmptyState title={copy.emptyTitle} body={copy.emptyBody} />;
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {links.map((link) => {
         const partnership = link.creator.partnerships.find(
           ({ brandId }) => brandId === link.product.brand.id,
@@ -64,38 +80,117 @@ export function LinkList({
         const rate =
           link.commissionType === "PERCENT"
             ? `${new Decimal(link.commissionValue.toString()).times(100).toString()}%`
-            : `${link.commissionValue.toString()} ₾`;
+            : `${new Decimal(link.commissionValue.toString()).toFixed(2)} ₾`;
+        const acceptedVersion =
+          typeof link.acceptedTerms === "object" &&
+          link.acceptedTerms !== null &&
+          "version" in link.acceptedTerms &&
+          typeof link.acceptedTerms.version === "number"
+            ? link.acceptedTerms.version
+            : 1;
         return (
           <article
-            className="grid gap-5 rounded-md border border-slate-200 bg-paper p-5 sm:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)]"
+            className="group grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-hidden rounded-md border border-slate-200 bg-paper transition-[border-color,box-shadow] duration-200 hover:border-signal hover:shadow-sm"
             key={link.id}
           >
-            <div className="grid content-start gap-2">
-              <p className="m-0 type-small font-semibold text-slate-600">
-                {link.product.brand.name}
-              </p>
-              <h2 className="m-0 type-h3 text-ink">{link.product.title}</h2>
-              <p className="m-0 type-small text-slate-600">
-                {copy.rate}: <code className="type-mono text-ink">{rate}</code>
-              </p>
-              <div>
-                <StatusPill
-                  state={resolution.active ? "active" : "disabled"}
-                  label={
-                    resolution.active
-                      ? copy.active
-                      : copy.reasons[resolution.reason]
-                  }
-                />
+            <Link
+              className="block text-inherit no-underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus"
+              href={`/${locale}/creator/products/${link.product.id}`}
+            >
+              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                {link.product.imageUrls[0] ? (
+                  <Image
+                    alt=""
+                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.025]"
+                    fill
+                    sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 33vw"
+                    src={link.product.imageUrls[0]}
+                    unoptimized
+                  />
+                ) : (
+                  <div className="grid size-full content-between bg-slate-100 p-5">
+                    <span className="type-caption font-semibold text-slate-600">
+                      {link.product.brand.name}
+                    </span>
+                    <div className="grid justify-items-center gap-3 text-center">
+                      <span
+                        aria-hidden="true"
+                        className="grid size-14 place-items-center rounded-full border border-slate-300 type-h3 text-slate-600"
+                      >
+                        {link.product.brand.name.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="type-small font-semibold text-ink">
+                        {copy.productTypes[link.product.productType]}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 type-caption text-slate-600">
+                      <span>{copy.imageFallback}</span>
+                      <code className="min-w-0 truncate type-mono">
+                        {link.product.sku}
+                      </code>
+                    </div>
+                  </div>
+                )}
               </div>
+              <div className="grid gap-4 p-5">
+                <div>
+                  <div className="flex items-start justify-between gap-3 type-caption text-slate-600">
+                    <span>{link.product.brand.name}</span>
+                    <span className="text-right">
+                      {copy.productTypes[link.product.productType]}
+                    </span>
+                  </div>
+                  <h2 className="mb-0 mt-2 line-clamp-2 type-h3 text-ink transition-colors group-hover:text-signal">
+                    {link.product.title}
+                  </h2>
+                </div>
+                <dl className="m-0 grid grid-cols-2 gap-4">
+                  <div>
+                    <dt className="type-caption text-slate-600">{copy.rate}</dt>
+                    <dd className="m-0 mt-1 type-mono font-semibold text-ink">
+                      {rate}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="type-caption text-slate-600">
+                      {copy.status}
+                    </dt>
+                    <dd className="m-0 mt-1">
+                      <StatusPill
+                        state={resolution.active ? "active" : "disabled"}
+                        label={
+                          resolution.active
+                            ? copy.active
+                            : copy.reasons[resolution.reason]
+                        }
+                      />
+                    </dd>
+                  </div>
+                </dl>
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-slate-200 pt-3">
+                  <p className="m-0 type-caption text-slate-600">
+                    {copy.acceptedTerms.replace(
+                      "{version}",
+                      String(acceptedVersion),
+                    )}
+                  </p>
+                  <span className="inline-flex min-h-11 shrink-0 items-center gap-2 type-small font-semibold text-signal">
+                    {copy.viewProduct} <span aria-hidden="true">→</span>
+                  </span>
+                </div>
+              </div>
+            </Link>
+            <div className="min-w-0 border-t border-slate-200 p-4">
+              <CopyField
+                value={`${baseUrl.replace(/\/$/, "")}/r/${link.code}`}
+                label={copy.link}
+                copyLabel={copy.copy}
+                copiedLabel={copy.copied}
+                copyErrorLabel={copy.copyError}
+                compact
+                truncateValue
+              />
             </div>
-            <CopyField
-              value={`${baseUrl.replace(/\/$/, "")}/r/${link.code}`}
-              label={copy.link}
-              copyLabel={copy.copy}
-              copiedLabel={copy.copied}
-              copyErrorLabel={copy.copyError}
-            />
           </article>
         );
       })}

@@ -1,0 +1,5 @@
+Use case: ui-mockup
+Asset type: high-fidelity desktop web creator links catalog decision comp
+Primary request: Create SHUAMO's Tracking links page as an Editorial Link Ledger. Keep the workspace rail, page heading, product category band, search, Brand, Status and Sort filters, result count, four full-width image-led product rows, and pagination. Each row has a 4:3 product thumbnail, brand, category and prominent title, exact commission, worded status, and a right-hand tracking URL with Copy. Product identity and View product navigate to details; Copy remains a separate utility. Rows must feel like premium commerce, not a generic data table.
+Identity reference: Preserve only the reference screenshot's paper-white ground, ink typography, signal indigo #4436F5, Geist-like sans, mono figures, fine neutral rules, restrained elevation and calm operational character. Do not copy its content.
+Constraints: working desktop product UI, accessible contrast, sparse dividers, one signal accent, no gradients, glass, fake metrics, browser chrome or watermark.

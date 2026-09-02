@@ -54,29 +54,33 @@ test("@phase-3 a creator explicitly accepts one product rate", async ({
   const agreedRate = "10%";
 
   await signIn(page, "en", CREATOR);
-  await page.goto("/en/creator/links");
+  await page.goto("/en/creator/products");
   const chosenOffer = page
     .locator("article")
     .filter({ hasText: chosenProduct });
   await expect(chosenOffer).toContainText(agreedRate);
-  await chosenOffer
-    .getByRole("button", { name: "Create link at this rate" })
-    .click();
+  await chosenOffer.getByRole("link").click();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Create link at this rate" }).click();
+  await expect(page.getByText("Link active", { exact: true })).toBeVisible();
+  await page.goto("/en/creator/links");
 
   const agreedLink = page.locator("article").filter({ hasText: chosenProduct });
   await expect(agreedLink.getByRole("button", { name: "Copy" })).toBeVisible();
   await expect(agreedLink).toContainText(agreedRate);
+  await page.goto("/en/creator/products");
   await expect(
     page.locator("article").filter({ hasText: otherProduct }),
-  ).toContainText("Create link at this rate");
+  ).toContainText("View offer");
 
   await page.context().clearCookies();
   await signIn(page, "en", BRAND);
-  await page.goto("/en/brand/products");
+  const chosenSku = `P-E2E-chosen-${testInfo.project.name}-${RUN_ID}`;
+  await page.goto(`/en/brand/products?q=${encodeURIComponent(chosenSku)}`);
   await page
-    .getByRole("link", {
-      name: `P-E2E-chosen-${testInfo.project.name}-${RUN_ID}`,
-    })
+    .locator("article")
+    .filter({ hasText: chosenSku })
+    .getByRole("link", { name: "Manage product" })
     .click();
   const creatorLinks = page.locator("#creator-links");
   await expect(
