@@ -387,22 +387,35 @@ export interface CreatorOfferCatalogQuery {
   pageSize?: number;
 }
 
-function creatorCatalogWhere(
-  creatorId: string,
+const NO_CREATOR_ID = "00000000-0000-4000-8000-000000000000";
+
+function activeEligibleCreatorLinkWhere(
+  creatorId: string | undefined,
+): Prisma.TrackingLinkWhereInput {
+  const eligibleCreatorId = creatorId ?? NO_CREATOR_ID;
+  return {
+    creatorId: eligibleCreatorId,
+    status: "ACTIVE",
+    product: {
+      brand: {
+        partnerships: {
+          some: {
+            creatorId: eligibleCreatorId,
+            status: "APPROVED",
+            creator: { status: "APPROVED" },
+          },
+        },
+      },
+    },
+  };
+}
+
+function publicCatalogWhere(
   query: CreatorOfferCatalogQuery = {},
 ): Prisma.ProductWhereInput {
   return {
     status: "ACTIVE",
-    brand: {
-      status: "APPROVED",
-      partnerships: {
-        some: {
-          creatorId,
-          status: "APPROVED",
-          creator: { status: "APPROVED" },
-        },
-      },
-    },
+    brand: { status: "APPROVED" },
     ...(query.productType ? { productType: query.productType } : {}),
     ...(query.commissionType ? { commissionType: query.commissionType } : {}),
     ...(query.q
@@ -415,6 +428,25 @@ function creatorCatalogWhere(
           ],
         }
       : {}),
+  };
+}
+
+function creatorCatalogWhere(
+  creatorId: string,
+  query: CreatorOfferCatalogQuery = {},
+): Prisma.ProductWhereInput {
+  return {
+    ...publicCatalogWhere(query),
+    brand: {
+      status: "APPROVED",
+      partnerships: {
+        some: {
+          creatorId,
+          status: "APPROVED",
+          creator: { status: "APPROVED" },
+        },
+      },
+    },
   };
 }
 
@@ -457,11 +489,92 @@ function serializeCreatorOffer<
     brand: { name: string };
   },
 >(product: T) {
+  const { brand, ...offer } = product;
   return {
-    ...product,
-    brandName: product.brand.name,
+    ...offer,
+    brandName: brand.name,
     priceGel: product.priceGel.toFixed(2),
     commissionValue: product.commissionValue.toFixed(4),
+  };
+}
+
+function catalogOrderBy(
+  sort: CreatorOfferCatalogQuery["sort"],
+): Prisma.ProductOrderByWithRelationInput[] {
+  return sort === "title"
+    ? [{ title: "asc" }]
+    : sort === "price_low"
+      ? [{ priceGel: "asc" }, { title: "asc" }]
+      : sort === "commission_high"
+        ? [{ commissionValue: "desc" }, { title: "asc" }]
+        : [{ createdAt: "desc" }, { title: "asc" }];
+}
+
+export async function listPublicProductOffers(
+  query: CreatorOfferCatalogQuery = {},
+  creatorId?: string,
+) {
+  const pageSize = Math.min(Math.max(query.pageSize ?? 12, 1), 48);
+  const requestedPage = Math.max(query.page ?? 1, 1);
+  const where = publicCatalogWhere(query);
+  const total = await prisma.product.count({ where });
+  const pageCount = Math.max(Math.ceil(total / pageSize), 1);
+  const page = Math.min(requestedPage, pageCount);
+  const products = await prisma.product.findMany({
+    where,
+    select: {
+      ...creatorOfferSelect,
+      links: {
+        ...creatorOfferSelect.links,
+        where: activeEligibleCreatorLinkWhere(creatorId),
+      },
+    },
+    orderBy: catalogOrderBy(query.sort),
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
+  return {
+    items: products.map(serializeCreatorOffer),
+    total,
+    page,
+    pageSize,
+    pageCount,
+  };
+}
+
+export async function getPublicProductOffer(
+  productId: string,
+  creatorId?: string,
+) {
+  if (!UUID.test(productId)) return undefined;
+  const product = await prisma.product.findFirst({
+    where: { id: productId, ...publicCatalogWhere() },
+    select: {
+      ...creatorOfferSelect,
+      brand: {
+        select: {
+          name: true,
+          partnerships: {
+            where: {
+              creatorId: creatorId ?? NO_CREATOR_ID,
+              status: "APPROVED",
+              creator: { status: "APPROVED" },
+            },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+      links: {
+        ...creatorOfferSelect.links,
+        where: activeEligibleCreatorLinkWhere(creatorId),
+      },
+    },
+  });
+  if (product === null) return undefined;
+  return {
+    ...serializeCreatorOffer(product),
+    isCreatorEligible: product.brand.partnerships.length > 0,
   };
 }
 
@@ -475,14 +588,6 @@ export async function listProductOffersForCreator(
   const total = await prisma.product.count({ where });
   const pageCount = Math.max(Math.ceil(total / pageSize), 1);
   const page = Math.min(requestedPage, pageCount);
-  const orderBy: Prisma.ProductOrderByWithRelationInput[] =
-    query.sort === "title"
-      ? [{ title: "asc" }]
-      : query.sort === "price_low"
-        ? [{ priceGel: "asc" }, { title: "asc" }]
-        : query.sort === "commission_high"
-          ? [{ commissionValue: "desc" }, { title: "asc" }]
-          : [{ createdAt: "desc" }, { title: "asc" }];
   const products = await prisma.product.findMany({
     where,
     select: {
@@ -492,7 +597,7 @@ export async function listProductOffersForCreator(
         where: { creatorId, status: "ACTIVE" },
       },
     },
-    orderBy,
+    orderBy: catalogOrderBy(query.sort),
     skip: (page - 1) * pageSize,
     take: pageSize,
   });

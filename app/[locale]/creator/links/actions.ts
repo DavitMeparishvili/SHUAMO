@@ -26,5 +26,7 @@ export async function createProductLinkAction(
   revalidatePath(`/${locale}/creator/links`);
   revalidatePath(`/${locale}/creator/products`);
   revalidatePath(`/${locale}/creator/products/${acceptance.productId}`);
+  revalidatePath(`/${locale}/products`);
+  revalidatePath(`/${locale}/products/${acceptance.productId}`);
   revalidatePath(`/${locale}/brand/links`);
 }

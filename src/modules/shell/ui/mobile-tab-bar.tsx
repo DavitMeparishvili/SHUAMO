@@ -17,7 +17,7 @@ export function MobileTabBar({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 grid min-h-16 auto-cols-fr grid-flow-col border-t border-slate-300 bg-paper px-2 pb-[env(safe-area-inset-bottom)] shadow-md min-[640px]:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid min-h-16 auto-cols-[minmax(72px,1fr)] grid-flow-col overflow-x-auto border-t border-slate-300 bg-paper px-2 pb-[env(safe-area-inset-bottom)] shadow-md min-[640px]:hidden"
       aria-label={t(messages, "nav.mobile")}
     >
       {destinations.map((destination) => (

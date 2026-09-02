@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import {
   Banner,
   Button,
@@ -11,13 +11,9 @@ import {
   ProductImageGallery,
   productTypeMessageKey,
 } from "@/src/modules/catalog";
-import {
-  currentViewer,
-  requireCreator,
-  WorkspaceShell,
-} from "@/src/modules/identity";
+import { currentViewer, WorkspaceShell } from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
-import { getProductOfferForCreator } from "@/src/modules/partnerships";
+import { getPublicProductOffer } from "@/src/modules/partnerships";
 import { Money } from "@/src/modules/shared";
 import { createProductLinkAction } from "../../links/actions";
 
@@ -30,13 +26,14 @@ export default async function CreatorProductPage({
 }: {
   params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale, id } = await params;
+  const [{ locale, id }, viewer] = await Promise.all([params, currentViewer()]);
   if (!isLocale(locale)) notFound();
-  const allowed = requireCreator(await currentViewer());
-  if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const [messages, offer] = await Promise.all([
     Promise.resolve(getMessages(locale)),
-    getProductOfferForCreator(allowed.value.creatorId, id),
+    getPublicProductOffer(
+      id,
+      viewer.kind === "creator" ? viewer.creatorId : undefined,
+    ),
   ]);
   if (!offer) notFound();
   const rate =
@@ -72,7 +69,7 @@ export default async function CreatorProductPage({
       <div className="grid gap-10">
         <Link
           className="w-fit type-small font-semibold text-slate-600 hover:text-ink"
-          href={`/${locale}/creator/products`}
+          href={`/${locale}/products`}
         >
           ← {t(messages, "catalog.backToProducts")}
         </Link>
@@ -144,8 +141,13 @@ export default async function CreatorProductPage({
                   </dt>
                   <dd className="m-0 mt-1">
                     <StatusPill
-                      label={t(messages, "catalog.terms.eligible")}
-                      state="active"
+                      label={t(
+                        messages,
+                        offer.isCreatorEligible
+                          ? "catalog.terms.eligible"
+                          : "catalog.terms.readOnly",
+                      )}
+                      state={offer.isCreatorEligible ? "active" : "disabled"}
                     />
                   </dd>
                 </div>
@@ -165,7 +167,7 @@ export default async function CreatorProductPage({
                   </Link>
                 }
               />
-            ) : (
+            ) : viewer.kind === "creator" && offer.isCreatorEligible ? (
               <form
                 action={createProductLinkAction.bind(null, locale)}
                 className="grid gap-4"
@@ -204,6 +206,40 @@ export default async function CreatorProductPage({
                   {t(messages, "links.createAtRate")}
                 </Button>
               </form>
+            ) : viewer.kind === "anonymous" ? (
+              <Banner
+                tone="info"
+                title={t(messages, "catalog.access.signInTitle")}
+                body={t(messages, "catalog.access.signInBody")}
+                action={
+                  <Link
+                    className="type-small font-semibold text-signal"
+                    href={`/${locale}/sign-in`}
+                  >
+                    {t(messages, "nav.signIn")}
+                  </Link>
+                }
+              />
+            ) : viewer.kind === "creator" ? (
+              <Banner
+                tone="info"
+                title={t(messages, "catalog.access.partnershipTitle")}
+                body={t(messages, "catalog.access.partnershipBody")}
+                action={
+                  <Link
+                    className="type-small font-semibold text-signal"
+                    href={`/${locale}/brands`}
+                  >
+                    {t(messages, "catalog.access.browseBrands")}
+                  </Link>
+                }
+              />
+            ) : (
+              <Banner
+                tone="info"
+                title={t(messages, "catalog.access.viewOnlyTitle")}
+                body={t(messages, "catalog.access.viewOnlyBody")}
+              />
             )}
             <a
               className="text-center type-small font-semibold text-slate-600 hover:text-ink"

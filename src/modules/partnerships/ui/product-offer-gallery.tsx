@@ -60,7 +60,7 @@ export function ProductOfferGallery({
           >
             <Link
               className="block text-inherit no-underline"
-              href={`/${locale}/creator/products/${offer.id}`}
+              href={`/${locale}/products/${offer.id}`}
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                 {offer.imageUrls[0] ? (

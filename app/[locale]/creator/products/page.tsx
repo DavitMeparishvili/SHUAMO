@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Button, Field, Select } from "@/src/modules/design-system";
 import {
   CatalogPagination,
@@ -9,11 +9,7 @@ import {
   productTypeMessageKey,
   type ProductTypeValue,
 } from "@/src/modules/catalog";
-import {
-  currentViewer,
-  requireCreator,
-  WorkspaceShell,
-} from "@/src/modules/identity";
+import { currentViewer, WorkspaceShell } from "@/src/modules/identity";
 import {
   getMessages,
   isLocale,
@@ -21,7 +17,7 @@ import {
   type Messages,
 } from "@/src/modules/localization";
 import {
-  listProductOffersForCreator,
+  listPublicProductOffers,
   ProductOfferGallery,
 } from "@/src/modules/partnerships";
 
@@ -42,10 +38,12 @@ function FilterForm({
   messages,
   query,
   suffix,
+  clearHref,
 }: {
   messages: Messages;
   query: Query;
   suffix: string;
+  clearHref: string;
 }) {
   return (
     <form
@@ -102,7 +100,7 @@ function FilterForm({
         <Button type="submit">{t(messages, "catalog.filter.apply")}</Button>
         <Link
           className="inline-flex min-h-11 items-center px-3 type-small font-semibold text-slate-600 hover:text-ink"
-          href="?"
+          href={clearHref}
         >
           {t(messages, "catalog.filter.clear")}
         </Link>
@@ -118,10 +116,12 @@ export default async function CreatorProductsPage({
   params: Promise<{ locale: string }>;
   searchParams: Promise<Query>;
 }) {
-  const [{ locale }, query] = await Promise.all([params, searchParams]);
+  const [{ locale }, query, viewer] = await Promise.all([
+    params,
+    searchParams,
+    currentViewer(),
+  ]);
   if (!isLocale(locale)) notFound();
-  const allowed = requireCreator(await currentViewer());
-  if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const messages = getMessages(locale);
   const productType =
     query.type && isProductType(query.type) ? query.type : undefined;
@@ -135,13 +135,16 @@ export default async function CreatorProductsPage({
     ? (query.sort as "newest" | "title" | "price_low" | "commission_high")
     : "newest";
   const search = query.q?.trim();
-  const catalog = await listProductOffersForCreator(allowed.value.creatorId, {
-    ...(search ? { q: search } : {}),
-    ...(productType ? { productType } : {}),
-    ...(commissionType ? { commissionType } : {}),
-    sort,
-    page: validPage(query.page),
-  });
+  const catalog = await listPublicProductOffers(
+    {
+      ...(search ? { q: search } : {}),
+      ...(productType ? { productType } : {}),
+      ...(commissionType ? { commissionType } : {}),
+      sort,
+      page: validPage(query.page),
+    },
+    viewer.kind === "creator" ? viewer.creatorId : undefined,
+  );
   const productTypes = Object.fromEntries(
     PRODUCT_TYPES.map((type) => [
       type,
@@ -159,7 +162,8 @@ export default async function CreatorProductsPage({
     }))
       if (value) values.set(key, value);
     const serialized = values.toString();
-    return serialized ? `?${serialized}` : `/${locale}/creator/products`;
+    const catalogPath = `/${locale}/products`;
+    return serialized ? `${catalogPath}?${serialized}` : catalogPath;
   };
   const activeFilterCount = [
     query.q,
@@ -169,7 +173,8 @@ export default async function CreatorProductsPage({
   ].filter(Boolean).length;
   return (
     <WorkspaceShell
-      name={allowed.value.displayName}
+      name={t(messages, "app.name")}
+      showName={false}
       title={t(messages, "catalog.discover.title")}
       intro={t(messages, "catalog.discover.intro")}
     >
@@ -197,7 +202,12 @@ export default async function CreatorProductsPage({
           ))}
         </nav>
         <div className="hidden sm:block">
-          <FilterForm messages={messages} query={query} suffix="desktop" />
+          <FilterForm
+            clearHref={`/${locale}/products`}
+            messages={messages}
+            query={query}
+            suffix="desktop"
+          />
         </div>
         <div className="flex items-center justify-between gap-4">
           <p className="m-0 type-small text-slate-600">
@@ -211,7 +221,12 @@ export default async function CreatorProductsPage({
             closeLabel={t(messages, "catalog.filter.close")}
             label={t(messages, "catalog.filter.mobile")}
           >
-            <FilterForm messages={messages} query={query} suffix="mobile" />
+            <FilterForm
+              clearHref={`/${locale}/products`}
+              messages={messages}
+              query={query}
+              suffix="mobile"
+            />
           </MobileFilterSheet>
         </div>
         <ProductOfferGallery
