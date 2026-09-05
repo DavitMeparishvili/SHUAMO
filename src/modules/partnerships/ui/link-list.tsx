@@ -19,8 +19,18 @@ export function LinkList({
   performance,
   baseUrl,
   copy,
+  brandControls,
 }: {
   locale: string;
+  brandControls?: {
+    creator: string;
+    enable: string;
+    disable: string;
+    setStatusAction: (
+      linkId: string,
+      status: "ACTIVE" | "DISABLED",
+    ) => void | Promise<void>;
+  };
   links: readonly {
     id: string;
     code: string;
@@ -43,6 +53,7 @@ export function LinkList({
       };
     };
     creator: {
+      displayName?: string;
       partnerships: readonly {
         brandId: string;
         status: "PENDING" | "APPROVED" | "REJECTED";
@@ -108,7 +119,7 @@ export function LinkList({
           >
             <Link
               className="block text-inherit no-underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus"
-              href={`/${locale}/creator/products/${link.product.id}`}
+              href={`/${locale}/${brandControls ? "brand" : "creator"}/products/${link.product.id}`}
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                 {link.product.imageUrls[0] ? (
@@ -156,6 +167,11 @@ export function LinkList({
                   <h2 className="mb-0 mt-2 line-clamp-2 type-h3 text-ink transition-colors group-hover:text-signal">
                     {link.product.title}
                   </h2>
+                  {brandControls ? (
+                    <p className="mb-0 mt-2 break-words type-small text-slate-600">
+                      {brandControls.creator}: {link.creator.displayName}
+                    </p>
+                  ) : null}
                 </div>
                 <dl className="m-0 grid grid-cols-2 gap-4">
                   <div>
@@ -247,11 +263,30 @@ export function LinkList({
               )}
               <Link
                 className="inline-flex min-h-11 w-fit items-center type-small font-semibold text-signal"
-                href={`/${locale}/creator/earnings?link=${link.id}&view=links#breakdown`}
+                href={`/${locale}/${brandControls ? "brand/performance" : "creator/earnings"}?link=${link.id}&view=links#breakdown`}
               >
                 {copy.viewPerformance}
               </Link>
             </div>
+            {brandControls ? (
+              <form
+                className="border-t border-slate-200 p-4"
+                action={brandControls.setStatusAction.bind(
+                  null,
+                  link.id,
+                  link.status === "ACTIVE" ? "DISABLED" : "ACTIVE",
+                )}
+              >
+                <Button
+                  type="submit"
+                  variant={link.status === "ACTIVE" ? "danger" : "outline"}
+                >
+                  {link.status === "ACTIVE"
+                    ? brandControls.disable
+                    : brandControls.enable}
+                </Button>
+              </form>
+            ) : null}
           </article>
         );
       })}

@@ -35,67 +35,94 @@ const productTypes = Object.fromEntries(
 ) as Record<ProductTypeValue, string>;
 
 describe("LinkList", () => {
-  it("makes the product destination obvious while keeping copy as a separate action", () => {
-    const html = renderToStaticMarkup(
-      <LinkList
-        baseUrl="https://shuamo.test"
-        locale="en"
-        copy={{
-          emptyTitle: "No links",
-          emptyBody: "Choose a product",
-          active: "Active",
-          link: "Tracking link",
-          rate: "Commission",
-          status: "Link status",
-          viewProduct: "View product",
-          imageFallback: "No product image",
-          acceptedTerms: "Accepted terms version {version}",
-          copy: "Copy",
-          copied: "Copied",
-          copyError: "Copy failed",
-          productTypes,
-          reasons: copy.reasons,
-          last30Days: copy.last30Days,
-          clicks: copy.clicks,
-          converted: copy.converted,
-          orders: copy.orders,
-          confirmed: copy.confirmed,
-          noActivity: copy.noActivity,
-          viewPerformance: copy.viewPerformance,
-        }}
-        links={[
-          {
-            id: "l1",
-            code: "ABCDEFGH",
-            commissionType: "PERCENT",
-            commissionValue: { toString: () => "0.125" },
-            status: "ACTIVE",
-            acceptedTerms: { version: 3 },
-            product: {
-              id: "p1",
-              title: "Amber perfume",
-              sku: "AMBER-100",
-              productType: "BEAUTY_FRAGRANCE",
-              imageUrls: [],
+  it.each([false, true])(
+    "keeps role-specific destinations and separate controls (brand: %s)",
+    (isBrand) => {
+      const html = renderToStaticMarkup(
+        <LinkList
+          {...(isBrand
+            ? {
+                brandControls: {
+                  creator: copy.creator,
+                  enable: copy.enable,
+                  disable: copy.disable,
+                  setStatusAction: () => undefined,
+                },
+              }
+            : {})}
+          baseUrl="https://shuamo.test"
+          locale="en"
+          copy={{
+            emptyTitle: "No links",
+            emptyBody: "Choose a product",
+            active: "Active",
+            link: "Tracking link",
+            rate: "Commission",
+            status: "Link status",
+            viewProduct: "View product",
+            imageFallback: "No product image",
+            acceptedTerms: "Accepted terms version {version}",
+            copy: "Copy",
+            copied: "Copied",
+            copyError: "Copy failed",
+            productTypes,
+            reasons: copy.reasons,
+            last30Days: copy.last30Days,
+            clicks: copy.clicks,
+            converted: copy.converted,
+            orders: copy.orders,
+            confirmed: copy.confirmed,
+            noActivity: copy.noActivity,
+            viewPerformance: copy.viewPerformance,
+          }}
+          links={[
+            {
+              id: "l1",
+              code: "ABCDEFGH",
+              commissionType: "PERCENT",
+              commissionValue: { toString: () => "0.125" },
               status: "ACTIVE",
-              brand: { id: "b1", name: "Aroma", status: "APPROVED" },
+              acceptedTerms: { version: 3 },
+              product: {
+                id: "p1",
+                title: "Amber perfume",
+                sku: "AMBER-100",
+                productType: "BEAUTY_FRAGRANCE",
+                imageUrls: [],
+                status: "ACTIVE",
+                brand: { id: "b1", name: "Aroma", status: "APPROVED" },
+              },
+              creator: {
+                displayName: "Nino Beridze",
+                partnerships: [{ brandId: "b1", status: "APPROVED" as const }],
+              },
             },
-            creator: {
-              partnerships: [{ brandId: "b1", status: "APPROVED" as const }],
-            },
-          },
-        ]}
-      />,
-    );
+          ]}
+        />,
+      );
 
-    expect(html).toContain("Amber perfume");
-    expect(html).toContain("Aroma");
-    expect(html).toContain("12.5%");
-    expect(html).toContain("View product");
-    expect(html).toContain('href="/en/creator/products/p1"');
-    expect(html).toContain("https://shuamo.test/r/ABCDEFGH");
-    expect(html).toContain("Accepted terms version 3");
-  });
+      expect(html).toContain("Amber perfume");
+      expect(html).toContain("Aroma");
+      expect(html).toContain("12.5%");
+      expect(html).toContain("View product");
+      expect(html).toContain(
+        `href="/en/${isBrand ? "brand" : "creator"}/products/p1"`,
+      );
+      expect(html).toContain(
+        `/en/${isBrand ? "brand/performance" : "creator/earnings"}?link=l1`,
+      );
+      if (isBrand) {
+        expect(html).toContain("Nino Beridze");
+        expect(html).toContain("Disable link");
+        expect(html).not.toContain("/en/creator/");
+      } else {
+        expect(html).not.toContain("Disable link");
+        expect(html).not.toContain("/en/brand/");
+      }
+      expect(html).toContain("https://shuamo.test/r/ABCDEFGH");
+      expect(html).toContain("Accepted terms version 3");
+    },
+  );
 });
 
 describe("BrandLinkList", () => {

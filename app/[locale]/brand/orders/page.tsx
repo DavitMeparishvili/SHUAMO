@@ -29,6 +29,8 @@ export default async function BrandOrdersPage({
       name={allowed.value.brandName}
       title={t(messages, "orders.title")}
       intro={t(messages, "orders.intro")}
+      contentVariant="plain"
+      showName={false}
     >
       <div className="grid gap-6">
         <OrdersQueue
@@ -37,6 +39,18 @@ export default async function BrandOrdersPage({
           decisionAction={decideOrderAction.bind(null, locale)}
           copy={{
             emptyTitle: t(messages, "orders.empty.title"),
+            all: t(messages, "orders.all"),
+            search: t(messages, "orders.search"),
+            searchPlaceholder: t(messages, "orders.searchPlaceholder"),
+            details: t(messages, "orders.details"),
+            products: t(messages, "orders.products"),
+            explanation: t(messages, "orders.explanation"),
+            cancelledNote: t(messages, "orders.cancelledNote"),
+            noResults: t(messages, "orders.noResults"),
+            reset: t(messages, "orders.reset"),
+            previous: t(messages, "orders.previous"),
+            next: t(messages, "orders.next"),
+            page: t(messages, "orders.page"),
             emptyBody: t(messages, "orders.empty.body"),
             order: t(messages, "orders.order"),
             date: t(messages, "orders.date"),

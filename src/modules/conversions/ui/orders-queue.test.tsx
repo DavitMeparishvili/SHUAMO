@@ -1,9 +1,24 @@
+// @vitest-environment jsdom
 import { renderToStaticMarkup } from "react-dom/server";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { describe, expect, it, vi } from "vitest";
 import type { ConversionView } from "../ports/conversion-repository";
 import { OrdersQueue } from "./orders-queue";
 
 const copy = {
+  all: "All orders",
+  search: "Search orders",
+  searchPlaceholder: "Search order, SKU or creator",
+  details: "View order details",
+  products: "Products",
+  explanation: "Open an order to see its products.",
+  cancelledNote: "Excluded from earnings",
+  noResults: "No matching orders",
+  reset: "Clear filters",
+  previous: "Previous",
+  next: "Next",
+  page: "Page",
   emptyTitle: "No orders",
   emptyBody: "Orders appear here.",
   order: "Order",
@@ -59,6 +74,75 @@ function order(
 }
 
 describe("OrdersQueue", () => {
+  afterEach(cleanup);
+
+  it("counts distinct SKUs while retaining every reported line", () => {
+    const original = order("CONFIRMED");
+    const first = original.items[0]!;
+    render(
+      <OrdersQueue
+        orders={[
+          {
+            ...original,
+            items: [
+              first,
+              { ...first, id: "duplicate-line" },
+              { ...first, id: "second-product", sku: "P-10" },
+            ],
+          },
+        ]}
+        locale="en"
+        decisionAction={vi.fn()}
+        copy={copy}
+      />,
+    );
+    expect(screen.getByText("Products: 2")).toBeTruthy();
+    expect(document.querySelectorAll("dl")).toHaveLength(3);
+  });
+
+  it("filters by status and creator, and resets an empty search", () => {
+    render(
+      <OrdersQueue
+        orders={[order("CONFIRMED"), order("CANCELLED", false)]}
+        locale="en"
+        decisionAction={vi.fn()}
+        copy={copy}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancelled 1" }));
+    expect(document.querySelectorAll("details")).toHaveLength(1);
+    expect(screen.getByText("Excluded from earnings")).toBeTruthy();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "Nino" },
+    });
+    expect(screen.getByText("No matching orders")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(document.querySelectorAll("details")).toHaveLength(2);
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "nino" },
+    });
+    expect(document.querySelectorAll("details")).toHaveLength(1);
+  });
+
+  it("paginates without losing orders", () => {
+    const orders = Array.from({ length: 11 }, (_, index) => ({
+      ...order("CONFIRMED"),
+      id: `cv-${index}`,
+      orderId: `order-${index}`,
+    }));
+    render(
+      <OrdersQueue
+        orders={orders}
+        locale="en"
+        decisionAction={vi.fn()}
+        copy={copy}
+      />,
+    );
+    expect(document.querySelectorAll("details")).toHaveLength(10);
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(document.querySelectorAll("details")).toHaveLength(1);
+    expect(screen.getByText("Order #order-10")).toBeTruthy();
+  });
   it("shows exact line attribution and cancellation without a redundant confirmation", () => {
     const html = renderToStaticMarkup(
       <OrdersQueue

@@ -117,6 +117,10 @@ space:
 
 # SHUAMO design language
 
+## Tracking link galleries
+
+Brand and creator Tracking links share the product-first card gallery: 4:3 imagery, product facts, accepted commission and terms, resolved status, a separate compact copy utility, and recent performance. Both use product-type tabs, desktop filters, a mobile filter sheet, and six-item pagination. Brand cards also identify the creator and expose Enable/Disable controls outside the product link; product and performance destinations stay within the brand workspace. Product-scoped brand link rows retain their compact management layout.
+
 ## Overview — Provenance
 
 SHUAMO exists to answer one question about money: where did this number come from? The interface is built as an instrument, not a dashboard. Every aggregate is a link to the rows beneath it, every forward-looking figure is labelled an estimate, and every amount is set in tabular mono so two numbers in a column can be compared by eye. Ink and paper carry the page. One electric signal marks the single thing to do next. Three state tones — accrued, settled, reversed — carry money's only three conditions, and they are always accompanied by words.

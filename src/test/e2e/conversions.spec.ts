@@ -62,7 +62,7 @@ test("@phase-6 a posted exact-link order automatically earns commission without 
 
   await signIn(page, "en", BRAND);
   await page.goto("/en/brand/orders");
-  const order = page.getByRole("article").filter({ hasText: `#${orderId}` });
+  const order = page.locator("details").filter({ hasText: `#${orderId}` });
   await expect(order.getByText("10.00 ₾").first()).toBeVisible();
   await expect(
     order.getByRole("button", { name: "Confirm order" }),
@@ -84,6 +84,7 @@ test("@phase-6 a posted exact-link order automatically earns commission without 
   await signIn(page, "en", BRAND);
   await page.goto("/en/brand/orders");
   const cancel = order.getByRole("button", { name: "Cancel / return order" });
+  await order.locator("summary").click();
   page.once("dialog", (dialog) => dialog.dismiss());
   await cancel.click();
   await expect(order.getByText("Confirmed", { exact: true })).toBeVisible();
@@ -119,10 +120,12 @@ test("@phase-6 an unattributed sale stays confirmed and cancellable", async ({
 }) => {
   await signIn(page, "ka", BRAND);
   await page.goto("/ka/brand/orders");
+  await page.getByRole("searchbox").fill("UNATTRIBUTED-ORDER");
   const order = page
-    .getByRole("article")
+    .locator("details")
     .filter({ hasText: "UNATTRIBUTED-ORDER" });
   await expect(order).toBeVisible();
+  await order.locator("summary").click();
   await expect(order.getByRole("button")).toHaveCount(1);
   await expect(order).toContainText("შემქმნელის საკომისიოს გარეშე");
   await expectNoAccessibilityViolations(page);
