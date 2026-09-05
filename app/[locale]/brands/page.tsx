@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { currentViewer, requireCreator } from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
   listPublicBrandProfiles,
@@ -16,6 +17,13 @@ export default async function BrandsDirectory({
 }) {
   const [{ locale }, filters] = await Promise.all([params, searchParams]);
   if (!isLocale(locale)) notFound();
+  if (requireCreator(await currentViewer()).ok) {
+    const query = new URLSearchParams();
+    if (filters.q) query.set("q", filters.q);
+    if (filters.category) query.set("category", filters.category);
+    if (filters.location) query.set("location", filters.location);
+    redirect(`/${locale}/creator/brands${query.size ? `?${query}` : ""}`);
+  }
   const messages = getMessages(locale);
   const rows = await listPublicBrandProfiles(locale, {
     ...(filters.q ? { query: filters.q } : {}),

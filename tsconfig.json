@@ -35,7 +35,9 @@
     ".next-redesign/types/**/*.ts",
     ".next-redesign/dev/types/**/*.ts",
     ".next-discovery/types/**/*.ts",
-    ".next-discovery/dev/types/**/*.ts"
+    ".next-discovery/dev/types/**/*.ts",
+    ".next-brands/types/**/*.ts",
+    ".next-brands/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", "src/test/boundaries/fixtures"]
 }

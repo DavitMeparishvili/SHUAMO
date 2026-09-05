@@ -6,8 +6,10 @@ import { currentViewer, requireCreator } from "@/src/modules/identity";
 
 export async function applyAction(locale: string, brandId: string) {
   const allowed = requireCreator(await currentViewer());
-  if (!allowed.ok) throw new Error("unauthenticated");
+  if (!allowed.ok) return { ok: false };
   const result = await applyCreatorToBrand(allowed.value.creatorId, brandId);
-  if (!result.ok) throw new Error(result.error);
+  if (!result.ok && result.error !== "already_exists") return { ok: false };
   revalidatePath(`/${locale}/creator/brands`);
+  revalidatePath(`/${locale}/brands`, "layout");
+  return { ok: true };
 }

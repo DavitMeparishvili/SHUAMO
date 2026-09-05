@@ -19,6 +19,7 @@ export function SiteFrame({
   const discovery = /^\/(ka|en)\/(creator\/)?products$/.test(path);
   const productDetail = /^\/(ka|en)\/(creator\/)?products\/[^/]+$/.test(path);
   const trackingLinks = /^\/(ka|en)\/creator\/links$/.test(path);
+  const brandsPage = /^\/(ka|en)\/creator\/brands$/.test(path);
   const drawer = useRef<HTMLDialogElement>(null);
   const [signingOut, setSigningOut] = useState(false);
   const label = (en: string, ka: string) => (locale === "ka" ? ka : en);
@@ -45,7 +46,9 @@ export function SiteFrame({
     },
     {
       href: `${root}/${brand ? "creators" : "brands"}`,
-      text: label("Collaborations", "თანამშრომლობები"),
+      text: brand
+        ? label("Collaborations", "თანამშრომლობები")
+        : label("Brands", "ბრენდები"),
       icon: "users",
     },
     {
@@ -173,7 +176,8 @@ export function SiteFrame({
     <div
       className={
         (workspace ? "site-frame workspace-frame" : "site-frame public-frame") +
-        (productDetail ? " product-detail-frame" : "")
+        (productDetail ? " product-detail-frame" : "") +
+        (brandsPage ? " brands-frame" : "")
       }
     >
       <a className="skip-link" href="#main">
@@ -257,13 +261,15 @@ export function SiteFrame({
               <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
             </div>
           ) : null}
-          {workspace && (discovery || trackingLinks) ? (
+          {workspace && (discovery || trackingLinks || brandsPage) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
               <span>
-                {trackingLinks
-                  ? label("Tracking links", "ტრეკინგ ბმულები")
-                  : label("Discover", "აღმოჩენა")}
+                {brandsPage
+                  ? label("Brands", "ბრენდები")
+                  : trackingLinks
+                    ? label("Tracking links", "ტრეკინგ ბმულები")
+                    : label("Discover", "აღმოჩენა")}
               </span>
             </div>
           ) : workspace ? (
@@ -434,8 +440,8 @@ export function SiteFrame({
           {[
             nav[0]!,
             nav[1]!,
-            nav.find((n) => n.icon === "link")!,
-            nav.find((n) => n.icon === "chart")!,
+            nav.find((n) => n.icon === (brand ? "link" : "users"))!,
+            nav.find((n) => n.icon === (brand ? "chart" : "link"))!,
           ].map((n) => (
             <Link
               key={n.href}
@@ -449,7 +455,7 @@ export function SiteFrame({
             >
               <Icon name={n.icon} />
               <span>
-                {(discovery || trackingLinks || productDetail) && !brand
+                {!brand
                   ? n.icon === "search"
                     ? label("Discover", "აღმოჩენა")
                     : n.icon === "link"

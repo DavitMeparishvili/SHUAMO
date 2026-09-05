@@ -1,12 +1,9 @@
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { currentViewer, requireCreator } from "@/src/modules/identity";
+import { isLocale } from "@/src/modules/localization";
 import {
-  currentViewer,
-  requireCreator,
-  WorkspaceShell,
-} from "@/src/modules/identity";
-import { getMessages, isLocale, t } from "@/src/modules/localization";
-import {
-  CreatorBrandList,
+  BrandsDirectory,
   listBrandsForCreator,
 } from "@/src/modules/partnerships";
 import { applyAction } from "./actions";
@@ -20,33 +17,54 @@ export default async function CreatorBrandsPage({
   if (!isLocale(locale)) notFound();
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
-  const [messages, brands] = await Promise.all([
-    Promise.resolve(getMessages(locale)),
-    listBrandsForCreator(allowed.value.creatorId),
-  ]);
+  const brands = await listBrandsForCreator(allowed.value.creatorId);
+  const localized = (ka: string, en: string) =>
+    locale === "ka" ? ka || en : en || ka;
   return (
-    <WorkspaceShell
-      name={allowed.value.displayName}
-      title={t(messages, "partnership.creator.title")}
-      intro={t(messages, "partnership.creator.intro")}
-    >
-      <CreatorBrandList
-        brands={brands.map((brand) => ({
-          ...brand,
-          ...(brand.profile?.status === "PUBLISHED" && brand.profile.slug
-            ? { profileHref: `/${locale}/brands/${brand.profile.slug}` }
-            : {}),
-        }))}
+    <Suspense>
+      <BrandsDirectory
+        locale={locale}
         applyAction={applyAction.bind(null, locale)}
-        copy={{
-          emptyTitle: t(messages, "partnership.brands.emptyTitle"),
-          emptyBody: t(messages, "partnership.brands.emptyBody"),
-          apply: t(messages, "partnership.apply"),
-          pending: t(messages, "partnership.status.pending"),
-          approved: t(messages, "partnership.status.approved"),
-          rejected: t(messages, "partnership.status.rejected"),
-        }}
+        items={brands.map((brand) => {
+          const profile = brand.profile;
+          const interests = Array.isArray(profile?.collaborationInterests)
+            ? profile.collaborationInterests
+            : [];
+          return {
+            id: brand.id,
+            name: brand.name,
+            createdAt: brand.createdAt.toISOString(),
+            status: brand.status ?? "NOT_APPLIED",
+            appliedAt: brand.appliedAt?.toISOString() ?? null,
+            tagline: profile
+              ? localized(profile.taglineKa, profile.taglineEn)
+              : "",
+            location: profile
+              ? localized(profile.locationKa, profile.locationEn)
+              : "",
+            locationAliases: profile
+              ? [profile.locationEn, profile.locationKa]
+              : [],
+            locationKey: profile
+              ? profile.locationEn || profile.locationKa
+              : "",
+            imageUrl: profile ? profile.heroImageUrl || profile.logoUrl : "",
+            profileHref: profile?.slug
+              ? `/${locale}/brands/${profile.slug}`
+              : null,
+            categories: profile?.categories ?? [],
+            interests: interests.flatMap((value) => {
+              if (!value || typeof value !== "object" || Array.isArray(value))
+                return [];
+              const en = typeof value.en === "string" ? value.en : "";
+              const ka = typeof value.ka === "string" ? value.ka : "";
+              return en || ka
+                ? [{ key: en || ka, label: localized(ka, en) }]
+                : [];
+            }),
+          };
+        })}
       />
-    </WorkspaceShell>
+    </Suspense>
   );
 }

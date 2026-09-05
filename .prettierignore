@@ -2,6 +2,7 @@ node_modules
 .next
 .next-redesign
 .next-discovery
+.next-brands
 out
 build
 coverage

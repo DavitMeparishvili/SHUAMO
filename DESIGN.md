@@ -497,6 +497,8 @@ The frontmatter records both the shared component scale and the direct surface s
 
 ## Layout
 
+Creator Brands keeps the established workspace shell around a centered directory capped at 1600px, with 28px desktop gutters. A 230px filter sidebar sits beside compact horizontal rows; between 901px and 1350px the sidebar narrows to 205px and row metadata wraps beneath identity. At 900px and below, 16px gutters, wrapping application-state pills and separate white rows replace the desktop list panel; filters move to a bottom sheet. Photographs step from 88px by 72px on wide desktop to 64px by 72px on mobile. At 380px and below, 12px gutters and 56px by 64px images leave room for translated names, with the row action below the metadata. The Brands mobile top bar is 76px tall. These are surface-specific adaptations of the shared shell.
+
 Profile routes pin the workspace content to white inside the existing navy shell, with a 1120px route cap and 1040px view cap. Brand profiles lead with a wide 4.15:1 cover and overlapping circular logo. Creator profiles split portrait and introduction equally on desktop. Below 760px, the brand cover becomes 3:1 and reaches the content edges; the creator portrait and identity share the opening row, followed by full-width biography and facts. Profile galleries use three columns on desktop and two on mobile. Editor media and paired fields collapse to one column; the fixed mobile savebar replaces workspace top and bottom navigation and respects the safe area, with reserved content space below the form.
 
 Marketing uses a 90% column capped at 1320px. A globe hero leads into two overlapping photographic audience cards, followed by steps, a soft invitation banner and a navy footer. The registration composition has a 1260px maximum and a photographic story beside a white form. Seller and creator registration share one continuous navy globe background across the entire registration section, including below the header.
@@ -509,6 +511,8 @@ Discovery shares the normal desktop workspace navigation: a 244px rail (220px at
 
 ## Elevation & Depth
 
+Brands rows and filter panels stay flat, separated by fine borders. Its native filter and application dialogs use a translucent navy backdrop. The filter sheet enters from a 16px vertical offset over 180ms only when reduced motion is not requested. Search focus surrounds the whole field; keyboard controls have a visible blue outline.
+
 Depth comes from navy framing, pale canvas, white panels and soft borders. Dashboard cards use the panel shadow; registration and sign-in panels receive deeper ambient lift. The shared card kit retains three shadow levels for resting cards, linked-card hover and dialogs. Photographic gradients maintain foreground readability; they are part of the chosen reference direction.
 
 The sidecar records exact shadows, motion and breakpoints. Controls transition color and borders over 150ms; audience photos use a 300ms crop transform and scale to 1.025 on hover. Reduced-motion preferences suppress these transitions and smooth scrolling. All keyboard-operable controls retain the shared visible focus outline and halo; the programmatically focused registration heading intentionally omits that ring.
@@ -517,6 +521,8 @@ Discovery cards stay flat with a pale border. Its filter sheet is separated by a
 
 ## Shapes
 
+Brands uses 10px desktop panels, 9px desktop row corners and 12px mobile row corners. Image corners are 7px and row actions are 6px. Mobile application-filter pills use a local 24px radius; the filter sheet reuses the shared large radius on its top corners and stays square at the bottom. These local shapes do not redefine the shared pill token.
+
 Profiles use 6px buttons, fields and image corners, 7px covers and approval badges, and 9px creator panels. Creator category chips intentionally use the scoped 14px profile-category radius; this does not change the shared pill token. The brand logo remains circular, with a white border and the local shadow `0 3px 6px rgb(11 28 61 / 10%)`.
 
 The geometric X is the identity's fixed silhouette. Cards use 10?12px corners, primary surface buttons 7px, registration fields 6px and shared controls 8px. The shared token named pill is now 8px; it is not a capsule. Circular avatars, step numbers and audience icons provide the recurring round accent. Use real strokes around fields and panels; do not substitute the former dark editorial hairline system.
@@ -524,6 +530,14 @@ The geometric X is the identity's fixed silhouette. Cards use 10?12px corners, p
 Discovery retains 12px card corners, 6px commission/action corners and circular save controls. Its mobile filter sheet uses the scoped discovery-sheet radius on its two top corners, with square bottom corners. This reference-approved sheet shape is a local exception, not a change to the shared card radius.
 
 ## Components
+
+### Creator Brands directory
+
+The user-supplied Brands desktop and mobile compositions define this surface within the existing Xurjin palette. It reuses the discovery blue for primary actions, active filters and desktop brand names; mobile brand names use ink. Green, amber, red and neutral fills accompany explicit creator application labels: Approved, Pending, Rejected and Not applied. Every badge describes the creator's relationship with that brand, independently of platform account approval. Dots supplement the words. Shared Manrope and Georgian typography remains in place, with a 32px desktop page heading and 28px mobile heading; brand names step from 17px to 14px.
+
+Rows combine supplied brand imagery or an initial fallback, name, tagline, category/location, application state and one state-appropriate action. Published names link to the profile in every application state. Approved actions browse products; pending and rejected actions open a named application dialog with the recorded state and date; applying shows pending, success or repair feedback. Desktop actions have a 40px minimum height, mobile row actions 32px, and mobile dialog actions 44px. Solid actions reuse the discovery hover color; outline actions reuse its soft fill.
+
+Search, secondary filters, sort and application-state controls preserve URL state and browser Back behavior. State counts respect the other filters. Desktop filters apply immediately; the mobile sheet keeps draft edits until its result-count apply action, with reset, close, Escape and backdrop dismissal. Its scrollable body leaves the safe-area-aware footer available. Empty results offer reset. The [Brands surface brief](.impeccable/surfaces/app-locale-creator-brands-page-tsx.md) owns the full task and reference contract.
 
 ### Profile views and editor
 

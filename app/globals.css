@@ -6,6 +6,7 @@
 @import "./discovery.css";
 @import "./product-detail.css";
 @import "./profiles.css";
+@import "./brands.css";
 
 :root {
   color-scheme: light;

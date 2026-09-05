@@ -119,15 +119,34 @@ export async function listBrandsForCreator(creatorId: string) {
       select: {
         id: true,
         name: true,
-        profile: { select: { slug: true, status: true } },
+        createdAt: true,
+        profile: {
+          where: { status: "PUBLISHED", slug: { not: null } },
+          select: {
+            slug: true,
+            status: true,
+            taglineKa: true,
+            taglineEn: true,
+            locationKa: true,
+            locationEn: true,
+            heroImageUrl: true,
+            logoUrl: true,
+            categories: true,
+            collaborationInterests: true,
+          },
+        },
       },
       orderBy: { name: "asc" },
     }),
     prisma.partnership.findMany({
       where: { creatorId },
-      select: { brandId: true, status: true },
+      select: { brandId: true, status: true, createdAt: true },
     }),
   ]);
-  const byBrand = new Map(partnerships.map((row) => [row.brandId, row.status]));
-  return brands.map((brand) => ({ ...brand, status: byBrand.get(brand.id) }));
+  const byBrand = new Map(partnerships.map((row) => [row.brandId, row]));
+  return brands.map((brand) => ({
+    ...brand,
+    status: byBrand.get(brand.id)?.status,
+    appliedAt: byBrand.get(brand.id)?.createdAt,
+  }));
 }
