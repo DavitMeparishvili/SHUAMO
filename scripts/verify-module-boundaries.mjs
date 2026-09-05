@@ -31,7 +31,13 @@ const PUBLIC_ENTRIES = new Set(["", "index", "testing", "testing/index"]);
 const TESTING_ENTRIES = new Set(["testing", "testing/index"]);
 
 // Skipped wherever they appear, because they nest.
-const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", ".git", ".next"]);
+const SKIPPED_DIRECTORY_NAMES = new Set([
+  "node_modules",
+  ".git",
+  ".next",
+  ".next-redesign",
+  ".next-discovery",
+]);
 
 // Skipped only at these exact repository-relative paths. Matching on the bare
 // directory name would exempt any directory that happened to share it — a

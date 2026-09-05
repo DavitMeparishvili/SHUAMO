@@ -25,11 +25,11 @@ export default function LocaleError({
   const messages = getMessages(locale);
 
   return (
-    <>
+    <section className="coming-soon-page">
       <h1>{t(messages, "error.title")}</h1>
-      <button type="button" onClick={reset}>
+      <button className="x-button primary" type="button" onClick={reset}>
         {t(messages, "error.retry")}
       </button>
-    </>
+    </section>
   );
 }

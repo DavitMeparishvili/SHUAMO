@@ -51,7 +51,6 @@ describe("tokens", () => {
       "settled pill",
       "reversed pill",
       "utility strip",
-      "destination border rest",
       "destination border hover",
       "destination border active",
     ]) {

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 import { currentViewer } from "@/src/modules/identity";
@@ -51,14 +50,14 @@ export default async function LocaleLayout({
 
   return (
     <html
-      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      className={GeistMono.variable}
       data-scroll-behavior="smooth"
       lang={locale}
     >
       <body>
         <span
-          data-catalog-direction-contract="THESIS: fixed product types organize an image-led offer catalog without hiding exact affiliate terms. OWN-WORLD: SHUAMO paper, ink, signal indigo, editorial product crops, fine rules, mono money, and restrained depth. STORY: creators filter products, inspect a gallery and full versioned terms, then explicitly accept; brands manage the same truth at denser list scale. FIRST VIEWPORT: product-type navigation, practical search and filters, then a responsive photography-led gallery with price and commission visible. FORM: Category Gallery, sixth grounded structure, seed 3709064c. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md"
           hidden
+          data-xurjin-direction-contract="THESIS: creator commerce connects brands with measurable sales. OWN-WORLD: user-provided Xurjin screenshots; navy navigation, luminous blue-purple actions, white panels, rounded sans typography, photography. STORY: discover, register, collaborate, measure real GEL results. FIRST VIEWPORT: globe hero with left-aligned three-line heading above paired seller and creator photographs; workspace sidebar and card dashboard. FORM: user-pinned reference images override seed 72b40c2d. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md"
         />
         <span
           data-profile-direction="phase-06-5-passport-proof-ledger"

@@ -19,3 +19,5 @@ export { AuthCard } from "./ui/auth-card";
 export { BrandKeyGenerator } from "./ui/brand-key-generator";
 export { SignInForm, type AuthFormCopy } from "./ui/sign-in-form";
 export { WorkspaceShell } from "./ui/workspace-shell";
+export { registrationSchema } from "./application/registration-input";
+export { RegistrationForm } from "./ui/registration-form";

@@ -31,7 +31,7 @@ export function Button({
       disabled={pending || rest.disabled}
       aria-busy={pending || undefined}
       className={[
-        "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-pill type-small",
+        "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-pill type-small font-semibold",
         "cursor-pointer transition-[background-color,border-color] duration-150",
         "disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "px-4" : "px-5",

@@ -24,6 +24,8 @@
 
 # next.js
 /.next/
+/.next-redesign/
+/.next-discovery/
 /out/
 
 # production

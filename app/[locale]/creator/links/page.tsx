@@ -202,7 +202,7 @@ export default async function CreatorLinksPage({
     >
       <div
         className="grid gap-7"
-        data-links-direction-contract="THESIS: product imagery identifies where every creator link leads, while copying remains a distinct utility. OWN-WORLD: SHUAMO paper, ink, signal indigo, editorial product crops, restrained borders, and mono link data. STORY: creators filter their links, recognize a product, open its detail page, or copy its tracking URL. FIRST VIEWPORT: product-type navigation, compact filters, result count, and a three-column gallery of product-first link cards. FORM: Active Product Gallery, fifth grounded structure, seed de440c92. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md"
+        data-links-direction-contract="THESIS: product imagery identifies where every creator link leads, while copying remains a distinct utility. OWN-WORLD: Xurjin paper, ink, signal indigo, editorial product crops, restrained borders, and mono link data. STORY: creators filter their links, recognize a product, open its detail page, or copy its tracking URL. FIRST VIEWPORT: product-type navigation, compact filters, result count, and a three-column gallery of product-first link cards. FORM: Active Product Gallery, fifth grounded structure, seed de440c92. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md"
       >
         <nav
           aria-label={t(messages, "catalog.filter.productType")}

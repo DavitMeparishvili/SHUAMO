@@ -18,6 +18,8 @@ import { ClickLedger } from "./click-ledger";
 import { PerformanceFilters } from "./performance-filters";
 import { performanceHref } from "./performance-links";
 import { PerformanceTrend } from "./performance-trend";
+import { ProductDistribution } from "./workspace-overview";
+import { Icon } from "@/src/modules/design-system";
 
 function formatCount(locale: Locale, value: number) {
   return new Intl.NumberFormat(locale === "ka" ? "ka-GE" : "en-GB").format(
@@ -203,15 +205,22 @@ function MetricRail({
     },
   ];
   return (
-    <div
-      className={`mt-6 grid overflow-hidden rounded-sm border border-slate-200 bg-paper sm:grid-cols-2 ${report.role === "brand" ? "xl:grid-cols-6" : "xl:grid-cols-5"}`}
-    >
+    <div className="analytics-metrics">
       {metrics.map((metric) => (
-        <Link
-          className="group min-w-0 border-b border-slate-200 p-4 no-underline last:border-b-0 hover:bg-slate-50 sm:border-r sm:[&:nth-child(2)]:border-r-0 xl:border-b-0 xl:[&:nth-child(2)]:border-r xl:last:border-r-0"
-          href={metric.href}
-          key={metric.key}
-        >
+        <Link className="analytics-metric" href={metric.href} key={metric.key}>
+          <span className="metric-icon">
+            <Icon
+              name={
+                metric.key === "clicks"
+                  ? "click"
+                  : metric.key === "orders"
+                    ? "cart"
+                    : metric.key === "sales"
+                      ? "chart"
+                      : "wallet"
+              }
+            />
+          </span>
           <span className="block type-caption text-slate-600">
             {metric.label}
           </span>
@@ -685,15 +694,17 @@ export function PerformanceDashboard({
   messages: Messages;
   basePath: string;
 }) {
-  if (report.scope.links === 0)
-    return (
-      <EmptyState
-        body={t(messages, `performance.empty.${report.role}.body`)}
-        title={t(messages, `performance.empty.${report.role}.title`)}
-      />
-    );
   return (
-    <div className="grid" data-performance-workspace="performance-pulse">
+    <div
+      className="analytics-workspace"
+      data-performance-workspace="xurjin-analytics"
+    >
+      {report.scope.links === 0 && (
+        <EmptyState
+          body={t(messages, `performance.empty.${report.role}.body`)}
+          title={t(messages, `performance.empty.${report.role}.title`)}
+        />
+      )}
       <PerformanceFilters
         basePath={basePath}
         messages={messages}
@@ -773,14 +784,17 @@ export function PerformanceDashboard({
           state={state}
         />
       </section>
-      <PerformanceTrend
-        basePath={basePath}
-        locale={locale}
-        messages={messages}
-        metric={state.metric}
-        points={report.trend}
-        state={state}
-      />
+      <div className="overview-charts analytics-charts">
+        <PerformanceTrend
+          basePath={basePath}
+          locale={locale}
+          messages={messages}
+          metric={state.metric}
+          points={report.trend}
+          state={state}
+        />
+        <ProductDistribution report={report} locale={locale} />
+      </div>
       <Breakdown
         basePath={basePath}
         locale={locale}

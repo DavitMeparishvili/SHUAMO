@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { XurjinLogo } from "@/src/modules/design-system";
+import "./globals.css";
 import { DEFAULT_LOCALE, getMessages, t } from "@/src/modules/localization";
 
 export const metadata: Metadata = {
@@ -15,9 +18,22 @@ export default function RootNotFound() {
   return (
     <html lang={DEFAULT_LOCALE}>
       <body>
-        <main id="main">
+        <header className="marketing-header">
+          <Link
+            className="brand-link"
+            href={`/${DEFAULT_LOCALE}`}
+            aria-label="Xurjin"
+          >
+            <XurjinLogo />
+          </Link>
+        </header>
+        <main id="main" className="coming-soon-page">
+          <span className="soon-label">404</span>
           <h1>{t(messages, "notFound.title")}</h1>
           <p>{t(messages, "notFound.body")}</p>
+          <Link className="x-button primary" href="/ka">
+            მთავარი / Home
+          </Link>
         </main>
       </body>
     </html>

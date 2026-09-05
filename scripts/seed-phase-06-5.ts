@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { seedDemoMedia } from "./lib/demo-media";
 Object.assign(process.env, { NODE_ENV: process.env.NODE_ENV ?? "development" });
 const { prisma } = await import("@/src/infrastructure/db/client");
 const brandId = "22000000-0000-4000-8000-000000000001",
@@ -214,5 +215,6 @@ await Promise.all(
     }),
   ),
 );
+await seedDemoMedia(prisma);
 console.log(JSON.stringify({ event: "phase_6_5_seeded", profiles: 4 }));
 await prisma.$disconnect();

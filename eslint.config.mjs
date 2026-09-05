@@ -5,6 +5,8 @@ const config = [
   {
     ignores: [
       ".next/**",
+      ".next-redesign/**",
+      ".next-discovery/**",
       "out/**",
       "build/**",
       "coverage/**",

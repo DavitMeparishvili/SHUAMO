@@ -16,8 +16,8 @@ export function WorkspaceShell({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto grid max-w-[var(--layout-column)] gap-10 px-[var(--layout-gutter)] py-12 max-[1179px]:px-[var(--layout-gutter-md)] max-[639px]:px-[var(--layout-gutter-sm)]">
-      <header className="max-w-[70ch]">
+    <div className="workspace-content">
+      <header className="workspace-heading">
         {showName ? (
           <p className="mb-2 mt-0 type-small font-semibold text-signal">
             {name}
@@ -27,11 +27,7 @@ export function WorkspaceShell({
         <p className="mb-0 mt-3 text-slate-600">{intro}</p>
       </header>
       <section
-        className={
-          contentVariant === "panel"
-            ? "rounded-md border border-slate-200 bg-slate-50 px-6 py-8 max-[639px]:px-4"
-            : undefined
-        }
+        className={contentVariant === "panel" ? "workspace-panel" : undefined}
       >
         {children}
       </section>

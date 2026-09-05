@@ -1,12 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { EmptyState } from "@/src/modules/design-system";
+import { currentViewer, requireBrand } from "@/src/modules/identity";
+import { isLocale } from "@/src/modules/localization";
 import {
-  currentViewer,
-  requireBrand,
-  WorkspaceShell,
-} from "@/src/modules/identity";
-import { getMessages, isLocale, t } from "@/src/modules/localization";
-
+  brandPerformanceReport,
+  WorkspaceOverview,
+} from "@/src/modules/conversions";
+import { listProductsForBrand } from "@/src/modules/catalog";
 export default async function BrandWorkspace({
   params,
 }: {
@@ -16,21 +15,29 @@ export default async function BrandWorkspace({
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
   const allowed = requireBrand(viewer);
-  if (!allowed.ok) {
-    if (viewer.kind === "creator") redirect(`/${locale}/creator`);
-    redirect(`/${locale}/sign-in`);
-  }
-  const messages = getMessages(locale);
+  if (!allowed.ok)
+    redirect(
+      "/" + locale + (viewer.kind === "creator" ? "/creator" : "/sign-in"),
+    );
+  const [report, catalog] = await Promise.all([
+    brandPerformanceReport(allowed.value.brandId, { period: "30d" }),
+    listProductsForBrand(allowed.value.brandId, { pageSize: 3 }),
+  ]);
   return (
-    <WorkspaceShell
+    <WorkspaceOverview
+      locale={locale}
       name={allowed.value.brandName}
-      title={t(messages, "identity.brand.title")}
-      intro={t(messages, "identity.brand.intro")}
-    >
-      <EmptyState
-        title={t(messages, "identity.brand.emptyTitle")}
-        body={t(messages, "identity.brand.emptyBody")}
-      />
-    </WorkspaceShell>
+      report={report}
+      products={catalog.items.map((p) => ({
+        id: p.id,
+        title: p.title,
+        brandName: allowed.value.brandName,
+        imageUrl: p.imageUrls[0],
+        price: p.priceGel.toString(),
+        commissionType: p.commissionType,
+        commissionValue: p.commissionValue.toString(),
+      }))}
+      discover={[]}
+    />
   );
 }

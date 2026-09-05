@@ -289,7 +289,7 @@ export function ProductForm({
   }
 
   return (
-    <form action={action} className="grid gap-10">
+    <form action={action} className="product-editor grid gap-10">
       {editing ? (
         <Banner
           tone="warning"

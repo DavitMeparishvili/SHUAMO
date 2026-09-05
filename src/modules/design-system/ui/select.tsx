@@ -19,7 +19,7 @@ export function Select({
   const descriptionId = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2">
       <label className="type-small font-semibold text-ink" htmlFor={id}>
         {label}
         {required ? (
@@ -35,7 +35,7 @@ export function Select({
         aria-invalid={error ? true : undefined}
         aria-describedby={descriptionId}
         className={[
-          "min-h-[44px] rounded-sm border bg-paper px-3 text-ink",
+          "min-h-[44px] min-w-0 w-full rounded-sm border bg-paper px-3 text-ink",
           "disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500",
           error ? "border-reversed" : "border-slate-300 hover:border-slate-600",
           className,

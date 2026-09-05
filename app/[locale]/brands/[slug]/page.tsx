@@ -25,7 +25,7 @@ export async function generateMetadata({
     (locale === "ka" ? profile.taglineKa : profile.taglineEn) ||
     (locale === "ka" ? profile.taglineEn : profile.taglineKa);
   return {
-    title: `${profile.brand.name} — SHUAMO`,
+    title: `${profile.brand.name} — Xurjin`,
     description,
     alternates: {
       canonical: `/${locale}/brands/${slug}`,

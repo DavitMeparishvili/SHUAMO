@@ -74,7 +74,7 @@ export async function generateMetadata({
   const messages = getMessages(locale);
 
   return {
-    title: `${t(messages, "design.title")} | SHUAMO`,
+    title: `${t(messages, "design.title")} | Xurjin`,
     description: t(messages, "design.intro"),
   };
 }

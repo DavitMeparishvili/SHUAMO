@@ -1,22 +1,22 @@
 export const COLORS = {
-  signal: "#4436F5",
-  "signal-hover": "#3628D6",
-  "signal-active": "#2A1FAD",
+  signal: "#2060E8",
+  "signal-hover": "#194CC0",
+  "signal-active": "#193F96",
   "signal-50": "#F0EEFF",
   "signal-100": "#DEDAFE",
   "signal-200": "#C0B8FC",
-  "signal-700": "#2A1FAD",
-  ink: "#111318",
+  "signal-700": "#193F96",
+  ink: "#0B1C3D",
   paper: "#FFFFFF",
-  "slate-50": "#F7F8FA",
-  "slate-100": "#EFF1F5",
-  "slate-200": "#8E95A3",
-  "slate-300": "#858C99",
+  "slate-50": "#F5F7FC",
+  "slate-100": "#EDF1F8",
+  "slate-200": "#DCE3EF",
+  "slate-300": "#8491A9",
   "slate-400": "#7F8694",
-  "slate-500": "#6F7686",
-  "slate-600": "#535A69",
-  "slate-700": "#3B414D",
-  "slate-800": "#252A33",
+  "slate-500": "#5C6D8B",
+  "slate-600": "#526584",
+  "slate-700": "#354967",
+  "slate-800": "#13243E",
   "on-inverse": "#F3F4F7",
   accrued: "#8A5A00",
   "accrued-soft": "#FFF4DE",
@@ -41,22 +41,22 @@ export interface TypeStyle {
 }
 
 const TEXT =
-  "var(--font-geist-sans), var(--font-noto-sans-georgian), system-ui, sans-serif";
-const MONO = "var(--font-geist-mono), ui-monospace, monospace";
+  "var(--font-manrope), var(--font-noto-sans-georgian), system-ui, sans-serif";
+const MONO = TEXT;
 
 export const TYPE_SCALE = {
   display: {
     fontFamily: TEXT,
     fontSize: "48px",
     fontWeight: 700,
-    lineHeight: 1.05,
+    lineHeight: 1.18,
     letterSpacing: "-0.03em",
   },
   h1: {
     fontFamily: TEXT,
     fontSize: "34px",
     fontWeight: 700,
-    lineHeight: 1.1,
+    lineHeight: 1.25,
     letterSpacing: "-0.025em",
   },
   h2: {
@@ -102,7 +102,7 @@ export const TYPE_SCALE = {
     fontFamily: MONO,
     fontSize: "28px",
     fontWeight: 600,
-    lineHeight: 1.1,
+    lineHeight: 1.25,
     fontVariantNumeric: "tabular-nums",
   },
   figure: {
@@ -128,7 +128,7 @@ export const RADIUS = {
   sm: "8px",
   md: "12px",
   lg: "20px",
-  pill: "999px",
+  pill: "8px",
 } as const;
 
 export const ELEVATION = {
@@ -138,11 +138,11 @@ export const ELEVATION = {
 } as const;
 
 export const LAYOUT = {
-  column: "1160px",
+  column: "1320px",
   gutter: "32px",
   "gutter-md": "24px",
   "gutter-sm": "16px",
-  rail: "248px",
+  rail: "244px",
   "control-height": "44px",
 } as const;
 
@@ -294,24 +294,14 @@ export const CONTRAST_PAIRS = [
     background: "paper",
     minimum: 4.5,
   },
-  {
-    name: "hairline on paper",
-    foreground: "slate-200",
-    background: "paper",
-    minimum: 3,
-  },
+
   {
     name: "interactive border on paper",
     foreground: "slate-300",
     background: "paper",
     minimum: 3,
   },
-  {
-    name: "destination border rest",
-    foreground: "slate-200",
-    background: "paper",
-    minimum: 3,
-  },
+
   {
     name: "destination border hover",
     foreground: "signal",

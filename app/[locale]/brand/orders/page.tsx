@@ -19,6 +19,15 @@ export default async function BrandOrdersPage({
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const orders = await listOrdersForBrand(allowed.value.brandId);
   const messages = getMessages(locale);
+  // Format once on the server: browser ICU may not include Georgian locale data.
+  const dateFormatter = new Intl.DateTimeFormat(
+    locale === "ka" ? "ka-GE" : "en-GB",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Asia/Tbilisi",
+    },
+  );
   const statuses = {
     confirmed: t(messages, "orders.status.confirmed"),
     cancelled: t(messages, "orders.status.cancelled"),
@@ -36,6 +45,12 @@ export default async function BrandOrdersPage({
         <OrdersQueue
           orders={orders}
           locale={locale}
+          formattedDates={Object.fromEntries(
+            orders.map((order) => [
+              order.id,
+              dateFormatter.format(new Date(order.occurredAt)),
+            ]),
+          )}
           decisionAction={decideOrderAction.bind(null, locale)}
           copy={{
             emptyTitle: t(messages, "orders.empty.title"),

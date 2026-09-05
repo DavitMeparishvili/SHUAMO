@@ -69,3 +69,8 @@ export { EarningsList } from "./ui/earnings-list";
 export { EarningsLedger } from "./ui/earnings-ledger";
 export { ClickLedger } from "./ui/click-ledger";
 export { PerformanceDashboard } from "./ui/performance-dashboard";
+export {
+  WorkspaceOverview,
+  ProductDistribution,
+  type HomeProduct,
+} from "./ui/workspace-overview";

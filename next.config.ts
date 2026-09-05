@@ -14,8 +14,10 @@ const standalone =
     : standaloneOverride === "1";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.XURJIN_BUILD_DIR ?? ".next",
   ...(standalone ? { output: "standalone" as const } : {}),
   poweredByHeader: false,
+  devIndicators: false,
   reactStrictMode: true,
 };
 

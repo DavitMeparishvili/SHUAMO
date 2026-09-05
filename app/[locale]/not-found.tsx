@@ -1,6 +1,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { Icon } from "@/src/modules/design-system";
 import {
   DEFAULT_LOCALE,
   getMessages,
@@ -23,9 +25,17 @@ export default function LocaleNotFound() {
   const messages = getMessages(locale);
 
   return (
-    <>
+    <section className="coming-soon-page">
+      <span className="metric-icon">
+        <Icon name="search" />
+      </span>
+      <span className="soon-label">404</span>
       <h1>{t(messages, "notFound.title")}</h1>
       <p>{t(messages, "notFound.body")}</p>
-    </>
+      <Link className="x-button primary" href={`/${locale}`}>
+        {locale === "ka" ? "მთავარ გვერდზე დაბრუნება" : "Back to home"}
+        <Icon name="arrow" />
+      </Link>
+    </section>
   );
 }

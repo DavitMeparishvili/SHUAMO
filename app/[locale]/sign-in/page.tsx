@@ -12,7 +12,7 @@ export default async function SignInPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ returnTo?: string | string[] }>;
+  searchParams: Promise<{ returnTo?: string | string[]; status?: string }>;
 }) {
   const [{ locale }, query] = await Promise.all([params, searchParams]);
   if (!isLocale(locale)) notFound();
@@ -31,6 +31,13 @@ export default async function SignInPage({
         </>
       }
     >
+      {query.status === "suspended" && (
+        <p className="form-error" role="status">
+          {locale === "ka"
+            ? "შენი ანგარიში შეჩერებულია. სამუშაო სივრცეზე წვდომა ადმინისტრატორმა უნდა აღადგინოს."
+            : "Your account is suspended. An administrator must restore access to your workspace."}
+        </p>
+      )}
       <SignInForm
         locale={locale}
         mode="sign-in"

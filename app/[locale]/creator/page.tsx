@@ -1,12 +1,15 @@
 import { notFound, redirect } from "next/navigation";
-import { EmptyState } from "@/src/modules/design-system";
+import { currentViewer, requireCreator } from "@/src/modules/identity";
+import { isLocale } from "@/src/modules/localization";
 import {
-  currentViewer,
-  requireCreator,
-  WorkspaceShell,
-} from "@/src/modules/identity";
-import { getMessages, isLocale, t } from "@/src/modules/localization";
-
+  creatorPerformanceReport,
+  WorkspaceOverview,
+} from "@/src/modules/conversions";
+import {
+  listCreatorLinkCatalog,
+  listPublicProductOffers,
+} from "@/src/modules/partnerships";
+import { serverEnv } from "@/src/config/env";
 export default async function CreatorWorkspace({
   params,
 }: {
@@ -16,21 +19,38 @@ export default async function CreatorWorkspace({
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
   const allowed = requireCreator(viewer);
-  if (!allowed.ok) {
-    if (viewer.kind === "brand") redirect(`/${locale}/brand`);
-    redirect(`/${locale}/sign-in`);
-  }
-  const messages = getMessages(locale);
+  if (!allowed.ok)
+    redirect("/" + locale + (viewer.kind === "brand" ? "/brand" : "/sign-in"));
+  const [report, links, offers] = await Promise.all([
+    creatorPerformanceReport(allowed.value.creatorId, { period: "30d" }),
+    listCreatorLinkCatalog(allowed.value.creatorId, {
+      resolution: "ACTIVE",
+      pageSize: 3,
+    }),
+    listPublicProductOffers({ pageSize: 3 }, allowed.value.creatorId),
+  ]);
+  const products = links.items.map((l) => ({
+    id: l.product.id,
+    title: l.product.title,
+    brandName: l.product.brand.name,
+    imageUrl: l.product.imageUrls[0],
+    price: l.product.priceGel.toFixed(2),
+    commissionType: l.commissionType,
+    commissionValue: l.commissionValue.toString(),
+    linkId: l.id,
+    linkUrl: serverEnv().APP_URL + "/r/" + l.code,
+  }));
   return (
-    <WorkspaceShell
+    <WorkspaceOverview
+      locale={locale}
       name={allowed.value.displayName}
-      title={t(messages, "identity.creator.title")}
-      intro={t(messages, "identity.creator.intro")}
-    >
-      <EmptyState
-        title={t(messages, "identity.creator.emptyTitle")}
-        body={t(messages, "identity.creator.emptyBody")}
-      />
-    </WorkspaceShell>
+      report={report}
+      products={products}
+      discover={offers.items.map((p) => ({
+        ...p,
+        price: p.priceGel,
+        imageUrl: p.imageUrls[0],
+      }))}
+    />
   );
 }

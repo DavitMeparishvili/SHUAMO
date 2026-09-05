@@ -22,11 +22,13 @@ function statusState(status: ConversionStatus) {
 export function OrdersQueue({
   orders,
   locale,
+  formattedDates,
   decisionAction,
   copy,
 }: {
   orders: readonly ConversionView[];
   locale: "ka" | "en";
+  formattedDates?: Record<string, string>;
   decisionAction: (
     conversionId: string,
     action: OrderAction,
@@ -82,10 +84,6 @@ export function OrdersQueue({
   const pages = Math.max(1, Math.ceil(matching.length / 10));
   const currentPage = Math.min(page, pages);
   const visible = matching.slice((currentPage - 1) * 10, currentPage * 10);
-  const dateFormatter = new Intl.DateTimeFormat(
-    locale === "ka" ? "ka-GE" : "en-GB",
-    { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tbilisi" },
-  );
   const filters = [
     { value: "ALL", label: copy.all, count: orders.length },
     {
@@ -180,7 +178,7 @@ export function OrdersQueue({
                     />
                   </div>
                   <time dateTime={order.occurredAt}>
-                    {dateFormatter.format(new Date(order.occurredAt))}
+                    {formattedDates?.[order.id] ?? order.occurredAt}
                   </time>
                 </div>
                 <div className={styles.products}>
