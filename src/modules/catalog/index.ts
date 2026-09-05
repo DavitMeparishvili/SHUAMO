@@ -63,3 +63,4 @@ export {
   type DiscoveryFilters,
 } from "./ui/discovery-controls";
 export { ProductImageGallery } from "./ui/product-image-gallery";
+export { ProductTermGroup } from "./ui/product-term-group";

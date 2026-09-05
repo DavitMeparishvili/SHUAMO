@@ -23,7 +23,7 @@ export function ProductImageGallery({
   const current = images[selected];
   if (!current) {
     return (
-      <div className="grid aspect-[4/3] place-items-center rounded-md bg-slate-100 text-center text-slate-500">
+      <div className="product-gallery-image grid aspect-[4/3] place-items-center rounded-md bg-slate-100 text-center text-slate-500">
         <div>
           <svg
             aria-hidden="true"
@@ -54,7 +54,7 @@ export function ProductImageGallery({
     <div className="grid gap-3">
       <button
         aria-label={copy.enlarge}
-        className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-md bg-slate-100"
+        className="product-gallery-image relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-md bg-slate-100"
         onClick={() => dialogRef.current?.showModal()}
         type="button"
       >

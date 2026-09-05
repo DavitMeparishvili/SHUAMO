@@ -2,7 +2,11 @@ import { prisma } from "@/src/infrastructure/db/client";
 import { createProductLinkForCreator } from "@/src/infrastructure/phase-3-services";
 import { seedApprovedPartnership } from "@/src/test/fixtures/accounts";
 import { describe, expect, it } from "vitest";
-import { listResolvedLinksForBrandProduct } from "./prisma-link-repository";
+import {
+  getPublicProductOffer,
+  listResolvedLinksForBrandProduct,
+} from "./prisma-link-repository";
+import { parseAcceptedOfferTerms } from "../application/accepted-offer-terms";
 
 function acceptance(product: {
   id: string;
@@ -40,6 +44,64 @@ async function expectBlocked<T>(operation: Promise<T>) {
 }
 
 describe("creator product link creation", () => {
+  it("product details preserve the viewer's accepted terms after the brand changes its offer", async () => {
+    const { brand, creator } = await seedApprovedPartnership();
+    const product = await prisma.product.create({
+      data: {
+        brandId: brand.id,
+        sku: "DETAIL-SNAPSHOT",
+        title: "Saved offer",
+        priceGel: "100.00",
+        backlinkUrl: "https://shop.example.ge/saved",
+        commissionType: "FIXED",
+        commissionValue: "8.0000",
+        cookieWindowDays: 45,
+        couponPolicy: "Original coupon policy",
+      },
+    });
+    expect(
+      (await createProductLinkForCreator(creator.id, acceptance(product))).ok,
+    ).toBe(true);
+    await prisma.product.update({
+      where: { id: product.id },
+      data: {
+        commissionValue: "20.0000",
+        cookieWindowDays: 7,
+        couponPolicy: "Replacement coupon policy",
+        termsVersion: 2,
+      },
+    });
+    const offer = await getPublicProductOffer(product.id, creator.id);
+    expect(offer).toMatchObject({
+      commissionValue: "20.0000",
+      termsVersion: 2,
+    });
+    expect(offer?.links[0]).toMatchObject({
+      commissionType: "FIXED",
+      commissionValue: "8.0000",
+    });
+    expect(
+      parseAcceptedOfferTerms(offer?.links[0]?.acceptedTerms),
+    ).toMatchObject({
+      version: 1,
+      cookieWindowDays: 45,
+      couponPolicy: "Original coupon policy",
+    });
+    expect((await getPublicProductOffer(product.id))?.links).toEqual([]);
+    const other = await seedApprovedPartnership();
+    expect(
+      (await getPublicProductOffer(product.id, other.creator.id))?.links,
+    ).toEqual([]);
+    await prisma.partnership.updateMany({
+      where: { brandId: brand.id, creatorId: creator.id },
+      data: { status: "REJECTED" },
+    });
+    expect(await getPublicProductOffer(product.id, creator.id)).toMatchObject({
+      links: [],
+      isCreatorEligible: false,
+    });
+  });
+
   it("scopes a brand product drill-down to that product's creator links", async () => {
     const { brand, creator } = await seedApprovedPartnership();
     const products = await Promise.all(

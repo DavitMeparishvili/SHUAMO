@@ -4,6 +4,7 @@
 @import "@fontsource/manrope/latin.css";
 @import "./xurjin.css";
 @import "./discovery.css";
+@import "./product-detail.css";
 
 :root {
   color-scheme: light;

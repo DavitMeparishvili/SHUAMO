@@ -508,6 +508,7 @@ function creatorCatalogWhere(
 
 const creatorOfferSelect = {
   id: true,
+  brandId: true,
   sku: true,
   title: true,
   description: true,
@@ -647,12 +648,25 @@ export async function getPublicProductOffer(
       links: {
         ...creatorOfferSelect.links,
         where: activeEligibleCreatorLinkWhere(creatorId),
+        select: {
+          id: true,
+          code: true,
+          createdAt: true,
+          commissionType: true,
+          commissionValue: true,
+          acceptedTerms: true,
+          termsAcceptedAt: true,
+        },
       },
     },
   });
   if (product === null) return undefined;
   return {
     ...serializeCreatorOffer(product),
+    links: product.links.map((link) => ({
+      ...link,
+      commissionValue: link.commissionValue.toFixed(4),
+    })),
     isCreatorEligible: product.brand.partnerships.length > 0,
   };
 }

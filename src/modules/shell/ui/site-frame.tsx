@@ -17,6 +17,7 @@ export function SiteFrame({
 }) {
   const path = usePathname();
   const discovery = /^\/(ka|en)\/(creator\/)?products$/.test(path);
+  const productDetail = /^\/(ka|en)\/(creator\/)?products\/[^/]+$/.test(path);
   const trackingLinks = /^\/(ka|en)\/creator\/links$/.test(path);
   const drawer = useRef<HTMLDialogElement>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -129,13 +130,14 @@ export function SiteFrame({
       key={n.href}
       className={
         path === n.href ||
-        (!brand && discovery && n.icon === "search") ||
+        (!brand && (discovery || productDetail) && n.icon === "search") ||
         (n.href !== root && path.startsWith(n.href + "/"))
           ? "active"
           : ""
       }
       aria-current={
-        path === n.href || (!brand && discovery && n.icon === "search")
+        path === n.href ||
+        (!brand && (discovery || productDetail) && n.icon === "search")
           ? "page"
           : undefined
       }
@@ -170,7 +172,8 @@ export function SiteFrame({
   return (
     <div
       className={
-        workspace ? "site-frame workspace-frame" : "site-frame public-frame"
+        (workspace ? "site-frame workspace-frame" : "site-frame public-frame") +
+        (productDetail ? " product-detail-frame" : "")
       }
     >
       <a className="skip-link" href="#main">
@@ -211,6 +214,15 @@ export function SiteFrame({
       )}
       <div className="site-body">
         <header className={workspace ? "workspace-topbar" : "marketing-header"}>
+          {workspace && productDetail ? (
+            <Link
+              className="product-detail-mobile-back icon-button"
+              href={`/${locale}/products`}
+              aria-label={label("Back to products", "პროდუქტებზე დაბრუნება")}
+            >
+              <Icon name="arrow" />
+            </Link>
+          ) : null}
           <button
             className="mobile-menu icon-button"
             aria-label={label("Open navigation", "მენიუს გახსნა")}
@@ -236,6 +248,15 @@ export function SiteFrame({
               <XurjinLogo />
             </Link>
           )}
+          {workspace && productDetail ? (
+            <div className="discovery-breadcrumb">
+              <Icon name="arrow" />
+              <Link href={`/${locale}/products`}>
+                {label("Discover", "აღმოჩენა")}
+              </Link>
+              <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
+            </div>
+          ) : null}
           {workspace && (discovery || trackingLinks) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
@@ -420,14 +441,15 @@ export function SiteFrame({
               key={n.href}
               href={n.href}
               aria-current={
-                path === n.href || (!brand && discovery && n.icon === "search")
+                path === n.href ||
+                (!brand && (discovery || productDetail) && n.icon === "search")
                   ? "page"
                   : undefined
               }
             >
               <Icon name={n.icon} />
               <span>
-                {(discovery || trackingLinks) && !brand
+                {(discovery || trackingLinks || productDetail) && !brand
                   ? n.icon === "search"
                     ? label("Discover", "აღმოჩენა")
                     : n.icon === "link"
@@ -437,7 +459,7 @@ export function SiteFrame({
               </span>
             </Link>
           ))}
-          {(discovery || trackingLinks) && !brand ? (
+          {(discovery || trackingLinks || productDetail) && !brand ? (
             <Link href={`${root}/profile`}>
               <Icon name="user" />
               <span>{label("Profile", "პროფილი")}</span>

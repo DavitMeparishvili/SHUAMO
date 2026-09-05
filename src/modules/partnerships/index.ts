@@ -64,3 +64,5 @@ export {
   createApplyHandler,
   createDecisionHandler,
 } from "./http/partnership-handlers";
+export { parseAcceptedOfferTerms } from "./application/accepted-offer-terms";
+export { CopyOfferLink } from "./ui/discovery-card-actions";

@@ -529,6 +529,8 @@ Discovery search, category, product type, commission type, brand, sort and pagin
 
 ## Do's and Don'ts
 
+Product details follow the supplied desktop/mobile reference within the established shell. The desktop photo and description sit beside product identity and a commission-led offer card, above three affiliate-term disclosures. Mobile stacks these sections and starts the disclosures closed. The scoped detail palette uses #075aff for actions, #53698f for muted copy and #dce5f3 for separators; supporting text, status, hover and selection reuse shared tokens. Stored commission and accepted terms remain distinct from current catalog estimates and legacy links without snapshots.
+
 ### Do:
 
 - Do reuse the geometric X and spell Xurjin in Latin letters in both locales.
