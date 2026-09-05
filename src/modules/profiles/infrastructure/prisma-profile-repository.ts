@@ -178,6 +178,11 @@ async function saveBrandSafely(brandId: string, input: BrandProfileInput) {
       : current
         ? { status: current.status, publishedAt: current.publishedAt }
         : {};
+    if (input.profileName !== undefined)
+      await tx.brand.update({
+        where: { id: brandId },
+        data: { name: input.profileName },
+      });
     const profile = await tx.brandProfile.upsert({
       where: { brandId },
       create: { brandId, ...brandData(input), ...statusData },
@@ -204,6 +209,11 @@ async function saveCreatorSafely(
       : current
         ? { status: current.status, publishedAt: current.publishedAt }
         : {};
+    if (input.profileName !== undefined)
+      await tx.creator.update({
+        where: { id: creatorId },
+        data: { displayName: input.profileName },
+      });
     const profile = await tx.creatorProfile.upsert({
       where: { creatorId },
       create: { creatorId, ...creatorData(input), ...statusData },
@@ -460,7 +470,7 @@ export async function getProfilePartnership(
 export async function listOwnedActiveProducts(brandId: string) {
   return prisma.product.findMany({
     where: { brandId, status: "ACTIVE" },
-    select: { id: true, title: true, imageUrls: true },
+    select: { id: true, title: true, imageUrls: true, backlinkUrl: true },
     orderBy: [{ title: "asc" }, { id: "asc" }],
   });
 }

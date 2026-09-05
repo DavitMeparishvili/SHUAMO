@@ -40,6 +40,7 @@ export async function saveCreatorProfileAction(
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const messages = getMessages(locale);
   const parsed = creatorProfileInputSchema.safeParse({
+    profileName: data.get("profileName") ?? undefined,
     slug: data.get("slug"),
     tagline: { ka: data.get("taglineKa"), en: data.get("taglineEn") },
     description: {

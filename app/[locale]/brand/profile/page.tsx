@@ -1,12 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import {
-  currentViewer,
-  requireBrand,
-  WorkspaceShell,
-} from "@/src/modules/identity";
+import { currentViewer, requireBrand } from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
-  BrandProfile,
   listOwnedActiveProducts,
   prismaProfileRepository,
 } from "@/src/modules/profiles";
@@ -31,15 +26,13 @@ export default async function BrandProfileEditorPage({
   ]);
   const messages = getMessages(locale);
   const record = profile as Parameters<typeof ProfileEditor>[0]["profile"];
-  const base = profile as unknown as Record<string, unknown> | null;
   return (
-    <WorkspaceShell
-      name={allowed.value.brandName}
-      title={t(messages, "profile.editor.brandTitle")}
-      intro={t(messages, "profile.editor.intro")}
-    >
+    <div className="profile-route">
       <ProfileEditor
         role="brand"
+        locale={locale}
+        name={allowed.value.brandName}
+        brandCopy={brandCopy(messages)}
         profile={record}
         products={products}
         saveAction={saveBrandProfileAction.bind(null, locale)}
@@ -47,42 +40,7 @@ export default async function BrandProfileEditorPage({
         unpublishAction={unpublishBrandProfileAction.bind(null, locale)}
         copy={editorCopy(messages)}
       />
-      {profile ? (
-        <div
-          className="mt-12 border-t border-slate-300 pt-8"
-          id="profile-preview"
-        >
-          <BrandProfile
-            profile={
-              {
-                ...base,
-                featuredProducts: products
-                  .filter((p) =>
-                    (Array.isArray(
-                      (profile as { featuredProductIds: unknown })
-                        .featuredProductIds,
-                    )
-                      ? (profile as { featuredProductIds: string[] })
-                          .featuredProductIds
-                      : []
-                    ).includes(p.id),
-                  )
-                  .map((p) => ({
-                    ...p,
-                    description: "",
-                    backlinkUrl: "#",
-                    imageUrls: p.imageUrls,
-                  })),
-                brand: { name: allowed.value.brandName },
-              } as never
-            }
-            locale={locale}
-            preview
-            copy={brandCopy(messages)}
-          />
-        </div>
-      ) : null}
-    </WorkspaceShell>
+    </div>
   );
 }
 function editorCopy(m: Record<string, string>) {

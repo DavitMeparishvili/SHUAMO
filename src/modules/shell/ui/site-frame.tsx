@@ -459,8 +459,12 @@ export function SiteFrame({
               </span>
             </Link>
           ))}
-          {(discovery || trackingLinks || productDetail) && !brand ? (
-            <Link href={`${root}/profile`}>
+          {((discovery || trackingLinks || productDetail) && !brand) ||
+          path === `${root}/profile` ? (
+            <Link
+              href={`${root}/profile`}
+              aria-current={path === `${root}/profile` ? "page" : undefined}
+            >
               <Icon name="user" />
               <span>{label("Profile", "პროფილი")}</span>
             </Link>

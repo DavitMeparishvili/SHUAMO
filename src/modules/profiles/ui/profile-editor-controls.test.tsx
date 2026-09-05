@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { CreatorWorkEditor } from "./creator-work-editor";
 import { SocialLinksEditor } from "./social-links-editor";
+import { ProfileFormats } from "./profile-form-controls";
 
 const mediaCopy = {
   tooLarge: "Too large",
@@ -13,6 +14,23 @@ const mediaCopy = {
 };
 
 describe("profile editor collection controls", () => {
+  it("preserves custom formats alongside the reference checkboxes", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ProfileFormats
+        initialValue={["Editorial"]}
+        locale="en"
+        onDirty={() => {}}
+      />,
+    );
+    await user.click(screen.getByText("Add format", { selector: "summary" }));
+    await user.type(screen.getByLabelText("Add format"), "Photography");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByRole("checkbox", { name: "Photography" })).toBeChecked();
+    expect(container.querySelector('input[name="contentFormats"]')).toHaveValue(
+      "Editorial,Photography",
+    );
+  });
   it("renders explicit social platform and URL pairs", async () => {
     const user = userEvent.setup();
     render(

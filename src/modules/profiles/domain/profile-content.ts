@@ -14,6 +14,7 @@ export interface SocialLink {
   url: string;
 }
 export interface BrandProfileInput {
+  profileName?: string | undefined;
   slug: string | null;
   tagline: LocalizedText;
   description: LocalizedText;
@@ -27,6 +28,7 @@ export interface BrandProfileInput {
   featuredProductIds: string[];
 }
 export interface CreatorProfileInput {
+  profileName?: string | undefined;
   slug: string | null;
   tagline: LocalizedText;
   description: LocalizedText;

@@ -45,6 +45,7 @@ export async function saveBrandProfileAction(
     data.get("whatWeMakeEn"),
   );
   const parsed = brandProfileInputSchema.safeParse({
+    profileName: data.get("profileName") ?? undefined,
     slug: data.get("slug"),
     tagline: { ka: data.get("taglineKa"), en: data.get("taglineEn") },
     description: {

@@ -41,7 +41,19 @@ export function SocialLinksEditor({
             <select
               className="min-h-11 rounded-sm border border-slate-300 bg-paper px-3 font-normal"
               name="socialPlatform"
-              defaultValue={row.platform}
+              value={row.platform}
+              onChange={(event) =>
+                setRows((current) =>
+                  current.map((item) =>
+                    item.id === row.id
+                      ? {
+                          ...item,
+                          platform: event.target.value as SocialPlatform,
+                        }
+                      : item,
+                  ),
+                )
+              }
             >
               {SOCIAL_PLATFORMS.map((platform) => (
                 <option key={platform} value={platform}>
@@ -57,7 +69,16 @@ export function SocialLinksEditor({
               name="socialUrl"
               type="url"
               inputMode="url"
-              defaultValue={row.url}
+              value={row.url}
+              onChange={(event) =>
+                setRows((current) =>
+                  current.map((item) =>
+                    item.id === row.id
+                      ? { ...item, url: event.target.value }
+                      : item,
+                  ),
+                )
+              }
               required
             />
           </label>

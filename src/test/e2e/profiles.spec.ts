@@ -89,24 +89,40 @@ test.describe("@phase-6.5 public profiles", () => {
   }) => {
     await signInBrand(page);
     await page.goto("/en/brand/profile");
+    await page
+      .getByRole("button", { name: "Edit profile", exact: true })
+      .click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.getByLabel("Hero image URL").setInputFiles({
+    await page.getByLabel("Cover image").setInputFiles({
       name: "profile.jpg",
       mimeType: "image/jpeg",
       buffer: readFileSync("src/test/fixtures/perfume.jpg"),
     });
     await expect(page.getByText("Upload complete.")).toBeVisible();
-    await page.getByRole("button", { name: "Save draft" }).click();
+    await page
+      .getByRole("button", { name: "Save changes", exact: true })
+      .click();
     await page.waitForLoadState("networkidle");
     await page.reload();
     await expect(
       page.locator('img[src*="profiles/brands/"]').first(),
     ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Edit profile", exact: true })
+      .click();
+    await page.locator(".profile-account-section summary").click();
     await page.getByRole("button", { name: "Unpublish profile" }).click();
     await expect(
       page.getByRole("button", { name: "Publish profile" }),
     ).toBeVisible();
-    expect((await page.request.get("/en/brands/aromashop")).status()).toBe(404);
+    // A non-streaming response has the final status; browser streaming can commit 200 before notFound.
+    expect(
+      (
+        await page.request.get("/en/brands/aromashop", {
+          headers: { "user-agent": "Googlebot" },
+        })
+      ).status(),
+    ).toBe(404);
     await page.getByRole("button", { name: "Publish profile" }).click();
     await expect(
       page.getByRole("button", { name: "Unpublish profile" }),
@@ -122,15 +138,24 @@ test.describe("@phase-6.5 public profiles", () => {
   }) => {
     await signInCreator(page);
     await page.goto("/en/creator/profile");
+    await page
+      .getByRole("button", { name: "Edit profile", exact: true })
+      .click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.getByLabel("Hero image URL").setInputFiles({
+    await page.getByLabel("Profile photo").setInputFiles({
       name: "creator-hero.jpg",
       mimeType: "image/jpeg",
       buffer: readFileSync("src/test/fixtures/perfume.jpg"),
     });
     await expect(page.getByText("Upload complete.")).toBeVisible();
+    await page
+      .getByText("Translation & profile address", { exact: true })
+      .click();
     await page.getByLabel("Public profile address").clear();
-    const work = page.getByRole("group", { name: "Featured proof" });
+    await page
+      .getByRole("button", { name: "Featured work", exact: true })
+      .click();
+    const work = page.getByRole("group", { name: "Featured work" });
     while (await work.getByRole("button", { name: "Remove" }).count())
       await work.getByRole("button", { name: "Remove" }).first().click();
     await work.getByRole("button", { name: "Add featured work" }).click();
@@ -160,7 +185,16 @@ test.describe("@phase-6.5 public profiles", () => {
     await page.getByRole("button", { name: "Save draft" }).click();
     await expect(page.getByText("Profile saved")).toBeVisible();
     await page.reload();
+    await page
+      .getByRole("button", { name: "Edit profile", exact: true })
+      .click();
+    await page
+      .getByText("Translation & profile address", { exact: true })
+      .click();
     await expect(page.getByLabel("Public profile address")).toHaveValue("");
+    await page
+      .getByRole("button", { name: "Featured work", exact: true })
+      .click();
     await expect(work.getByLabel("Title in English").first()).toHaveValue(
       "Second",
     );

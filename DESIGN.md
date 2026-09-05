@@ -2,6 +2,23 @@
 name: Xurjin
 description: "Reference-led creator commerce with navy framing, blue-purple light and traceable working surfaces."
 colors:
+  profile-accent: "#1d5cff"
+  profile-action-border: "#a8bdf1"
+  profile-approved-soft: "#e6f8e9"
+  profile-approved-text: "#087722"
+  profile-approved-icon: "#098d2c"
+  profile-chip-border: "#dbe4f3"
+  profile-chip-fill: "#f2f5fc"
+  profile-category-fill: "#edf1fa"
+  profile-instagram: "#df1875"
+  profile-youtube: "#e00000"
+  profile-tiktok: "#051522"
+  profile-field-border: "#ccd6e8"
+  profile-field-fill: "#fbfcff"
+  profile-edit-chip-fill: "#eaf0fd"
+  profile-remove: "#b42318"
+  profile-unsaved: "#e99910"
+  profile-mobile-nav-selected: "#183e82"
   discovery-accent: "#1d5cff"
   discovery-accent-hover: "#1549d6"
   discovery-soft: "#f0f5ff"
@@ -169,6 +186,16 @@ colors:
   chart-series-4: "#8196b8"
   chart-series-5: "#e6ebf5"
 typography:
+  profile-creator-heading:
+    fontSize: "44px"
+    fontWeight: 800
+    lineHeight: 1.15
+    letterSpacing: "-0.03em"
+  profile-creator-heading-mobile:
+    fontSize: "38px"
+    fontWeight: 800
+    lineHeight: 1.15
+    letterSpacing: "-0.03em"
   display:
     fontFamily: "var(--font-manrope), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "48px"
@@ -324,6 +351,7 @@ typography:
     fontFamily: "var(--font-manrope), var(--font-noto-sans-georgian), system-ui, sans-serif"
     fontSize: "19px"
 rounded:
+  profile-category: "14px"
   discovery-sheet: "24px"
   compact-label: "5px"
   search-notice: "9px"
@@ -459,6 +487,8 @@ Navy and navy-soft frame marketing and navigation. Ink is the dark heading color
 
 ## Typography
 
+Profiles inherit the shared Manrope and Noto Sans Georgian stack. The profile-only creator name uses the 44px heading role on desktop and 38px on mobile; brand names use 34px and 28px. Editor headings step from 28px to 24px below 1100px and 18px below 760px. These reference-led sizes are local hierarchy choices, not replacements for shared headings.
+
 Manrope is the Latin family; Noto Sans Georgian is the Georgian glyph fallback in the same stack. Both are bundled through Fontsource CSS imports. The Xurjin wordmark uses Manrope. The retained figure and mono token names now resolve to the same text stack, with tabular numerals applied by components; they do not designate a monospace face.
 
 The frontmatter records both the shared component scale and the direct surface scale. Public hero text uses a responsive clamp with a separate mobile treatment; auth headings, overview headings, section titles and metric numerals use a strong 800 weight. Shared h1/h2/h3 styles remain available for deeper operational pages. Compact labels and metadata range from 9 to 15px in the implemented surface CSS; the smallest sizes belong to badges and mobile navigation, not primary reading copy. Supporting size entries record observed responsive exceptions and do not prescribe a mathematical scale.
@@ -466,6 +496,8 @@ The frontmatter records both the shared component scale and the direct surface s
 **The Equal Script Rule.** Georgian and English share hierarchy, weight and usable space; allow wrapping instead of reducing one language to fit.
 
 ## Layout
+
+Profile routes pin the workspace content to white inside the existing navy shell, with a 1120px route cap and 1040px view cap. Brand profiles lead with a wide 4.15:1 cover and overlapping circular logo. Creator profiles split portrait and introduction equally on desktop. Below 760px, the brand cover becomes 3:1 and reaches the content edges; the creator portrait and identity share the opening row, followed by full-width biography and facts. Profile galleries use three columns on desktop and two on mobile. Editor media and paired fields collapse to one column; the fixed mobile savebar replaces workspace top and bottom navigation and respects the safe area, with reserved content space below the form.
 
 Marketing uses a 90% column capped at 1320px. A globe hero leads into two overlapping photographic audience cards, followed by steps, a soft invitation banner and a navy footer. The registration composition has a 1260px maximum and a photographic story beside a white form. Seller and creator registration share one continuous navy globe background across the entire registration section, including below the header.
 
@@ -485,11 +517,19 @@ Discovery cards stay flat with a pale border. Its filter sheet is separated by a
 
 ## Shapes
 
+Profiles use 6px buttons, fields and image corners, 7px covers and approval badges, and 9px creator panels. Creator category chips intentionally use the scoped 14px profile-category radius; this does not change the shared pill token. The brand logo remains circular, with a white border and the local shadow `0 3px 6px rgb(11 28 61 / 10%)`.
+
 The geometric X is the identity's fixed silhouette. Cards use 10?12px corners, primary surface buttons 7px, registration fields 6px and shared controls 8px. The shared token named pill is now 8px; it is not a capsule. Circular avatars, step numbers and audience icons provide the recurring round accent. Use real strokes around fields and panels; do not substitute the former dark editorial hairline system.
 
 Discovery retains 12px card corners, 6px commission/action corners and circular save controls. Its mobile filter sheet uses the scoped discovery-sheet radius on its two top corners, with square bottom corners. This reference-approved sheet shape is a local exception, not a change to the shared card radius.
 
 ## Components
+
+### Profile views and editor
+
+The user-supplied desktop and mobile profile compositions govern this surface. Profile-prefixed frontmatter tokens apply only to `app/profiles.css`: vivid solid blue carries actions and active tab underlines; pale green with green words and icons identifies approval/public visibility; draft visibility reuses the shared soft amber state. The local amber unsaved dot supplements explicit save-status text. Profile social colors identify their named destinations, and the local removal red identifies media removal. Keep these colors within their profile roles.
+
+Brand views lead from cover and identity into story, products and collaboration interests; creator views lead from portrait and biography into social links and featured work. Preserve real supplied content and factual media fallbacks. Editors group labeled compact fields behind underline tabs and expandable sections, retain media controls and worded visibility status, and expose draft/publish controls beside persistent save feedback. Fields use the profile field border and near-white fill, 40px desktop and 42px mobile minimum heights. Profile primary actions use the scoped solid accent, white text and shared signal-hover color; outline actions use the profile action border. The related surface brief owns the detailed task and reference contract.
 
 ### Buttons
 

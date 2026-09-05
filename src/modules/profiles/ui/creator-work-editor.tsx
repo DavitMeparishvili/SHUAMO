@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useState } from "react";
 import type { MediaUploadCopy } from "./profile-media-field";
@@ -14,6 +15,8 @@ export function CreatorWorkEditor({
   initialValue,
   copy,
   mediaCopy,
+  onDirty,
+  onBusy,
 }: {
   initialValue: unknown;
   copy: {
@@ -29,6 +32,8 @@ export function CreatorWorkEditor({
     maximum: string;
   };
   mediaCopy: MediaUploadCopy;
+  onDirty?: (() => void) | undefined;
+  onBusy?: ((id: string, busy: boolean) => void) | undefined;
 }) {
   const initial = Array.isArray(initialValue)
     ? initialValue.map((item, index) => {
@@ -57,6 +62,8 @@ export function CreatorWorkEditor({
           last={rows.length - 1}
           copy={copy}
           mediaCopy={mediaCopy}
+          onBusy={(busy) => onBusy?.(row.id, busy)}
+          onDirty={onDirty}
           onImage={(imageUrl) =>
             setRows((current) =>
               current.map((item) =>
@@ -107,6 +114,8 @@ function WorkRow({
   onImage,
   onRemove,
   onMove,
+  onBusy,
+  onDirty,
 }: {
   row: Work;
   index: number;
@@ -116,6 +125,8 @@ function WorkRow({
   onImage: (url: string) => void;
   onRemove: () => void;
   onMove: (index: number, offset: number) => void;
+  onDirty?: (() => void) | undefined;
+  onBusy?: ((busy: boolean) => void) | undefined;
 }) {
   const [status, setStatus] = useState("");
   async function upload(file?: File) {
@@ -125,6 +136,7 @@ function WorkRow({
       return;
     }
     setStatus(mediaCopy.uploading);
+    onBusy?.(true);
     try {
       const response = await fetch("/api/creator/profile/media/presign", {
         method: "POST",
@@ -143,9 +155,12 @@ function WorkRow({
       });
       if (!put.ok) throw new Error("upload");
       onImage(target.publicUrl);
+      onDirty?.();
       setStatus(mediaCopy.complete);
     } catch {
       setStatus(mediaCopy.failed);
+    } finally {
+      onBusy?.(false);
     }
   }
   return (
@@ -161,7 +176,15 @@ function WorkRow({
         />
         <label className="grid gap-2 type-small font-semibold text-ink">
           {copy.image}
+          {row.imageUrl ? (
+            <img
+              src={row.imageUrl}
+              alt={row.title.en || row.title.ka}
+              className="profile-work-editor-image"
+            />
+          ) : null}
           <input
+            disabled={status === mediaCopy.uploading}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={(event) => void upload(event.target.files?.[0])}
@@ -201,13 +224,15 @@ function Input({
   value: string;
   type?: string;
 }) {
+  const [text, setText] = useState(value);
   return (
     <label className="grid gap-2 type-small font-semibold text-ink">
       {label}
       <input
         className="min-h-11 rounded-sm border border-slate-300 bg-paper px-3 font-normal"
         name={name}
-        defaultValue={value}
+        value={text}
+        onChange={(event) => setText(event.target.value)}
         type={type}
         required
       />

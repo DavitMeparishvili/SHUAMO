@@ -5,6 +5,7 @@
 @import "./xurjin.css";
 @import "./discovery.css";
 @import "./product-detail.css";
+@import "./profiles.css";
 
 :root {
   color-scheme: light;

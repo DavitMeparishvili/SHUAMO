@@ -72,6 +72,7 @@ const socialLinks = z
     });
   });
 const shared = z.object({
+  profileName: z.string().trim().min(1).max(120).optional(),
   slug: profileSlugSchema,
   tagline: localized(160),
   description: localized(4000),

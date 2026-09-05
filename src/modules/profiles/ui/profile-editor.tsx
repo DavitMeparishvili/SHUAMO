@@ -1,5 +1,21 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { Icon } from "@/src/modules/design-system";
+import type { Locale } from "@/src/modules/localization";
+import { BrandProfile, type BrandProfileView } from "./brand-profile";
+import { CreatorProfile, type CreatorProfileView } from "./creator-profile";
+import { profileDesignCopy } from "./profile-design-copy";
+import {
+  ProfileTags,
+  ProfileFormats,
+  FeaturedProductsEditor,
+} from "./profile-form-controls";
+import {
+  commaSeparated,
+  pairedLocalizedLines,
+  explicitSocialLinks,
+  creatorWorkRows,
+} from "../application/profile-editor-form";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/src/modules/design-system";
 import {
@@ -94,228 +110,613 @@ export function ProfileEditor({
   publishAction,
   unpublishAction,
   copy,
+  locale = "en",
+  name = "",
+  brandCopy,
+  creatorCopy,
 }: {
   role: "brand" | "creator";
   profile: ProfileEditorRecord | null | undefined;
-  products?: { id: string; title: string }[];
+  products?: {
+    id: string;
+    title: string;
+    imageUrls?: string[];
+    backlinkUrl?: string;
+  }[];
   saveAction: ProfileFormAction;
   publishAction: ProfileFormAction;
   unpublishAction: ProfileFormAction;
   copy: ProfileEditorCopy;
+  locale?: Locale;
+  name?: string;
+  brandCopy?: Parameters<typeof BrandProfile>[0]["copy"];
+  creatorCopy?: Parameters<typeof CreatorProfile>[0]["copy"];
 }) {
-  const [saveState, saveFormAction] = useActionState(
-    saveAction,
+  const ui = profileDesignCopy(locale);
+  const [mode, setMode] = useState<"view" | "edit">(profile ? "view" : "edit");
+  const [tab, setTab] = useState("details");
+  const [dirty, setDirty] = useState(false);
+  const [uploads, setUploads] = useState<Set<string>>(() => new Set());
+  const uploadBusy = (id: string, busy: boolean) =>
+    setUploads((current) => {
+      const next = new Set(current);
+      if (busy) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const [revision, setRevision] = useState(0);
+  const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const isPublic = profile?.status === "PUBLISHED";
+  const [saveState, saveFormAction, isSaving] = useActionState(
+    async (state: ProfileActionState, data: FormData) => {
+      const result = await saveAction(state, data);
+      if (result.status === "success") {
+        setDirty(false);
+        setDraft(null);
+      }
+      return result;
+    },
     INITIAL_PROFILE_ACTION_STATE,
   );
-  const [publishState, publishFormAction] = useActionState(
-    publishAction,
+  const [publicationState, publicationFormAction] = useActionState(
+    async (state: ProfileActionState, data: FormData) =>
+      data.get("publication") === "unpublish"
+        ? unpublishAction(state, data)
+        : publishAction(state, data),
     INITIAL_PROFILE_ACTION_STATE,
   );
-  const [unpublishState, unpublishFormAction] = useActionState(
-    unpublishAction,
-    INITIAL_PROFILE_ACTION_STATE,
-  );
-  const featuredIds = new Set(
-    Array.isArray(profile?.featuredProductIds)
-      ? (profile.featuredProductIds as string[])
-      : [],
-  );
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   const mediaCopy: MediaUploadCopy = {
     tooLarge: copy.uploadTooLarge,
     uploading: copy.uploading,
     complete: copy.uploadComplete,
     failed: copy.uploadFailed,
   };
+  const lang = locale === "ka" ? "Ka" : "En";
+  const other = locale === "ka" ? "En" : "Ka";
+  const textValue = (key: string) =>
+    (profile as Record<string, unknown> | undefined)?.[key] as
+      string | undefined;
+  const markDirty = () => setDirty(true);
+  const showPreview = () => {
+    if (formRef.current) {
+      const data = new FormData(formRef.current);
+      setDraft({
+        ...Object.fromEntries(data),
+        categories: commaSeparated(data.get("categories")),
+        languages: commaSeparated(data.get("languages")),
+        contentFormats: commaSeparated(data.get("contentFormats")),
+        socialLinks: explicitSocialLinks(data),
+        featuredWork: creatorWorkRows(data),
+        featuredProductIds: data.getAll("featuredProductIds"),
+        whatWeMake: pairedLocalizedLines(
+          data.get("whatWeMakeKa"),
+          data.get("whatWeMakeEn"),
+        ).map((label) => ({ label })),
+        collaborationInterests: pairedLocalizedLines(
+          data.get("interestsKa"),
+          data.get("interestsEn"),
+        ),
+      });
+    }
+    setMode("view");
+    window.scrollTo({ top: 0 });
+  };
+  const cancel = () => {
+    if (dirty && !window.confirm(ui.discard)) return;
+    setRevision((value) => value + 1);
+    setDirty(false);
+    setDraft(null);
+    setMode("view");
+    window.scrollTo({ top: 0 });
+  };
+  const shown = {
+    slug: null,
+    taglineKa: "",
+    taglineEn: "",
+    descriptionKa: "",
+    descriptionEn: "",
+    locationKa: "",
+    locationEn: "",
+    heroImageUrl: "",
+    logoUrl: "",
+    categories: [],
+    languages: [],
+    contentFormats: [],
+    ...profile,
+    ...draft,
+  };
+  const featuredIds = Array.isArray(shown.featuredProductIds)
+    ? (shown.featuredProductIds as string[])
+    : [];
+  const previewName =
+    typeof draft?.profileName === "string" ? draft.profileName : name;
+  const preview =
+    role === "brand" && brandCopy ? (
+      <BrandProfile
+        locale={locale}
+        profile={
+          {
+            ...shown,
+            brand: { name: previewName },
+            featuredProducts: featuredIds.flatMap((id) => {
+              const product = products.find((item) => item.id === id);
+              return product
+                ? [
+                    {
+                      ...product,
+                      description: "",
+                      imageUrls: product.imageUrls ?? [],
+                      backlinkUrl:
+                        product.backlinkUrl ??
+                        `/${locale}/brand/products/${product.id}`,
+                    },
+                  ]
+                : [];
+            }),
+          } as BrandProfileView
+        }
+        copy={brandCopy}
+      />
+    ) : creatorCopy ? (
+      <CreatorProfile
+        locale={locale}
+        profile={
+          {
+            ...shown,
+            creator: { displayName: previewName },
+          } as CreatorProfileView
+        }
+        copy={creatorCopy}
+      />
+    ) : null;
+  const hero = (
+    <ProfileMediaField
+      label={role === "brand" ? ui.cover : ui.photo}
+      name="heroImageUrl"
+      initialValue={profile?.heroImageUrl ?? ""}
+      endpoint={`/api/${role}/profile/media/presign`}
+      kind={`${role}-hero`}
+      copy={mediaCopy}
+      locale={locale}
+      onDirty={markDirty}
+      onBusy={(busy) => uploadBusy("hero", busy)}
+    />
+  );
+  const socials = (
+    <SocialLinksEditor
+      initialValue={profile?.socialLinks}
+      copy={{
+        label: ui.social,
+        platform: copy.socialPlatform,
+        url: copy.socialUrl,
+        add: copy.addSocial,
+        remove: copy.remove,
+        platformLabels: {
+          website: copy.socialWebsite,
+          instagram: copy.socialInstagram,
+          tiktok: copy.socialTiktok,
+          youtube: copy.socialYoutube,
+          facebook: copy.socialFacebook,
+          linkedin: copy.socialLinkedin,
+        },
+      }}
+    />
+  );
+  const work =
+    role === "brand" ? (
+      <FeaturedProductsEditor
+        products={products}
+        initialValue={profile?.featuredProductIds}
+        locale={locale}
+        onDirty={markDirty}
+      />
+    ) : (
+      <CreatorWorkEditor
+        initialValue={profile?.featuredWork}
+        mediaCopy={mediaCopy}
+        onDirty={markDirty}
+        onBusy={(id, busy) => uploadBusy("work-" + id, busy)}
+        copy={{
+          label: ui.work,
+          titleKa: copy.workTitleKa,
+          titleEn: copy.workTitleEn,
+          destination: copy.workDestination,
+          image: copy.workImage,
+          add: copy.addWork,
+          remove: copy.remove,
+          up: copy.moveUp,
+          down: copy.moveDown,
+          maximum: copy.workMaximum,
+        }}
+      />
+    );
   return (
-    <div className="grid gap-8">
-      <form action={saveFormAction} className="grid gap-7" noValidate>
-        <ActionMessage state={saveState} fieldLabels={fieldLabels(copy)} />
-        <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
-          <Field
-            name="slug"
-            label={copy.slug}
-            value={profile?.slug ?? undefined}
-            error={saveState.fieldErrors?.slug}
-          />
-          <Field
-            name="categories"
-            label={copy.categories}
-            value={profile?.categories?.join(", ")}
-            error={saveState.fieldErrors?.categories}
-          />
-          <Field
-            name="taglineKa"
-            label={copy.taglineKa}
-            value={profile?.taglineKa}
-          />
-          <Field
-            name="taglineEn"
-            label={copy.taglineEn}
-            value={profile?.taglineEn}
-          />
-          <Area
-            name="descriptionKa"
-            label={copy.descriptionKa}
-            value={profile?.descriptionKa}
-          />
-          <Area
-            name="descriptionEn"
-            label={copy.descriptionEn}
-            value={profile?.descriptionEn}
-          />
-          <Field
-            name="locationKa"
-            label={copy.locationKa}
-            value={profile?.locationKa}
-          />
-          <Field
-            name="locationEn"
-            label={copy.locationEn}
-            value={profile?.locationEn}
-          />
-        </div>
-        <ProfileMediaField
-          label={copy.hero}
-          name="heroImageUrl"
-          initialValue={profile?.heroImageUrl ?? ""}
-          endpoint={`/api/${role}/profile/media/presign`}
-          kind={`${role}-hero`}
-          copy={mediaCopy}
-        />
-        {role === "brand" ? (
-          <ProfileMediaField
-            label={copy.logo}
-            name="logoUrl"
-            initialValue={profile?.logoUrl ?? ""}
-            endpoint="/api/brand/profile/media/presign"
-            kind="brand-logo"
-            copy={mediaCopy}
-          />
-        ) : null}
-        <SocialLinksEditor
-          initialValue={profile?.socialLinks}
-          copy={{
-            label: copy.socials,
-            platform: copy.socialPlatform,
-            url: copy.socialUrl,
-            add: copy.addSocial,
-            remove: copy.remove,
-            platformLabels: {
-              website: copy.socialWebsite,
-              instagram: copy.socialInstagram,
-              tiktok: copy.socialTiktok,
-              youtube: copy.socialYoutube,
-              facebook: copy.socialFacebook,
-              linkedin: copy.socialLinkedin,
-            },
-          }}
-        />
-        {role === "brand" ? (
-          <>
-            <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
-              <Area
-                name="whatWeMakeKa"
-                label={copy.whatWeMakeKa}
-                value={localizedLines(profile?.whatWeMake, "ka", "label")}
-              />
-              <Area
-                name="whatWeMakeEn"
-                label={copy.whatWeMakeEn}
-                value={localizedLines(profile?.whatWeMake, "en", "label")}
-              />
-              <Area
-                name="interestsKa"
-                label={copy.interestsKa}
-                value={localizedLines(profile?.collaborationInterests, "ka")}
-              />
-              <Area
-                name="interestsEn"
-                label={copy.interestsEn}
-                value={localizedLines(profile?.collaborationInterests, "en")}
-              />
-            </div>
-            <fieldset className="grid gap-3">
-              <legend className="font-semibold text-ink">
-                {copy.evidence}
-              </legend>
-              {products.map((product) => (
-                <label
-                  className="flex min-h-11 items-center gap-3"
-                  key={product.id}
-                >
-                  <input
-                    type="checkbox"
-                    name="featuredProductIds"
-                    value={product.id}
-                    defaultChecked={featuredIds.has(product.id)}
-                  />
-                  {product.title}
-                </label>
-              ))}
-            </fieldset>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-5 max-[700px]:grid-cols-1">
-              <Field
-                name="languages"
-                label={copy.languages}
-                value={profile?.languages?.join(", ")}
-              />
-              <Field
-                name="contentFormats"
-                label={copy.contentFormats}
-                value={profile?.contentFormats?.join(", ")}
-              />
-            </div>
-            <CreatorWorkEditor
-              initialValue={profile?.featuredWork}
-              mediaCopy={mediaCopy}
-              copy={{
-                label: copy.evidence,
-                titleKa: copy.workTitleKa,
-                titleEn: copy.workTitleEn,
-                destination: copy.workDestination,
-                image: copy.workImage,
-                add: copy.addWork,
-                remove: copy.remove,
-                up: copy.moveUp,
-                down: copy.moveDown,
-                maximum: copy.workMaximum,
-              }}
-            />
-          </>
-        )}
-        <div className="flex flex-wrap gap-3">
-          <SubmitButton label={copy.save} pendingLabel={copy.pending} />
-          <a
-            className="inline-flex min-h-11 items-center rounded-pill border border-slate-300 px-5 font-semibold text-ink no-underline"
-            href="#profile-preview"
+    <div
+      className="profile-workspace"
+      data-profile-mode={mode}
+      data-profile-role={role}
+    >
+      <div hidden={mode !== "view"}>
+        <div className={`profile-owner-banner ${isPublic ? "" : "private"}`}>
+          <Icon name={isPublic ? "eye" : "lock"} />
+          <div>
+            <strong>
+              {dirty
+                ? ui.unsaved
+                : isPublic
+                  ? ui.previewTitle
+                  : ui.privatePreview}
+            </strong>
+            {isPublic ? (
+              <small>{dirty ? ui.preview : ui.previewInfo}</small>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="profile-button"
+            onClick={() => {
+              setMode("edit");
+              window.scrollTo({ top: 0 });
+            }}
           >
-            {copy.preview}
-          </a>
+            <Icon name="edit" />
+            {ui.edit}
+          </button>
         </div>
-      </form>
-      <div className="grid gap-3 border-t border-slate-200 pt-6">
-        <ActionMessage
-          state={
-            unpublishState.status !== "idle" ? unpublishState : publishState
-          }
-          fieldLabels={fieldLabels(copy)}
-        />
-        {profile?.status === "PUBLISHED" ? (
-          <form action={unpublishFormAction}>
+        {preview}
+      </div>
+      <div hidden={mode !== "edit"}>
+        <header className="profile-editor-heading">
+          <button
+            className="profile-back"
+            type="button"
+            aria-label={ui.preview}
+            onClick={showPreview}
+          >
+            <Icon name="arrow" />
+          </button>
+          <div>
+            <h1>
+              <span className="profile-desktop-label">
+                {role === "brand" ? ui.brandTitle : ui.creatorTitle}
+              </span>
+              <span className="profile-mobile-label">
+                {role === "brand" ? ui.brandTitle : ui.edit}
+              </span>
+            </h1>
+            {role === "brand" ? <p>{ui.intro}</p> : null}
+          </div>
+          <span
+            className={`profile-visibility ${isPublic ? "public" : "private"}`}
+          >
+            <Icon name={isPublic ? "check" : "lock"} />
+            {isPublic ? ui.public : ui.draft}
+          </span>
+          <button
+            className="profile-button"
+            type="button"
+            onClick={showPreview}
+            disabled={isSaving || uploads.size > 0}
+          >
+            <Icon name="eye" />
+            {ui.preview}
+          </button>
+        </header>
+        <nav className="profile-tabs" aria-label={ui.edit}>
+          {[
+            ["details", role === "brand" ? ui.details : ui.about],
+            ["media", ui.media],
+            ["work", role === "brand" ? ui.products : ui.work],
+            ["links", ui.links],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={tab === id ? "page" : undefined}
+              onClick={() => setTab(id!)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <form
+          key={revision}
+          ref={formRef}
+          action={saveFormAction}
+          className="profile-edit-form"
+          noValidate
+          onReset={(event) => event.preventDefault()}
+          onSubmit={(event) => {
+            if (uploads.size) event.preventDefault();
+          }}
+          onChange={markDirty}
+          onClickCapture={(event) => {
+            if ((event.target as HTMLElement).closest("fieldset button"))
+              markDirty();
+          }}
+        >
+          <ActionMessage
+            state={saveState}
+            fieldLabels={{
+              ...fieldLabels(copy),
+              profileName: role === "brand" ? ui.name : ui.displayName,
+            }}
+          />
+          <fieldset disabled={isSaving} className="profile-form-fields">
+            <div
+              className={`profile-details-grid ${role}`}
+              hidden={tab !== "details" && tab !== "media"}
+            >
+              <div className="profile-main-media">{hero}</div>
+              {role === "brand" ? (
+                <div className="profile-logo-media">
+                  <ProfileMediaField
+                    label={ui.logo}
+                    name="logoUrl"
+                    initialValue={profile?.logoUrl ?? ""}
+                    endpoint="/api/brand/profile/media/presign"
+                    kind="brand-logo"
+                    copy={mediaCopy}
+                    locale={locale}
+                    onDirty={markDirty}
+                    onBusy={(busy) => uploadBusy("logo", busy)}
+                  />
+                </div>
+              ) : null}
+              <div className="profile-primary-fields" hidden={tab === "media"}>
+                <div className="profile-field-pair">
+                  <Field
+                    name="profileName"
+                    label={role === "brand" ? ui.name : ui.displayName}
+                    value={name}
+                  />
+                  {role === "brand" ? (
+                    <Field
+                      name={`tagline${lang}`}
+                      label={ui.tagline}
+                      value={textValue(`tagline${lang}`)}
+                    />
+                  ) : (
+                    <Field
+                      name={`location${lang}`}
+                      label={ui.location}
+                      value={textValue(`location${lang}`)}
+                    />
+                  )}
+                </div>
+                {role === "brand" ? (
+                  <Field
+                    name={`location${lang}`}
+                    label={ui.location}
+                    value={textValue(`location${lang}`)}
+                  />
+                ) : (
+                  <Area
+                    name={`tagline${lang}`}
+                    label={ui.bio}
+                    value={textValue(`tagline${lang}`)}
+                    limit={160}
+                  />
+                )}
+                <Area
+                  name={`description${lang}`}
+                  label={role === "brand" ? ui.description : ui.optionalAbout}
+                  value={textValue(`description${lang}`)}
+                  limit={role === "brand" ? 500 : 280}
+                />
+                <div className={role === "brand" ? "profile-field-pair" : ""}>
+                  <ProfileTags
+                    name="categories"
+                    label={
+                      role === "brand" ? ui.productCategories : ui.categories
+                    }
+                    initialValue={profile?.categories ?? []}
+                    maximum={5}
+                    locale={locale}
+                    onDirty={markDirty}
+                  />
+                  {role === "brand" ? (
+                    <ProfileTags
+                      name={`interests${lang}`}
+                      label={ui.interests}
+                      initialValue={localizedLines(
+                        profile?.collaborationInterests,
+                        locale,
+                      )
+                        .split("\n")
+                        .filter(Boolean)}
+                      separator={"\n"}
+                      maximum={4}
+                      locale={locale}
+                      onDirty={markDirty}
+                    />
+                  ) : null}
+                </div>
+                {role === "creator" ? (
+                  <div className="profile-field-pair">
+                    <ProfileTags
+                      name="languages"
+                      label={ui.languages}
+                      initialValue={profile?.languages ?? []}
+                      maximum={8}
+                      locale={locale}
+                      onDirty={markDirty}
+                    />
+                    <ProfileFormats
+                      initialValue={profile?.contentFormats ?? []}
+                      locale={locale}
+                      onDirty={markDirty}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            <div className="profile-editor-sections">
+              <details
+                className="profile-editor-section profile-work-section"
+                open={tab === "work"}
+                hidden={tab === "media" || tab === "links"}
+              >
+                <summary>
+                  <Icon name={role === "brand" ? "box" : "image"} />
+                  <span>
+                    <strong>{role === "brand" ? ui.featured : ui.work}</strong>
+                    {role === "creator" ? <small>{ui.workHint}</small> : null}
+                  </span>
+                  <Icon name="chevron" />
+                </summary>
+                <div className="profile-section-content">{work}</div>
+              </details>
+              <details
+                className="profile-editor-section profile-links-section"
+                open={tab === "links"}
+                hidden={tab === "media" || tab === "work"}
+              >
+                <summary>
+                  <Icon name="link" />
+                  <span>
+                    <strong>{ui.social}</strong>
+                    {role === "creator" ? <small>{ui.socialHint}</small> : null}
+                  </span>
+                  <Icon name="chevron" />
+                </summary>
+                <div className="profile-section-content">{socials}</div>
+              </details>
+              <details
+                className="profile-editor-section"
+                hidden={tab !== "details"}
+              >
+                <summary>
+                  <Icon name="settings" />
+                  <span>
+                    <strong>{ui.translations}</strong>
+                  </span>
+                  <Icon name="chevron" />
+                </summary>
+                <div className="profile-section-content profile-field-pair">
+                  <Field
+                    name="slug"
+                    label={copy.slug}
+                    value={profile?.slug ?? ""}
+                    error={saveState.fieldErrors?.slug}
+                  />
+                  <Field
+                    name={`tagline${other}`}
+                    label={copy[`tagline${other}`]}
+                    value={textValue(`tagline${other}`)}
+                  />
+                  <Field
+                    name={`location${other}`}
+                    label={copy[`location${other}`]}
+                    value={textValue(`location${other}`)}
+                  />
+                  <Area
+                    name={`description${other}`}
+                    label={copy[`description${other}`]}
+                    value={textValue(`description${other}`)}
+                  />
+                  {role === "brand" ? (
+                    <>
+                      <Area
+                        name="whatWeMakeKa"
+                        label={copy.whatWeMakeKa}
+                        value={localizedLines(
+                          profile?.whatWeMake,
+                          "ka",
+                          "label",
+                        )}
+                      />
+                      <Area
+                        name="whatWeMakeEn"
+                        label={copy.whatWeMakeEn}
+                        value={localizedLines(
+                          profile?.whatWeMake,
+                          "en",
+                          "label",
+                        )}
+                      />
+                      <Area
+                        name={`interests${other}`}
+                        label={copy[`interests${other}`]}
+                        value={localizedLines(
+                          profile?.collaborationInterests,
+                          locale === "ka" ? "en" : "ka",
+                        )}
+                      />
+                    </>
+                  ) : null}
+                </div>
+              </details>
+            </div>
+          </fieldset>
+          <footer className="profile-savebar">
+            <div className={dirty ? "is-dirty" : ""}>
+              <span className="save-status-dot" />
+              <span>
+                {dirty ? ui.unsaved : ui.saved}
+                <small>{isPublic ? ui.publicHint : ui.privateHint}</small>
+              </span>
+            </div>
+            <button
+              className="profile-button"
+              type="button"
+              onClick={cancel}
+              disabled={isSaving || uploads.size > 0}
+            >
+              {ui.cancel}
+            </button>
             <SubmitButton
-              label={copy.unpublish}
+              disabled={uploads.size > 0}
+              label={isPublic ? ui.save : ui.saveDraft}
               pendingLabel={copy.pending}
-              variant="outline"
             />
-          </form>
-        ) : (
-          <form action={publishFormAction}>
-            <SubmitButton label={copy.publish} pendingLabel={copy.pending} />
-          </form>
-        )}
+          </footer>
+        </form>
+        <details className="profile-editor-section profile-account-section">
+          <summary>
+            <Icon name="shield" />
+            <span>
+              <strong>{ui.account}</strong>
+              <small>{ui.accountHint}</small>
+            </span>
+            <Icon name="chevron" />
+          </summary>
+          <div className="profile-section-content">
+            <p>{isPublic ? ui.public : ui.draft}</p>
+            <ActionMessage
+              state={publicationState}
+              fieldLabels={fieldLabels(copy)}
+            />
+            {isPublic ? (
+              <form action={publicationFormAction}>
+                <input type="hidden" name="publication" value="unpublish" />
+                <SubmitButton
+                  label={copy.unpublish}
+                  pendingLabel={copy.pending}
+                  variant="outline"
+                />
+              </form>
+            ) : (
+              <form action={publicationFormAction}>
+                <input type="hidden" name="publication" value="publish" />
+                <SubmitButton
+                  label={copy.publish}
+                  pendingLabel={copy.pending}
+                />
+              </form>
+            )}
+          </div>
+        </details>
       </div>
     </div>
   );
@@ -378,15 +779,18 @@ function SubmitButton({
   label,
   pendingLabel,
   variant,
+  disabled,
 }: {
   label: string;
   pendingLabel: string;
   variant?: "signal" | "outline";
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="submit"
+      disabled={disabled}
       {...(variant ? { variant } : {})}
       pending={pending}
       pendingLabel={pendingLabel}
@@ -407,13 +811,15 @@ function Field({
   value: string | undefined;
   error?: string | undefined;
 }) {
+  const [text, setText] = useState(value ?? "");
   return (
     <label className="grid gap-2 font-semibold text-ink">
       {label}
       <input
         className="min-h-11 rounded-sm border border-slate-300 bg-paper px-3 font-normal"
         name={name}
-        defaultValue={value}
+        value={text}
+        onChange={(event) => setText(event.target.value)}
         aria-invalid={Boolean(error)}
       />
       {error ? (
@@ -427,19 +833,31 @@ function Area({
   name,
   label,
   value,
+  limit,
 }: {
   name: string;
   label: string;
   value: string | undefined;
+  limit?: number;
 }) {
+  const [text, setText] = useState(value ?? "");
+  const length = text.length;
   return (
     <label className="grid gap-2 font-semibold text-ink">
       {label}
       <textarea
+        aria-label={label}
+        maxLength={Math.max(limit ?? 4000, value?.length ?? 0)}
         className="min-h-28 rounded-sm border border-slate-300 bg-paper p-3 font-normal"
         name={name}
-        defaultValue={value}
+        value={text}
+        onChange={(event) => setText(event.target.value)}
       />
+      {limit ? (
+        <small className="profile-counter">
+          {length}/{Math.max(limit, value?.length ?? 0)}
+        </small>
+      ) : null}
     </label>
   );
 }

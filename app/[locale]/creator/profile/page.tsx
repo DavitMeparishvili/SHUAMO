@@ -1,14 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import {
-  currentViewer,
-  requireCreator,
-  WorkspaceShell,
-} from "@/src/modules/identity";
+import { currentViewer, requireCreator } from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
-import {
-  CreatorProfile,
-  prismaProfileRepository,
-} from "@/src/modules/profiles";
+import { prismaProfileRepository } from "@/src/modules/profiles";
 import { ProfileEditor } from "@/src/modules/profiles";
 import {
   publishCreatorProfileAction,
@@ -28,40 +21,20 @@ export default async function CreatorProfileEditorPage({
     allowed.value.creatorId,
   );
   const messages = getMessages(locale);
-  const base = profile as unknown as Record<string, unknown> | null;
   return (
-    <WorkspaceShell
-      name={allowed.value.displayName}
-      title={t(messages, "profile.editor.creatorTitle")}
-      intro={t(messages, "profile.editor.intro")}
-    >
+    <div className="profile-route">
       <ProfileEditor
         role="creator"
+        locale={locale}
+        name={allowed.value.displayName}
+        creatorCopy={creatorCopy(messages)}
         profile={profile as Parameters<typeof ProfileEditor>[0]["profile"]}
         saveAction={saveCreatorProfileAction.bind(null, locale)}
         publishAction={publishCreatorProfileAction.bind(null, locale)}
         unpublishAction={unpublishCreatorProfileAction.bind(null, locale)}
         copy={editorCopy(messages)}
       />
-      {profile ? (
-        <div
-          className="mt-12 border-t border-slate-300 pt-8"
-          id="profile-preview"
-        >
-          <CreatorProfile
-            profile={
-              {
-                ...base,
-                creator: { displayName: allowed.value.displayName },
-              } as never
-            }
-            locale={locale}
-            preview
-            copy={creatorCopy(messages)}
-          />
-        </div>
-      ) : null}
-    </WorkspaceShell>
+    </div>
   );
 }
 function editorCopy(m: Record<string, string>) {
