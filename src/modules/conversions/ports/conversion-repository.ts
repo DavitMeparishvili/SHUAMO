@@ -29,7 +29,7 @@ export interface ConversionView {
   readonly orderId: string;
   readonly occurredAt: string;
   readonly status: ConversionStatus;
-  readonly confirmedAt: string | undefined;
+  readonly confirmedAt: string;
   readonly commissionAmount: string;
   readonly items: readonly ConversionItemView[];
 }
@@ -57,7 +57,7 @@ export interface PersistConversionInput {
   readonly brandId: string;
   readonly payload: ConversionPayload;
   readonly requestFingerprint: string;
-  readonly status: "PENDING" | "UNATTRIBUTED";
+  readonly confirmedAt: Date;
   readonly lines: readonly PersistedLine[];
 }
 

@@ -6,14 +6,12 @@ export function SiteHeader({
   locale,
   messages,
   viewer,
-  pendingOrders,
 }: {
   locale: Locale;
   messages: Messages;
   viewer: Viewer;
-  pendingOrders?: { count: number; oldestDays: number } | undefined;
 }) {
-  const destinations = navDestinationsFor(viewer, locale, pendingOrders);
+  const destinations = navDestinationsFor(viewer, locale);
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-paper/95 backdrop-blur-sm">
@@ -35,18 +33,6 @@ export function SiteHeader({
               key={destination.href}
             >
               {t(messages, destination.labelKey)}
-              {destination.pending ? (
-                <span
-                  className="ml-2 rounded-pill bg-accrued-soft px-2 py-0.5 type-caption text-accrued"
-                  aria-label={t(messages, "nav.pendingOrdersDetail")
-                    .replace("{count}", String(destination.pending.count))
-                    .replace("{days}", String(destination.pending.oldestDays))}
-                >
-                  {t(messages, "nav.pendingOrdersCompact")
-                    .replace("{count}", String(destination.pending.count))
-                    .replace("{days}", String(destination.pending.oldestDays))}
-                </span>
-              ) : null}
             </a>
           ))}
         </nav>

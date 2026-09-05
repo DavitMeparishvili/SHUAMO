@@ -141,9 +141,6 @@ export function PerformanceFilters({
             <option value="">
               {t(messages, "performance.filter.allStatuses")}
             </option>
-            <option value="PENDING">
-              {t(messages, "orders.status.pending")}
-            </option>
             <option value="CONFIRMED">
               {t(messages, "orders.status.confirmed")}
             </option>

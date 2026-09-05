@@ -63,7 +63,7 @@ function viewOf(record: ConversionRecord): ConversionView {
     orderId: record.orderId,
     occurredAt: record.occurredAt.toISOString(),
     status: record.status,
-    confirmedAt: record.confirmedAt?.toISOString(),
+    confirmedAt: record.confirmedAt.toISOString(),
     commissionAmount,
     items,
   };
@@ -144,7 +144,8 @@ export function createPrismaConversionRepository(
               orderId: input.payload.orderId,
               requestFingerprint: input.requestFingerprint,
               occurredAt: input.payload.occurredAt,
-              status: input.status,
+              status: "CONFIRMED",
+              confirmedAt: input.confirmedAt,
               items: {
                 create: input.lines.map((line) => ({
                   sku: line.input.sku,
@@ -218,7 +219,7 @@ export function createPrismaConversionRepository(
       }
       return database.$transaction(async (transaction) => {
         const [record] = await transaction.$queryRaw<
-          { status: "PENDING" | "CONFIRMED" | "CANCELLED" | "UNATTRIBUTED" }[]
+          { status: "CONFIRMED" | "CANCELLED" }[]
         >(Prisma.sql`
           SELECT status::text AS status
           FROM conversion
@@ -238,16 +239,12 @@ export function createPrismaConversionRepository(
           where: { id: input.conversionId },
           data: {
             status: transition.value,
-            confirmedAt: transition.value === "CONFIRMED" ? input.now : null,
           },
         });
         await transaction.auditEvent.create({
           data: {
             actorId: input.actorId,
-            action:
-              transition.value === "CONFIRMED"
-                ? "conversion.confirmed"
-                : "conversion.cancelled",
+            action: "conversion.cancelled",
             entityType: "conversion",
             entityId: input.conversionId,
             changes: { from: record.status, to: transition.value },
@@ -272,30 +269,6 @@ export async function listOrdersForBrand(
     orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
   });
   return records.map(viewOf);
-}
-
-export async function pendingOrderSummary(brandId: string, now: Date) {
-  const [count, oldest] = await Promise.all([
-    prisma.conversion.count({ where: { brandId, status: "PENDING" } }),
-    prisma.conversion.findFirst({
-      where: { brandId, status: "PENDING" },
-      orderBy: { occurredAt: "asc" },
-      select: { occurredAt: true },
-    }),
-  ]);
-  return {
-    count,
-    oldestDays:
-      oldest === null
-        ? 0
-        : Math.max(
-            0,
-            Math.floor(
-              (now.getTime() - oldest.occurredAt.getTime()) /
-                (24 * 60 * 60 * 1000),
-            ),
-          ),
-  };
 }
 
 export async function listEarningsForCreator(creatorId: string) {

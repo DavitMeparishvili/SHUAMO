@@ -6,14 +6,12 @@ export function MobileTabBar({
   locale,
   messages,
   viewer,
-  pendingOrders,
 }: {
   locale: Locale;
   messages: Messages;
   viewer: Viewer;
-  pendingOrders?: { count: number; oldestDays: number } | undefined;
 }) {
-  const destinations = navDestinationsFor(viewer, locale, pendingOrders);
+  const destinations = navDestinationsFor(viewer, locale);
 
   return (
     <nav
@@ -27,18 +25,6 @@ export function MobileTabBar({
           key={destination.href}
         >
           {t(messages, destination.labelKey)}
-          {destination.pending ? (
-            <span
-              className="whitespace-nowrap rounded-pill bg-accrued-soft px-1.5 text-accrued"
-              aria-label={t(messages, "nav.pendingOrdersDetail")
-                .replace("{count}", String(destination.pending.count))
-                .replace("{days}", String(destination.pending.oldestDays))}
-            >
-              {t(messages, "nav.pendingOrdersCompact")
-                .replace("{count}", String(destination.pending.count))
-                .replace("{days}", String(destination.pending.oldestDays))}
-            </span>
-          ) : null}
         </a>
       ))}
     </nav>

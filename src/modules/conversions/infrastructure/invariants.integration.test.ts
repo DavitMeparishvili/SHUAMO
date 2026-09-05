@@ -27,7 +27,7 @@ async function seedConversionItem() {
 }
 
 describe("Phase 6 database constraints", () => {
-  it("defaults a conversion to PENDING and enforces brand/order idempotency", async () => {
+  it("defaults a conversion to CONFIRMED and enforces brand/order idempotency", async () => {
     const brand = await seedBrand();
     const data = {
       brandId: brand.id,
@@ -37,8 +37,8 @@ describe("Phase 6 database constraints", () => {
     };
     const conversion = await prisma.conversion.create({ data });
     expect(conversion).toMatchObject({
-      status: "PENDING",
-      confirmedAt: null,
+      status: "CONFIRMED",
+      confirmedAt: expect.any(Date),
     });
     await expect(prisma.conversion.create({ data })).rejects.toThrow();
   });
@@ -57,14 +57,14 @@ describe("Phase 6 database constraints", () => {
     ).rejects.toThrow();
   });
 
-  it("confirmed_at is set if and only if status is CONFIRMED", async () => {
+  it("requires confirmation time and rejects obsolete pending status", async () => {
     const brand = await seedBrand();
     await expect(
       prisma.$executeRaw`
         INSERT INTO conversion
-          (brand_id, order_id, request_fingerprint, occurred_at, status)
+          (brand_id, order_id, request_fingerprint, occurred_at, status, confirmed_at)
         VALUES (
-          ${brand.id}::uuid, 'bad-confirmed', ${"c".repeat(64)}, now(), 'CONFIRMED'
+          ${brand.id}::uuid, 'bad-confirmed', ${"c".repeat(64)}, now(), 'CONFIRMED', NULL
         )
       `,
     ).rejects.toThrow();

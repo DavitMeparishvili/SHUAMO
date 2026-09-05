@@ -1,5 +1,24 @@
 # Phase 11 — Money Views, Admin Console & Reconciliation Implementation Plan · **R2**
 
+> **Superseded lifecycle assumptions — 2026-09-05:** The
+> [successful-sale lifecycle decision](2026-09-05-successful-sale-lifecycle.md)
+> takes precedence over all older prose, code samples and tests below.
+> Successful-sale webhooks immediately confirm sales and earn eligible commission.
+> There is no manual order confirmation, pending sale commission, or UNATTRIBUTED
+> order status. Attribution is independent of sale status. Confirmation time
+> survives cancellation. Brand approval belongs to invoices; approval and period
+> close release no funds. Collected brand payment releases funded commission.
+> Apply the decision's acceptance tests when implementing this historical plan.
+
+## Required presentation changes (2026-09-05)
+
+- Remove pending-sale earnings and order-confirmation reminders from money views.
+- Show accrued, available, in-transit and paid amounts with their actual causes.
+- Add brand invoice approval visibility separately from invoice payment.
+- Reconciliation checks accrual completeness against canonical attributions from
+  successful-sale intake, excluding historical noncanonical/review-only rows.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Everyone can see where their money is, an operator can move it without touching the database, and seven nightly checks say whether the books are true.

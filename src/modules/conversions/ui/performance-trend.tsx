@@ -223,25 +223,27 @@ export function PerformanceTrend({
               );
             })}
           </svg>
-          <table className="sr-only">
-            <caption>{t(messages, "performance.trend.description")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t(messages, "orders.date")}</th>
-                <th scope="col">
-                  {t(messages, `performance.metric.${metric}`)}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((point, index) => (
-                <tr key={point.date}>
-                  <th scope="row">{calendarLabel(point.date, locale)}</th>
-                  <td>{formatValue(values[index] ?? 0)}</td>
+          <div className="sr-only">
+            <table>
+              <caption>{t(messages, "performance.trend.description")}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{t(messages, "orders.date")}</th>
+                  <th scope="col">
+                    {t(messages, `performance.metric.${metric}`)}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {points.map((point, index) => (
+                  <tr key={point.date}>
+                    <th scope="row">{calendarLabel(point.date, locale)}</th>
+                    <td>{formatValue(values[index] ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>

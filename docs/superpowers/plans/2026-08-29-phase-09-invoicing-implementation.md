@@ -1,5 +1,28 @@
 # Phase 9 — Invoicing & the Close Job Implementation Plan
 
+> **Superseded lifecycle assumptions — 2026-09-05:** The
+> [successful-sale lifecycle decision](2026-09-05-successful-sale-lifecycle.md)
+> takes precedence over all older prose, code samples and tests below.
+> Successful-sale webhooks immediately confirm sales and earn eligible commission.
+> There is no manual order confirmation, pending sale commission, or UNATTRIBUTED
+> order status. Attribution is independent of sale status. Confirmation time
+> survives cancellation. Brand approval belongs to invoices; approval and period
+> close release no funds. Collected brand payment releases funded commission.
+> Apply the decision's acceptance tests when implementing this historical plan.
+
+## Required invoice approval work (2026-09-05)
+
+- Add nullable `approvedAt` and `approvedById` (AppUser FK) to Invoice, with a
+  paired-nullability constraint. Do not introduce an order approval state.
+- Implement an idempotent, ownership-checked approval action for ISSUED invoices
+  with the owning approved brand as actor, row locking, and an audit event.
+- Add bilingual invoice detail approval controls and acceptance time/actor display.
+  Keep approval separate from the DRAFT / ISSUED / PAID / VOID lifecycle.
+- Test foreign-brand, unauthenticated, draft, void, repeated and concurrent
+  approvals. Test that approval changes neither ledger balances nor order states.
+- Approved invoice amounts are immutable. Use explicit correction processes.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Closing a period issues one gapless-numbered invoice per brand with entries in it, and re-running the job changes nothing.

@@ -37,7 +37,6 @@ type RawLinkRow = {
   orders: number | bigint;
   units: number | bigint;
   sales: Prisma.Decimal | string;
-  pending: Prisma.Decimal | string;
   confirmed: Prisma.Decimal | string;
   cancelled: Prisma.Decimal | string;
 };
@@ -53,7 +52,7 @@ type RawLedgerRow = {
   id: string;
   order_id: string;
   occurred_at: Date;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "CANCELLED";
   brand_id: string;
   brand_name: string;
   creator_id: string;
@@ -97,7 +96,6 @@ const ZERO_TOTALS: PerformanceTotals = {
   units: 0,
   convertedClickRate: 0,
   sales: "0.00",
-  pending: "0.00",
   confirmed: "0.00",
   cancelled: "0.00",
 };
@@ -217,7 +215,6 @@ async function loadLinkRows(
         COUNT(DISTINCT cv.id)::int AS orders,
         COALESCE(SUM(item_totals.units), 0)::int AS units,
         COALESCE(SUM(CASE WHEN cv.status::text <> 'CANCELLED' THEN item_totals.sales ELSE 0 END), 0) AS sales,
-        COALESCE(SUM(CASE WHEN cv.status::text = 'PENDING' THEN a.commission_amount ELSE 0 END), 0) AS pending,
         COALESCE(SUM(CASE WHEN cv.status::text = 'CONFIRMED' THEN a.commission_amount ELSE 0 END), 0) AS confirmed,
         COALESCE(SUM(CASE WHEN cv.status::text = 'CANCELLED' THEN a.commission_amount ELSE 0 END), 0) AS cancelled
       FROM attribution a
@@ -264,7 +261,6 @@ async function loadLinkRows(
       COALESCE(oc.orders, 0)::int AS orders,
       COALESCE(oc.units, 0)::int AS units,
       COALESCE(oc.sales, 0) AS sales,
-      COALESCE(oc.pending, 0) AS pending,
       COALESCE(oc.confirmed, 0) AS confirmed,
       COALESCE(oc.cancelled, 0) AS cancelled
     FROM tracking_link tl
@@ -301,7 +297,6 @@ async function loadLinkRows(
       units: numberOf(row.units),
       convertedClickRate: rateOf(convertedClicks, clicks),
       sales: moneyOf(row.sales),
-      pending: moneyOf(row.pending),
       confirmed: moneyOf(row.confirmed),
       cancelled: moneyOf(row.cancelled),
     };
@@ -316,7 +311,6 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
       orders: sum.orders + row.orders,
       units: sum.units + row.units,
       sales: sum.sales.plus(row.sales),
-      pending: sum.pending.plus(row.pending),
       confirmed: sum.confirmed.plus(row.confirmed),
       cancelled: sum.cancelled.plus(row.cancelled),
     }),
@@ -326,7 +320,6 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
       orders: 0,
       units: 0,
       sales: new Decimal(0),
-      pending: new Decimal(0),
       confirmed: new Decimal(0),
       cancelled: new Decimal(0),
     },
@@ -338,7 +331,6 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
     units: total.units,
     convertedClickRate: rateOf(total.convertedClicks, total.clicks),
     sales: total.sales.toFixed(2),
-    pending: total.pending.toFixed(2),
     confirmed: total.confirmed.toFixed(2),
     cancelled: total.cancelled.toFixed(2),
   };

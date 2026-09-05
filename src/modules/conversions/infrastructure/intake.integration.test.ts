@@ -122,7 +122,7 @@ describe("single-link conversion intake", () => {
     expect(report.totals).toMatchObject({
       convertedClicks: 1,
       orders: 1,
-      pending: "10.00",
+      confirmed: "10.00",
     });
   });
 
@@ -277,7 +277,7 @@ describe("single-link conversion intake", () => {
   });
 
   it.each(["absent", "unknown", "cross-brand", "future", "expired"] as const)(
-    "%s click produces an UNATTRIBUTED conversion",
+    "%s click produces a confirmed sale without attribution",
     async (kind) => {
       const { brand, product, click } = await fixture();
       let cited: string | undefined = click.id;
@@ -308,7 +308,8 @@ describe("single-link conversion intake", () => {
       );
       expect(result.kind).toBe("unattributed");
       if (!("conversion" in result)) return;
-      expect(result.conversion.status).toBe("UNATTRIBUTED");
+      expect(result.conversion.status).toBe("CONFIRMED");
+      expect(result.conversion.confirmedAt).toBe(NOW.toISOString());
       expect(await prisma.attribution.count()).toBe(0);
     },
   );
@@ -392,7 +393,7 @@ describe("single-link conversion intake", () => {
       orders: 1,
       units: 3,
       sales: "200.00",
-      pending: "30.00",
+      confirmed: "30.00",
     });
   });
 
@@ -449,7 +450,91 @@ describe("single-link conversion intake", () => {
     ).toBeNull();
   });
 
-  it("confirms and cancels atomically with audit while preserving amounts", async () => {
+  it("does not revive a cancelled sale on replay and excludes it from earned totals", async () => {
+    const { brand, creator, product, click } = await fixture();
+    const input = payload(click.id, product.sku);
+    const accepted = await intake(
+      { id: brand.id, vatRegistered: false },
+      input,
+    );
+    if (!("conversion" in accepted)) throw new Error("expected conversion");
+    const foreign = await seedBrand();
+    expect(
+      await prismaConversionRepository.decide({
+        brandId: foreign.id,
+        actorId: foreign.userId,
+        conversionId: accepted.conversion.id,
+        action: "CANCEL",
+        now: NOW,
+      }),
+    ).toEqual({ ok: false, error: "not_found" });
+    const decision = {
+      brandId: brand.id,
+      actorId: brand.userId,
+      conversionId: accepted.conversion.id,
+      action: "CANCEL" as const,
+      now: NOW,
+    };
+    const decisions = await Promise.all([
+      prismaConversionRepository.decide(decision),
+      prismaConversionRepository.decide(decision),
+    ]);
+    expect(decisions.filter((result) => result.ok)).toHaveLength(1);
+    expect(await prisma.auditEvent.count()).toBe(1);
+    const replay = await intake({ id: brand.id, vatRegistered: false }, input);
+    expect(replay).toMatchObject({
+      kind: "replay",
+      conversion: {
+        status: "CANCELLED",
+        confirmedAt: NOW.toISOString(),
+        commissionAmount: "10.00",
+      },
+    });
+    expect(await prisma.attribution.count()).toBe(1);
+    const report = await creatorPerformanceReport(
+      creator.id,
+      { period: "30d" },
+      NOW,
+    );
+    expect(report.totals).toMatchObject({
+      confirmed: "0.00",
+      cancelled: "10.00",
+    });
+    expect(report.ledger.rows[0]).toMatchObject({
+      status: "CANCELLED",
+      commissionAmount: "10.00",
+    });
+  });
+
+  it("allows cancellation of a successful sale with no attribution", async () => {
+    const { brand, creator, product } = await fixture();
+    const result = await intake(
+      { id: brand.id, vatRegistered: false },
+      payload(undefined, product.sku),
+    );
+    expect(result.kind).toBe("unattributed");
+    if (!("conversion" in result)) throw new Error("expected conversion");
+    expect(result.conversion).toMatchObject({
+      status: "CONFIRMED",
+      commissionAmount: "0.00",
+    });
+    expect(
+      await prismaConversionRepository.decide({
+        brandId: brand.id,
+        actorId: brand.userId,
+        conversionId: result.conversion.id,
+        action: "CANCEL",
+        now: NOW,
+      }),
+    ).toEqual({ ok: true, value: { status: "CANCELLED" } });
+    expect(await prisma.attribution.count()).toBe(0);
+    expect(
+      (await creatorPerformanceReport(creator.id, { period: "all" }, NOW))
+        .ledger.rows,
+    ).toEqual([]);
+  });
+
+  it("automatically confirms, then cancels atomically without losing history", async () => {
     const { brand, product, click } = await fixture();
     const accepted = await intake(
       { id: brand.id, vatRegistered: false },
@@ -460,15 +545,8 @@ describe("single-link conversion intake", () => {
     const before = (
       await prisma.attribution.findFirstOrThrow()
     ).commissionAmount.toFixed(2);
-    expect(
-      await prismaConversionRepository.decide({
-        brandId: brand.id,
-        actorId: brand.userId,
-        conversionId: id,
-        action: "CONFIRM",
-        now: NOW,
-      }),
-    ).toEqual({ ok: true, value: { status: "CONFIRMED" } });
+    expect(accepted.conversion.status).toBe("CONFIRMED");
+    expect(accepted.conversion.confirmedAt).toBe(NOW.toISOString());
     expect(
       await prismaConversionRepository.decide({
         brandId: brand.id,
@@ -481,11 +559,11 @@ describe("single-link conversion intake", () => {
     expect(
       (await prisma.attribution.findFirstOrThrow()).commissionAmount.toFixed(2),
     ).toBe(before);
-    expect(await prisma.auditEvent.count()).toBe(2);
+    expect(await prisma.auditEvent.count()).toBe(1);
     expect(
       (await prisma.conversion.findUniqueOrThrow({ where: { id } }))
         .confirmedAt,
-    ).toBeNull();
+    ).toEqual(NOW);
     expect(
       (await prisma.click.findUniqueOrThrow({ where: { id: click.id } }))
         .convertedAt,

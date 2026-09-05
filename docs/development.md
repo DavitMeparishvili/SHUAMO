@@ -446,3 +446,21 @@ container on the Compose network, `pnpm install --frozen-lockfile`,
 **Turbopack** and emitted `.next/standalone/server.js`, which confirms both
 platform conditionals resolve the way CI needs them to. `test:e2e` was not part
 of this run — the container has no browsers.
+
+# Successful-sale webhook contract (2026-09-05)
+
+`POST /v1/conversions` asserts a successful sale eligible for commission. Both
+matched and unmatched sales are stored as `CONFIRMED` immediately. The response's
+line attribution describes whether a creator earns commission; `UNATTRIBUTED` is
+no longer an order status. `confirmedAt` is webhook acceptance time and remains
+present after cancellation. `occurredAt` is the store's sale time.
+
+`PATCH /api/brand/orders/:id` accepts only `{ "action": "CANCEL" }` from the owning
+brand session. The former `CONFIRM` action returns 400. Cancellation retains exact
+commission records for history and excludes them from confirmed earnings. A
+webhook replay cannot resurrect a cancelled sale or create a second commission.
+Refund webhook adapters and partial refunds are not implemented by this change.
+
+There are no pending order reminders or pending earnings totals. Confirmed
+earnings do not imply paid funds. Future ledger/invoice implementation follows
+[the lifecycle plan](superpowers/plans/2026-09-05-successful-sale-lifecycle.md).

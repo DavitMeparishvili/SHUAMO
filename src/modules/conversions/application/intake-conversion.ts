@@ -86,12 +86,11 @@ export function intakeConversion(dependencies: {
           });
 
     const hasAttribution = lines.some((line) => line.attribution !== undefined);
-    const status = hasAttribution ? "PENDING" : "UNATTRIBUTED";
     const created = await dependencies.conversions.create({
       brandId: brand.id,
       payload,
       requestFingerprint: fingerprint,
-      status,
+      confirmedAt: dependencies.clock.now(),
       lines,
     });
 
@@ -102,7 +101,7 @@ export function intakeConversion(dependencies: {
     }
     if (created.kind === "click_conflict") return created;
     return {
-      kind: status === "UNATTRIBUTED" ? "unattributed" : "accepted",
+      kind: hasAttribution ? "accepted" : "unattributed",
       conversion: created.view,
     };
   };

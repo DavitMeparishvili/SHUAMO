@@ -15,15 +15,12 @@ const copy = {
   commission: "Commission",
   noAttribution: "No attribution",
   unattributedExplanation: "The click could not be resolved.",
-  confirm: "Confirm order",
   cancel: "Cancel order",
   pendingAction: "Saving",
   cancelConfirmedWarning: "This becomes a negative line.",
   statuses: {
-    pending: "Pending",
     confirmed: "Confirmed",
     cancelled: "Cancelled",
-    unattributed: "Unattributed",
   },
 };
 
@@ -36,8 +33,7 @@ function order(
     orderId: status,
     occurredAt: "2026-09-02T08:00:00.000Z",
     status,
-    confirmedAt:
-      status === "CONFIRMED" ? "2026-09-02T09:00:00.000Z" : undefined,
+    confirmedAt: "2026-09-02T09:00:00.000Z",
     commissionAmount: attribution ? "10.00" : "0.00",
     items: [
       {
@@ -63,10 +59,10 @@ function order(
 }
 
 describe("OrdersQueue", () => {
-  it("shows exact line attribution and whole-order actions for pending", () => {
+  it("shows exact line attribution and cancellation without a redundant confirmation", () => {
     const html = renderToStaticMarkup(
       <OrdersQueue
-        orders={[order("PENDING")]}
+        orders={[order("CONFIRMED")]}
         locale="en"
         decisionAction={vi.fn()}
         copy={copy}
@@ -74,20 +70,21 @@ describe("OrdersQueue", () => {
     );
     expect(html).toContain("Nino");
     expect(html.match(/10\.00 ₾/g)).toHaveLength(2);
-    expect(html).toContain("Confirm order");
+    expect(html).not.toContain("Confirm order");
     expect(html).toContain("Cancel order");
   });
 
-  it("surfaces UNATTRIBUTED orders without actions", () => {
+  it("keeps an unattributed sale confirmed and cancellable", () => {
     const html = renderToStaticMarkup(
       <OrdersQueue
-        orders={[order("UNATTRIBUTED", false)]}
+        orders={[order("CONFIRMED", false)]}
         locale="en"
         decisionAction={vi.fn()}
         copy={copy}
       />,
     );
     expect(html).toContain("The click could not be resolved.");
-    expect(html).not.toContain("<button");
+    expect(html).toContain("Confirmed");
+    expect(html).toContain("Cancel order");
   });
 });

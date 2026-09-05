@@ -1,5 +1,26 @@
 # Phase 8 — Billing Periods & Creator Ledger Implementation Plan
 
+> **Superseded lifecycle assumptions — 2026-09-05:** The
+> [successful-sale lifecycle decision](2026-09-05-successful-sale-lifecycle.md)
+> takes precedence over all older prose, code samples and tests below.
+> Successful-sale webhooks immediately confirm sales and earn eligible commission.
+> There is no manual order confirmation, pending sale commission, or UNATTRIBUTED
+> order status. Attribution is independent of sale status. Confirmation time
+> survives cancellation. Brand approval belongs to invoices; approval and period
+> close release no funds. Collected brand payment releases funded commission.
+> Apply the decision's acceptance tests when implementing this historical plan.
+
+## Required webhook accrual work (2026-09-05)
+
+- Replace `accrue-on-confirm` with `accrue-on-sale`; run it inside conversion
+  intake's transaction after canonical attribution insertion.
+- Remove pending-commission queries, manual confirmation hooks and fixtures.
+- Confirmed sales without attribution accrue nothing. Preserve one ACCRUAL per
+  positive canonical attribution and test replay/concurrent delivery idempotency.
+- `confirmedAt` is acceptance time and remains after cancellation. Test reversal
+  without mutating attribution amounts; write into the currently open period.
+
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Confirming an order writes money into an append-only ledger, and nothing in the system — not the application, not an admin, not a migration — can move an amount once it is written.

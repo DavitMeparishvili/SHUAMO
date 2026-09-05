@@ -36,7 +36,6 @@ export { prismaClickResolver } from "./infrastructure/prisma-click-resolver";
 export {
   prismaConversionRepository,
   listOrdersForBrand,
-  pendingOrderSummary,
   listEarningsForCreator,
 } from "./infrastructure/prisma-conversion-repository";
 export {
@@ -66,11 +65,6 @@ export type {
   PerformanceTrendPoint,
 } from "./ports/performance";
 export { OrdersQueue } from "./ui/orders-queue";
-export {
-  PendingBanner,
-  pendingEscalation,
-  type PendingEscalation,
-} from "./ui/pending-banner";
 export { EarningsList } from "./ui/earnings-list";
 export { EarningsLedger } from "./ui/earnings-ledger";
 export { ClickLedger } from "./ui/click-ledger";

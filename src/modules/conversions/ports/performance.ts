@@ -27,7 +27,6 @@ export interface PerformanceTotals {
   units: number;
   convertedClickRate: number;
   sales: string;
-  pending: string;
   confirmed: string;
   cancelled: string;
 }
@@ -66,7 +65,7 @@ export interface EarningsLedgerRow {
   id: string;
   orderId: string;
   occurredAt: string;
-  status: Exclude<ConversionStatus, "UNATTRIBUTED">;
+  status: ConversionStatus;
   brandId: string;
   brandName: string;
   creatorId: string;

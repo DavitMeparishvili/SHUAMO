@@ -24,7 +24,7 @@ async function expectNoAccessibilityViolations(page: Page) {
   expect(results.violations).toEqual([]);
 }
 
-test("@phase-6 a posted exact-link order appears, confirms and reaches creator earnings", async ({
+test("@phase-6 a posted exact-link order automatically earns commission without brand confirmation", async ({
   page,
   request,
 }, testInfo) => {
@@ -35,27 +35,28 @@ test("@phase-6 a posted exact-link order appears, confirms and reaches creator e
   if (location === undefined) throw new Error("redirect omitted Location");
   const clickId = new URL(location).searchParams.get("xu");
   expect(clickId).toMatch(/^ck_[0-9a-f]{12}$/);
+  const sale = {
+    orderId,
+    occurredAt: new Date().toISOString(),
+    clickId,
+    items: [
+      {
+        sku: "PHASE4-ACTIVE-1",
+        qty: 1,
+        unitPrice: "100.00",
+        lineDiscount: "0.00",
+        lineVat: "0.00",
+      },
+    ],
+  };
   const response = await request.post("/v1/conversions", {
     headers: { authorization: `Bearer ${KEY}` },
-    data: {
-      orderId,
-      occurredAt: new Date().toISOString(),
-      clickId,
-      items: [
-        {
-          sku: "PHASE4-ACTIVE-1",
-          qty: 1,
-          unitPrice: "100.00",
-          lineDiscount: "0.00",
-          lineVat: "0.00",
-        },
-      ],
-    },
+    data: sale,
   });
   expect(response.status()).toBe(200);
   expect(await response.json()).toMatchObject({
     orderId,
-    status: "PENDING",
+    status: "CONFIRMED",
     commissionAmount: "10.00",
   });
 
@@ -63,7 +64,9 @@ test("@phase-6 a posted exact-link order appears, confirms and reaches creator e
   await page.goto("/en/brand/orders");
   const order = page.getByRole("article").filter({ hasText: `#${orderId}` });
   await expect(order.getByText("10.00 ₾").first()).toBeVisible();
-  await order.getByRole("button", { name: "Confirm order" }).click();
+  await expect(
+    order.getByRole("button", { name: "Confirm order" }),
+  ).toHaveCount(0);
   await expect(order.getByText("Confirmed")).toBeVisible();
   await expectNoAccessibilityViolations(page);
 
@@ -76,9 +79,42 @@ test("@phase-6 a posted exact-link order appears, confirms and reaches creator e
   await expect(earning.getByText("10.00 ₾")).toBeVisible();
   await expect(earning.getByText("Confirmed")).toBeVisible();
   await expectNoAccessibilityViolations(page);
+
+  await page.context().clearCookies();
+  await signIn(page, "en", BRAND);
+  await page.goto("/en/brand/orders");
+  const cancel = order.getByRole("button", { name: "Cancel / return order" });
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await cancel.click();
+  await expect(order.getByText("Confirmed", { exact: true })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await cancel.click();
+  await expect(order.getByText("Cancelled", { exact: true })).toBeVisible();
+  await expect(cancel).toHaveCount(0);
+  const replay = await request.post("/v1/conversions", {
+    headers: { authorization: `Bearer ${KEY}` },
+    data: sale,
+  });
+  expect(replay.status()).toBe(200);
+  expect(await replay.json()).toMatchObject({
+    status: "CANCELLED",
+    commissionAmount: "10.00",
+  });
+
+  await page.context().clearCookies();
+  await signIn(page, "en", CREATOR);
+  await page.goto(
+    `/en/creator/earnings?q=${encodeURIComponent(orderId)}&status=CANCELLED`,
+  );
+  await expect(earning.getByText("Cancelled", { exact: true })).toBeVisible();
+  await expect(earning.getByText("10.00 ₾")).toBeVisible();
+  await page.goto(
+    `/en/creator/earnings?q=${encodeURIComponent(orderId)}&status=CONFIRMED`,
+  );
+  await expect(earning).toHaveCount(0);
 });
 
-test("@phase-6 an unattributed order stays visible without money actions", async ({
+test("@phase-6 an unattributed sale stays confirmed and cancellable", async ({
   page,
 }) => {
   await signIn(page, "ka", BRAND);
@@ -87,7 +123,7 @@ test("@phase-6 an unattributed order stays visible without money actions", async
     .getByRole("article")
     .filter({ hasText: "UNATTRIBUTED-ORDER" });
   await expect(order).toBeVisible();
-  await expect(order.getByRole("button")).toHaveCount(0);
-  await expect(order).toContainText("ატრიბუციის გარეშე");
+  await expect(order.getByRole("button")).toHaveCount(1);
+  await expect(order).toContainText("შემქმნელის საკომისიოს გარეშე");
   await expectNoAccessibilityViolations(page);
 });

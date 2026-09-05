@@ -1,10 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import {
-  listOrdersForBrand,
-  OrdersQueue,
-  PendingBanner,
-  pendingOrderSummary,
-} from "@/src/modules/conversions";
+import { listOrdersForBrand, OrdersQueue } from "@/src/modules/conversions";
 import {
   currentViewer,
   requireBrand,
@@ -22,16 +17,11 @@ export default async function BrandOrdersPage({
   if (!isLocale(locale)) notFound();
   const allowed = requireBrand(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
-  const [orders, pending] = await Promise.all([
-    listOrdersForBrand(allowed.value.brandId),
-    pendingOrderSummary(allowed.value.brandId, new Date()),
-  ]);
+  const orders = await listOrdersForBrand(allowed.value.brandId);
   const messages = getMessages(locale);
   const statuses = {
-    pending: t(messages, "orders.status.pending"),
     confirmed: t(messages, "orders.status.confirmed"),
     cancelled: t(messages, "orders.status.cancelled"),
-    unattributed: t(messages, "orders.status.unattributed"),
   };
 
   return (
@@ -41,14 +31,6 @@ export default async function BrandOrdersPage({
       intro={t(messages, "orders.intro")}
     >
       <div className="grid gap-6">
-        <PendingBanner
-          count={pending.count}
-          oldestDays={pending.oldestDays}
-          copy={{
-            title: t(messages, "orders.pending.title"),
-            body: t(messages, "orders.pending.body"),
-          }}
-        />
         <OrdersQueue
           orders={orders}
           locale={locale}
@@ -68,7 +50,6 @@ export default async function BrandOrdersPage({
               messages,
               "orders.unattributed.explanation",
             ),
-            confirm: t(messages, "orders.confirm"),
             cancel: t(messages, "orders.cancel"),
             pendingAction: t(messages, "orders.actionPending"),
             cancelConfirmedWarning: t(

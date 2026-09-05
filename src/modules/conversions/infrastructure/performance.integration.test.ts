@@ -27,7 +27,7 @@ async function earning({
   productId: string;
   sku: string;
   clickId: string;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "CANCELLED";
   orderId: string;
   occurredAt: Date;
   commission: string;
@@ -40,7 +40,7 @@ async function earning({
       requestFingerprint: "a".repeat(64),
       occurredAt,
       status,
-      ...(status === "CONFIRMED" ? { confirmedAt: occurredAt } : {}),
+      confirmedAt: occurredAt,
       items: {
         create: {
           sku,
@@ -69,7 +69,7 @@ describe("performance reporting", () => {
     const clicks = await Promise.all([
       prisma.click.create({
         data: {
-          id: "ck_performance_pending",
+          id: "ck_performance_recent",
           trackingLinkId: fixture.link.id,
           brandId: fixture.brand.id,
           occurredAt: new Date("2026-09-01T09:00:00.000Z"),
@@ -99,8 +99,8 @@ describe("performance reporting", () => {
         productId: fixture.product.id,
         sku: fixture.product.sku,
         clickId: clicks[0]!.id,
-        status: "PENDING",
-        orderId: "PERF-PENDING",
+        status: "CONFIRMED",
+        orderId: "PERF-RECENT",
         occurredAt: new Date("2026-09-01T10:00:00.000Z"),
         commission: "10.00",
         net: "90.00",
@@ -136,8 +136,7 @@ describe("performance reporting", () => {
       units: 2,
       convertedClickRate: 1,
       sales: "190.00",
-      pending: "10.00",
-      confirmed: "12.00",
+      confirmed: "22.00",
       cancelled: "0.00",
     });
     expect(brand.totals).toEqual(creator.totals);
@@ -150,7 +149,7 @@ describe("performance reporting", () => {
       id: fixture.brand.id,
       clicks: 2,
       orders: 2,
-      confirmed: "12.00",
+      confirmed: "22.00",
     });
     expect(brand.breakdowns.creators[0]).toMatchObject({
       id: fixture.creator.id,
@@ -158,27 +157,27 @@ describe("performance reporting", () => {
       orders: 2,
     });
     expect(creator.ledger.rows.map((row) => row.orderId)).toEqual([
-      "PERF-PENDING",
+      "PERF-RECENT",
       "PERF-CONFIRMED",
     ]);
     expect(creator.ledger.rows[0]).toMatchObject({
       linkId: fixture.link.id,
-      clickId: "ck_performance_pending",
+      clickId: "ck_performance_recent",
       productId: fixture.product.id,
       commissionableNet: "90.00",
     });
     expect(creator.clickLedger.rows.map((row) => row.id)).toEqual([
-      "ck_performance_pending",
+      "ck_performance_recent",
       "ck_performance_confirmed",
     ]);
     expect(creator.clickLedger.rows[0]).toMatchObject({
       linkCode: fixture.link.code,
-      orderIds: ["PERF-PENDING"],
+      orderIds: ["PERF-RECENT"],
     });
     expect(snapshots.get(fixture.link.id)).toMatchObject({
       clicks: 2,
       orders: 2,
-      confirmed: "12.00",
+      confirmed: "22.00",
     });
 
     const [custom, exported] = await Promise.all([
@@ -196,16 +195,16 @@ describe("performance reporting", () => {
     expect(custom.totals).toMatchObject({ clicks: 2, orders: 2 });
     expect(custom.trend).toHaveLength(2);
     expect(exported.rows.map((row) => row.orderId)).toEqual([
-      "PERF-PENDING",
+      "PERF-RECENT",
       "PERF-CONFIRMED",
     ]);
     const clickDrilldown = await creatorPerformanceReport(
       fixture.creator.id,
-      { period: "30d", ledgerQuery: "ck_performance_pending" },
+      { period: "30d", ledgerQuery: "ck_performance_recent" },
       NOW,
     );
     expect(clickDrilldown.ledger.rows.map((row) => row.orderId)).toEqual([
-      "PERF-PENDING",
+      "PERF-RECENT",
     ]);
   });
 
@@ -233,23 +232,23 @@ describe("performance reporting", () => {
     });
     const foreignBrand = await seedBrand();
 
-    const [pendingOnly, foreign] = await Promise.all([
+    const [cancelledOnly, foreign] = await Promise.all([
       creatorPerformanceReport(
         fixture.creator.id,
-        { period: "30d", status: "PENDING" },
+        { period: "30d", status: "CANCELLED" },
         NOW,
       ),
       brandPerformanceReport(foreignBrand.id, { period: "all" }, NOW),
     ]);
 
-    expect(pendingOnly.totals).toMatchObject({
+    expect(cancelledOnly.totals).toMatchObject({
       clicks: 1,
       convertedClicks: 0,
       orders: 0,
       confirmed: "0.00",
     });
-    expect(pendingOnly.ledger.rows).toEqual([]);
-    expect(pendingOnly.clickLedger.rows[0]).toMatchObject({
+    expect(cancelledOnly.ledger.rows).toEqual([]);
+    expect(cancelledOnly.clickLedger.rows[0]).toMatchObject({
       id: "ck_owner_scope",
       orderIds: [],
     });
@@ -261,7 +260,6 @@ describe("performance reporting", () => {
       units: 0,
       convertedClickRate: 0,
       sales: "0.00",
-      pending: "0.00",
       confirmed: "0.00",
       cancelled: "0.00",
     });

@@ -39,7 +39,6 @@ export function OrdersQueue({
     commission: string;
     noAttribution: string;
     unattributedExplanation: string;
-    confirm: string;
     cancel: string;
     pendingAction: string;
     cancelConfirmedWarning: string;
@@ -75,7 +74,7 @@ export function OrdersQueue({
             />
           </header>
 
-          {order.status === "UNATTRIBUTED" ? (
+          {!order.items.some((item) => item.attribution !== undefined) ? (
             <p className="m-0 max-w-[70ch] type-small text-slate-700">
               {copy.unattributedExplanation}
             </p>
@@ -138,24 +137,7 @@ export function OrdersQueue({
               {copy.commission}
               <MoneyAmount size="sm" value={Money.of(order.commissionAmount)} />
             </p>
-            {order.status === "PENDING" ? (
-              <div className="flex flex-wrap gap-2">
-                <OrderDecisionForm
-                  conversionId={order.id}
-                  action="CONFIRM"
-                  decisionAction={decisionAction}
-                  label={copy.confirm}
-                  pendingLabel={copy.pendingAction}
-                />
-                <OrderDecisionForm
-                  conversionId={order.id}
-                  action="CANCEL"
-                  decisionAction={decisionAction}
-                  label={copy.cancel}
-                  pendingLabel={copy.pendingAction}
-                />
-              </div>
-            ) : order.status === "CONFIRMED" ? (
+            {order.status === "CONFIRMED" ? (
               <OrderDecisionForm
                 conversionId={order.id}
                 action="CANCEL"

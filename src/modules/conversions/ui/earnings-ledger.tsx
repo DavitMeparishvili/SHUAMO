@@ -205,7 +205,7 @@ export function EarningsLedger({
               <tbody>
                 {rows.map((row) => {
                   const stateName = row.status.toLowerCase() as
-                    "pending" | "confirmed" | "cancelled";
+                    "confirmed" | "cancelled";
                   return (
                     <tr
                       className="border-b border-slate-200 last:border-b-0"
@@ -267,7 +267,7 @@ export function EarningsLedger({
           <div className="grid gap-3 md:hidden">
             {rows.map((row) => {
               const stateName = row.status.toLowerCase() as
-                "pending" | "confirmed" | "cancelled";
+                "confirmed" | "cancelled";
               return (
                 <article
                   className="border-b border-slate-200 py-5 first:pt-0"

@@ -15,7 +15,6 @@ const report: PerformanceReport = {
     units: 2,
     convertedClickRate: 1 / 6,
     sales: "190.00",
-    pending: "10.00",
     confirmed: "12.00",
     cancelled: "0.00",
   },
@@ -26,7 +25,6 @@ const report: PerformanceReport = {
     units: 1,
     convertedClickRate: 0.1,
     sales: "90.00",
-    pending: "0.00",
     confirmed: "6.00",
     cancelled: "0.00",
   },
@@ -62,7 +60,6 @@ const report: PerformanceReport = {
         units: 2,
         convertedClickRate: 1 / 6,
         sales: "190.00",
-        pending: "10.00",
         confirmed: "12.00",
         cancelled: "0.00",
         href: "?brand=11111111-1111-4111-8111-111111111111#breakdown",
@@ -137,9 +134,11 @@ describe("PerformanceDashboard", () => {
     expect(html).toContain("Earnings ledger");
     expect(html).toContain("AMBER100");
     expect(html).toContain("ck_amber");
-    expect(html).toContain("Confirmed records are approved earnings");
+    expect(html).toContain("Eligible sales earn commission automatically");
     expect(html).toContain("vs previous period");
     expect(html).toContain("Export CSV");
+    expect(html).not.toContain('value="PENDING"');
+    expect(html).not.toContain(">Pending<");
     expect(html).toContain("link=44444444-4444-4444-8444-444444444444");
     expect(html).toContain("q=ORDER-1");
   });

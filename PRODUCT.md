@@ -35,6 +35,12 @@ Brands maintain a brand-wide catalogue, archive rather than delete products, app
 - Link availability resolves brand, partnership, product, then link status in that exact order.
 - Disabling is forward-looking; existing click attribution remains intact.
 - Money and rates use exact decimal values.
+- A successful-sale webhook confirms the sale and earns eligible creator commission
+  automatically. Brands do not approve individual sales. Attribution is independent
+  of sale status; an unattributed sale earns no creator commission. Cancellation
+  preserves the original records and removes the amount from earned totals.
+- Future accounting approval belongs to invoices. Invoice approval does not mean
+  payment: collected brand funds release accrued commission for creator payout.
 
 ## Brand Commitments
 

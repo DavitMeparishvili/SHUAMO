@@ -79,7 +79,11 @@ test("@phase-6 creator performance connects link activity to its earnings trail"
   for await (const chunk of downloadStream) chunks.push(Buffer.from(chunk));
   const csv = Buffer.concat(chunks).toString("utf8");
   expect(csv).toContain('"Occurred at (UTC)"');
-  expect(csv).toContain('"PHASE6-SEED-1234"');
+  // The seeded order can predate today when a persistent dev database is reused.
+  // Inspect its immutable historical row through an all-time export instead.
+  const history = await page.request.get("/api/performance/export?period=all");
+  expect(history.status()).toBe(200);
+  expect(await history.text()).toContain('"PHASE6-SEED-1234"');
 
   await page.getByLabel("Period", { exact: true }).selectOption("7d");
   await page.getByRole("button", { name: "Apply filters" }).click();
@@ -92,7 +96,7 @@ test("@phase-6 creator performance connects link activity to its earnings trail"
       .filter({ hasText: "Converted clicks" })
       .first();
     await expect(sourceRow).toContainText("Converted clicks");
-    await expect(sourceRow).toContainText("Pending");
+    await expect(sourceRow).not.toContainText("Pending");
     await expect(sourceRow).toContainText("Confirmed");
   }
 
@@ -107,6 +111,13 @@ test("@phase-6 creator performance connects link activity to its earnings trail"
     page.getByRole("heading", { name: "Performance" }),
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
+  await expectAccessible(page);
+  await page.goto("/ka/creator/earnings");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   await expectAccessible(page);
 });
 

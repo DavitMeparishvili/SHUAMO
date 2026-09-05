@@ -6,7 +6,6 @@ import { GeistSans } from "geist/font/sans";
 import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 import { currentViewer } from "@/src/modules/identity";
-import { pendingOrderSummary } from "@/src/modules/conversions";
 import { serverEnv } from "@/src/config/env";
 
 export function generateStaticParams() {
@@ -49,10 +48,6 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
-  const pendingOrders =
-    viewer.kind === "brand"
-      ? await pendingOrderSummary(viewer.brandId, new Date())
-      : undefined;
 
   return (
     <html
@@ -69,7 +64,7 @@ export default async function LocaleLayout({
           data-profile-direction="phase-06-5-passport-proof-ledger"
           hidden
         />
-        <AppShell locale={locale} viewer={viewer} pendingOrders={pendingOrders}>
+        <AppShell locale={locale} viewer={viewer}>
           {children}
         </AppShell>
       </body>

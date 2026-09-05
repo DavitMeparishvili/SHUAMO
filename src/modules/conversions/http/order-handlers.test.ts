@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createOrderPatchHandler } from "./order-handlers";
 
-function request(body: unknown = { action: "CONFIRM" }) {
+function request(body: unknown = { action: "CANCEL" }) {
   return new Request("https://xu.ge/api/brand/orders/cv1", {
     method: "PATCH",
     body: JSON.stringify(body),
@@ -14,7 +14,7 @@ describe("brand order PATCH", () => {
   it("uses only the authenticated brand and actor", async () => {
     const decide = vi.fn(async () => ({
       ok: true as const,
-      value: { status: "CONFIRMED" as const },
+      value: { status: "CANCELLED" as const },
     }));
     const handler = createOrderPatchHandler({
       currentViewer: async () => ({
@@ -27,7 +27,7 @@ describe("brand order PATCH", () => {
       decide,
     });
     expect((await handler(request(), context)).status).toBe(200);
-    expect(decide).toHaveBeenCalledWith("b1", "u1", "cv1", "CONFIRM");
+    expect(decide).toHaveBeenCalledWith("b1", "u1", "cv1", "CANCEL");
   });
 
   it("rejects unauthenticated, malformed and illegal requests", async () => {
@@ -49,6 +49,9 @@ describe("brand order PATCH", () => {
     });
     expect(
       (await authenticated(request({ action: "REOPEN" }), context)).status,
+    ).toBe(400);
+    expect(
+      (await authenticated(request({ action: "CONFIRM" }), context)).status,
     ).toBe(400);
     expect((await authenticated(request(), context)).status).toBe(409);
   });

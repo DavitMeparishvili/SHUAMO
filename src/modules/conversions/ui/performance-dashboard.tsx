@@ -398,12 +398,6 @@ function Breakdown({
                     className="px-3 py-3 text-right font-semibold"
                     scope="col"
                   >
-                    {t(messages, "performance.metric.pending")}
-                  </th>
-                  <th
-                    className="px-3 py-3 text-right font-semibold"
-                    scope="col"
-                  >
                     {t(messages, "performance.metric.confirmed")}
                   </th>
                 </tr>
@@ -518,28 +512,6 @@ function Breakdown({
                       </td>
                     ) : null}
                     <td className="px-3 py-4 text-right">
-                      {row.pending !== "0.00" ? (
-                        <Link
-                          className="text-inherit underline-offset-2 hover:text-signal hover:underline"
-                          href={evidenceFor(row, "earnings-ledger", {
-                            status: "PENDING",
-                          })}
-                        >
-                          <MoneyAmount
-                            size="sm"
-                            tone="accrued"
-                            value={Money.of(row.pending)}
-                          />
-                        </Link>
-                      ) : (
-                        <MoneyAmount
-                          size="sm"
-                          tone="accrued"
-                          value={Money.of(row.pending)}
-                        />
-                      )}
-                    </td>
-                    <td className="px-3 py-4 text-right">
                       {row.confirmed !== "0.00" ? (
                         <Link
                           className="text-inherit underline-offset-2 hover:text-signal hover:underline"
@@ -647,18 +619,6 @@ function Breakdown({
                       </dd>
                     </div>
                   ) : null}
-                  <div>
-                    <dt className="type-caption text-slate-600">
-                      {t(messages, "performance.metric.pending")}
-                    </dt>
-                    <dd className="m-0 mt-1">
-                      <MoneyAmount
-                        size="sm"
-                        tone="accrued"
-                        value={Money.of(row.pending)}
-                      />
-                    </dd>
-                  </div>
                 </dl>
               </Link>
             ))}
@@ -769,24 +729,6 @@ export function PerformanceDashboard({
               value={Money.of(report.totals.confirmed)}
             />{" "}
             {t(messages, "performance.metric.confirmed").toLowerCase()}
-          </Link>
-          <span aria-hidden="true">·</span>
-          <Link
-            className="text-inherit no-underline hover:underline"
-            href={performanceHref(
-              basePath,
-              state.filters,
-              state,
-              { status: "PENDING", ledgerPage: undefined },
-              "earnings-ledger",
-            )}
-          >
-            <MoneyAmount
-              size="sm"
-              tone="accrued"
-              value={Money.of(report.totals.pending)}
-            />{" "}
-            {t(messages, "performance.metric.pending").toLowerCase()}
           </Link>
         </p>
         <p className="mb-0 mt-2 type-caption text-slate-600">

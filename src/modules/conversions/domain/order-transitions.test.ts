@@ -1,23 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { nextStatus } from "./order-transitions";
+import { nextStatus, type OrderAction } from "./order-transitions";
 
-describe("nextStatus", () => {
-  it.each([
-    ["PENDING", "CONFIRM", "CONFIRMED"],
-    ["PENDING", "CANCEL", "CANCELLED"],
-    ["CONFIRMED", "CANCEL", "CANCELLED"],
-  ] as const)("%s + %s -> %s", (from, action, to) => {
-    expect(nextStatus(from, action)).toEqual({ ok: true, value: to });
+describe("order transitions", () => {
+  it("allows only whole-order cancellation of a confirmed sale", () => {
+    expect(nextStatus("CONFIRMED", "CANCEL")).toEqual({
+      ok: true,
+      value: "CANCELLED",
+    });
+    expect(nextStatus("CANCELLED", "CANCEL")).toEqual({
+      ok: false,
+      error: "illegal_transition",
+    });
   });
-
-  it.each([
-    ["CONFIRMED", "CONFIRM"],
-    ["CANCELLED", "CONFIRM"],
-    ["CANCELLED", "CANCEL"],
-    ["UNATTRIBUTED", "CONFIRM"],
-    ["UNATTRIBUTED", "CANCEL"],
-  ] as const)("refuses %s + %s", (from, action) => {
-    expect(nextStatus(from, action)).toEqual({
+  it("rejects legacy confirmation even from an untyped caller", () => {
+    expect(nextStatus("CONFIRMED", "CONFIRM" as OrderAction)).toEqual({
       ok: false,
       error: "illegal_transition",
     });

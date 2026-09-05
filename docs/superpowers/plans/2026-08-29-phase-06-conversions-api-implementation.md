@@ -1,5 +1,16 @@
 # Phase 6 — Conversions API & Order Lifecycle Implementation Plan
 
+> **Superseded lifecycle assumptions — 2026-09-05:** The
+> [successful-sale lifecycle decision](2026-09-05-successful-sale-lifecycle.md)
+> takes precedence over all older prose, code samples and tests below.
+> Successful-sale webhooks immediately confirm sales and earn eligible commission.
+> There is no manual order confirmation, pending sale commission, or UNATTRIBUTED
+> order status. Attribution is independent of sale status. Confirmation time
+> survives cancellation. Brand approval belongs to invoices; approval and period
+> close release no funds. Collected brand payment releases funded commission.
+> Apply the decision's acceptance tests when implementing this historical plan.
+
+
 > **Corrected on 2026-09-01.** This future plan consumes the exact-link
 > calculator delivered by mandatory Phase 4.5. It must not recreate the former
 > multi-creator attribution model.

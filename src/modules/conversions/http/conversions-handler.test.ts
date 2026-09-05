@@ -7,8 +7,8 @@ const view: ConversionView = {
   id: "cv1",
   orderId: "1234",
   occurredAt: "2026-08-12T10:22:00.000Z",
-  status: "PENDING",
-  confirmedAt: undefined,
+  status: "CONFIRMED",
+  confirmedAt: "2026-09-02T09:00:00.000Z",
   commissionAmount: "11.44",
   items: [
     {
@@ -92,7 +92,9 @@ describe("POST /v1/conversions", () => {
     const { handler } = setup({
       kind,
       conversion:
-        kind === "unattributed" ? { ...view, status: "UNATTRIBUTED" } : view,
+        kind === "unattributed"
+          ? { ...view, commissionAmount: "0.00", items: [] }
+          : view,
     });
     expect((await handler(request())).status).toBe(status);
   });

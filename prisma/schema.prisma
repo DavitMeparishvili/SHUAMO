@@ -282,10 +282,8 @@ model Click {
 }
 
 enum ConversionStatus {
-  PENDING
   CONFIRMED
   CANCELLED
-  UNATTRIBUTED
 }
 
 enum AttributionStatus {
@@ -300,8 +298,9 @@ model Conversion {
   orderId            String           @map("order_id")
   requestFingerprint String           @map("request_fingerprint") @db.VarChar(64)
   occurredAt         DateTime         @map("occurred_at") @db.Timestamptz(6)
-  status             ConversionStatus @default(PENDING)
-  confirmedAt        DateTime?        @map("confirmed_at") @db.Timestamptz(6)
+  status             ConversionStatus @default(CONFIRMED)
+  /// Webhook acceptance time; preserved after cancellation.
+  confirmedAt        DateTime         @default(now()) @map("confirmed_at") @db.Timestamptz(6)
   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
   brand Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)

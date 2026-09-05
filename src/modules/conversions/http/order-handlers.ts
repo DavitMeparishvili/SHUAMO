@@ -43,7 +43,7 @@ export function createOrderPatchHandler(dependencies: {
       typeof body === "object" &&
       body !== null &&
       "action" in body &&
-      (body.action === "CONFIRM" || body.action === "CANCEL")
+      body.action === "CANCEL"
         ? body.action
         : undefined;
     if (action === undefined) {
