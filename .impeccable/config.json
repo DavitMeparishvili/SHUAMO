@@ -9,6 +9,25 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [],
-    "ignoreValues": []
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "app/xurjin.css"
+        ],
+        "createdAt": "2026-09-05T15:28:22.459Z",
+        "reason": "User confirmed the screenshot design including blue-purple gradient headings; old design system explicitly replaced."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "24px",
+        "files": [
+          "app/discovery.css"
+        ],
+        "createdAt": "2026-09-05T18:26:07.357Z",
+        "reason": "User supplied mobile filter reference specifies a generously rounded top sheet; 24px is intentional for that sheet only."
+      }
+    ]
   }
 }

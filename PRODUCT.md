@@ -12,7 +12,7 @@ Approved Georgian brands publish products, set exact creator commission rates, a
 
 ## Product Purpose
 
-SHUAMO makes creator commerce performance traceable from a partnership and tracking link through to the money rows they produce. Success means brands can publish and govern offers while creators can see exactly which links are usable and why any link stopped working.
+Xurjin makes creator commerce performance traceable from a partnership and tracking link through to the money rows they produce. Success means brands can publish and govern offers while creators can see exactly which links are usable and why any link stopped working.
 
 ## Positioning
 
@@ -20,7 +20,7 @@ Every aggregate and commission is traceable to its source rows; catalogue values
 
 ## Operating Context
 
-Brands maintain a brand-wide catalogue, archive rather than delete products, approve creators, and update offered rates. After partnership approval, creators choose individual active products and create links that snapshot the accepted rate. The product is bilingual in Georgian and English.
+Brands maintain a brand-wide catalogue, archive rather than delete products, approve creators, and update offered rates. After partnership approval, creators choose individual active products and create links that snapshot the accepted rate. The product is bilingual in Georgian and English. Registration progresses through Account, Channels, Profile and Review for sellers and creators; successful submission creates a pending application and draft profile. Administrator approval gates marketplace access, and a draft profile is not automatically public.
 
 ## Capabilities and Constraints
 
@@ -34,7 +34,8 @@ Brands maintain a brand-wide catalogue, archive rather than delete products, app
   implies ranking or social-performance verification.
 - Link availability resolves brand, partnership, product, then link status in that exact order.
 - Disabling is forward-looking; existing click attribution remains intact.
-- Money and rates use exact decimal values.
+- Money and rates use exact decimal values, denominated in GEL.
+- Dashboard metrics and charts use recorded reports; empty data is shown explicitly. Planned capabilities are labelled Coming soon and must not imply completed integrations or available payment flows.
 - A successful-sale webhook confirms the sale and earns eligible creator commission
   automatically. Brands do not approve individual sales. Attribution is independent
   of sale status; an unattributed sale earns no creator commission. Cancellation
@@ -44,11 +45,11 @@ Brands maintain a brand-wide catalogue, archive rather than delete products, app
 
 ## Brand Commitments
 
-The product is named SHUAMO. Its voice is factual, calm, and provenance-led. Existing product and visual commitments are documented in `DESIGN.md`.
+The product is named Xurjin, spelled in Latin letters in both Georgian and English. Its binding identity is the blue-purple geometric X from the user-selected references. Its voice stays factual, clear and welcoming. The replacement visual system, including reference-approved gradients, is documented in `DESIGN.md`.
 
 ## Evidence on Hand
 
-The authoritative product design and roadmap specifications live under `docs/superpowers/specs/` and `docs/superpowers/plans/`. Seed data is illustrative and must not be presented as customer proof.
+The authoritative product design and roadmap specifications live under `docs/superpowers/specs/` and `docs/superpowers/plans/`. Seed data is illustrative and must not be presented as customer proof. The six user-supplied screenshots establish the replacement Xurjin visual direction. `public/images/globe.webp`, `public/images/creator.webp` and `public/images/seller.webp` are AI-generated demonstration marketing assets aligned with those references, not customer endorsements or verified users. The reference bundle itself is design evidence; its imagery is not shipped. Product imagery in the marketplace remains actual owner-supplied media.
 
 ## Product Principles
 
