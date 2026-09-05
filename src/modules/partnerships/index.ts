@@ -38,6 +38,7 @@ export {
   listResolvedLinksForCreator,
   listCreatorLinkCatalog,
   listCreatorLinkBrands,
+  getCreatorLinkFacets,
   listLinkOffersForCreator,
   listPublicProductOffers,
   getPublicCatalogFacets,

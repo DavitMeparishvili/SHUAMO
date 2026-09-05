@@ -5,8 +5,10 @@
   --discovery-soft: #f0f5ff;
   display: grid;
   grid-template-columns: var(--discovery-sidebar-width) minmax(0, 1fr);
-  max-width: 1480px;
-  margin: 0 auto;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
   min-height: calc(100dvh - 78px);
   background: var(--color-slate-50);
   color: var(--color-ink);
@@ -88,9 +90,10 @@
 }
 .discovery-filter-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0 10px;
   min-height: 58px;
   border-bottom: 1px solid var(--line);
 }
@@ -197,6 +200,8 @@
   width: 100%;
 }
 .discovery-results {
+  container-type: inline-size;
+  container-name: discovery-results;
   min-width: 0;
   padding: 12px 24px 30px;
 }
@@ -556,99 +561,133 @@ body:has(.discovery-filter-sheet[open]) {
     opacity: 1;
   }
 }
-@media (min-width: 1051px) {
-  .workspace-frame:has(.discovery-workspace) {
-    --discovery-rail-width: clamp(170px, 14.4vw, 208px);
+@media (min-width: 640px) {
+  .discovery-heading {
+    padding-top: 24px;
+    padding-bottom: 20px;
   }
-  .workspace-frame:has(.discovery-workspace) .workspace-rail {
-    width: var(--discovery-rail-width);
+  .discovery-heading > p {
+    font-size: 14px;
   }
-  .workspace-frame:has(.discovery-workspace) .site-body {
-    margin-left: var(--discovery-rail-width);
+  .discovery-search {
+    min-height: 44px;
   }
-  .workspace-frame:has(.discovery-workspace) .workspace-topbar {
-    height: clamp(48px, 4.07vw, 59px);
-    padding: 0 24px;
-  }
-  .workspace-frame:has(.discovery-workspace) .workspace-rail > .brand-link {
-    min-height: clamp(56px, 4.7vw, 68px);
-    padding: 12px 18px;
-  }
-  .workspace-frame:has(.discovery-workspace) .workspace-rail .xurjin-logo {
-    font-size: 26px;
-    gap: 7px;
-  }
-  .workspace-frame:has(.discovery-workspace) .workspace-rail .xurjin-logo svg {
-    width: 32px;
-    height: 32px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-account {
-    padding: 20px 18px 14px;
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 3px 10px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-account .avatar {
-    width: 42px;
+  .discovery-search input {
     height: 42px;
-    font-size: 22px;
+    font-size: 14px;
   }
-  .workspace-frame:has(.discovery-workspace) .rail-account strong {
+  .discovery-search button {
+    height: 42px;
+  }
+  .discovery-filter-heading h2 {
+    font-size: 16px;
+  }
+  .discovery-filter-heading button {
     font-size: 12px;
   }
-  .workspace-frame:has(.discovery-workspace) .rail-account > a {
-    font-size: 9px;
+  .discovery-filter-group summary,
+  .discovery-categories label {
+    font-size: 14px;
   }
-  .workspace-frame:has(.discovery-workspace) .rail-nav {
+  .discovery-categories label {
+    min-height: 44px;
+  }
+  .discovery-categories small {
+    font-size: 12px;
+  }
+  .discovery-workspace select,
+  .discovery-result-count,
+  .discovery-sort {
+    font-size: 14px;
+  }
+  .discovery-sort select {
+    min-height: 44px;
+  }
+  .discovery-grid {
+    gap: 16px;
+  }
+  .discovery-product-image {
+    width: 100%;
+    max-height: 280px;
+  }
+  .discovery-card-body {
+    padding: 14px;
+  }
+  .discovery-brand,
+  .discovery-terms dt,
+  .discovery-cookie {
+    font-size: 12px;
+  }
+  .discovery-card h2 {
+    font-size: 18px;
+  }
+  .discovery-terms {
+    margin-top: 10px;
+    margin-bottom: 6px;
+  }
+  .discovery-terms dd {
+    font-size: 18px;
+  }
+  .discovery-commission {
     padding: 6px 10px;
-    gap: 4px;
+  }
+  .discovery-cookie {
+    margin-bottom: 8px;
+  }
+  .discovery-primary {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .discovery-active-link {
+    min-height: 44px;
+    gap: 8px;
+    padding: 6px;
+  }
+  .discovery-active-link > a,
+  .discovery-copy {
+    font-size: 12px;
+  }
+  .discovery-copy {
+    min-height: 32px;
+    padding: 4px 8px;
+  }
+}
+@container discovery-results (min-width: 1280px) {
+  .discovery-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@container discovery-results (min-width: 2200px) {
+  .discovery-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1051px) {
+  .discovery-breadcrumb {
+    font-size: 14px;
   }
   .workspace-frame:has(.discovery-workspace) .rail-nav > a {
-    min-height: 42px;
-    padding: 9px;
-    font-size: 11px;
-    gap: 12px;
     min-width: 0;
-    white-space: normal;
-    flex-wrap: wrap;
   }
   .workspace-frame:has(.discovery-workspace)
     .rail-nav
     > a
     > span:not(.nav-soon) {
     min-width: 0;
-    flex: 1;
     overflow-wrap: anywhere;
+  }
+  .workspace-frame:has(.discovery-workspace) .rail-nav svg {
+    flex-shrink: 0;
+  }
+  .workspace-frame:has(.discovery-workspace) .rail-nav > a:has(.nav-soon) {
+    display: grid;
+    grid-template-columns: 23px minmax(0, 1fr);
+    gap: 4px 15px;
   }
   .workspace-frame:has(.discovery-workspace) .rail-nav .nav-soon {
     grid-column: 2;
     justify-self: start;
     margin-left: 0;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-nav > a:has(.nav-soon) {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr);
-    gap: 4px 12px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-account > a {
-    overflow-wrap: anywhere;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-account {
-    min-width: 0;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-nav svg {
-    flex: 0 0 20px;
-    width: 20px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-bottom {
-    padding: 18px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-help {
-    border: 0;
-    padding: 0;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-bottom > a,
-  .workspace-frame:has(.discovery-workspace) .rail-bottom > button {
-    font-size: 11px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -668,7 +707,7 @@ body:has(.discovery-filter-sheet[open]) {
     padding: 10px;
   }
   .discovery-card h2 {
-    font-size: 13px;
+    font-size: 18px;
   }
 }
 @media (min-width: 640px) and (max-width: 900px) {
@@ -871,5 +910,117 @@ body:has(.discovery-filter-sheet[open]) {
   }
   .discovery-terms dd {
     font-size: 12px;
+  }
+}
+
+/* Tracking links share the discovery cards; these rows carry link-specific data. */
+.tracking-card {
+  display: flex;
+  flex-direction: column;
+}
+.tracking-card .discovery-product-image {
+  flex-shrink: 0;
+}
+.tracking-card .discovery-brand,
+.tracking-card h2 {
+  padding-right: 0;
+}
+.tracking-terms {
+  align-items: center;
+}
+.tracking-terms > div {
+  min-width: 0;
+}
+.tracking-status dd {
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  color: var(--color-reversed);
+}
+.tracking-status dd[data-active="true"] {
+  color: var(--color-settled);
+}
+.tracking-copy-row {
+  min-width: 0;
+}
+.tracking-copy-row[data-active="false"] {
+  background: var(--color-slate-100);
+}
+.tracking-copy-row > code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.tracking-copy-row .discovery-copy-wrap {
+  min-width: 0;
+  flex-shrink: 0;
+  max-width: 65%;
+}
+.tracking-copy-row .discovery-copy-error {
+  overflow-wrap: anywhere;
+}
+.tracking-performance {
+  grid-column: 1 / -1;
+  margin-top: auto;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--line);
+}
+.tracking-period {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.tracking-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 0 0 12px;
+}
+.tracking-metrics dt {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.tracking-metrics dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.tracking-earned {
+  color: var(--color-settled);
+}
+.tracking-no-activity {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 639px) {
+  .tracking-card {
+    display: grid;
+  }
+  .tracking-status dd {
+    font-size: 10px;
+  }
+  .tracking-copy-row > code {
+    font-size: 9px;
+  }
+  .tracking-performance {
+    padding: 10px 0 0;
+  }
+  .tracking-period,
+  .tracking-metrics dt,
+  .tracking-no-activity {
+    font-size: 11px;
+  }
+  .tracking-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .tracking-metrics dd {
+    font-size: 14px;
   }
 }

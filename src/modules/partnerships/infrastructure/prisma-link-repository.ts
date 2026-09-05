@@ -212,6 +212,8 @@ export async function listResolvedLinksForCreator(creatorId: string) {
 export interface CreatorLinkCatalogQuery {
   q?: string;
   productType?: ProductTypeValue;
+  productTypes?: ProductTypeValue[];
+  commissionType?: "PERCENT" | "FIXED";
   brandId?: string;
   resolution?: "ACTIVE" | "DISABLED";
   sort?: "newest" | "title" | "brand" | "commission_high";
@@ -243,6 +245,10 @@ function creatorLinkCatalogWhere(
   if (query.brandId) conditions.push({ product: { brandId: query.brandId } });
   if (query.productType)
     conditions.push({ product: { productType: query.productType } });
+  if (query.productTypes?.length)
+    conditions.push({ product: { productType: { in: query.productTypes } } });
+  if (query.commissionType)
+    conditions.push({ commissionType: query.commissionType });
   if (query.q)
     conditions.push({
       product: {
@@ -305,6 +311,50 @@ export async function listCreatorLinkBrands(creatorId: string) {
     },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
+  });
+}
+
+export async function getCreatorLinkFacets(creatorId: string, q?: string) {
+  const groups = await prisma.trackingLink.groupBy({
+    by: ["productId", "commissionType", "status"],
+    where: creatorLinkCatalogWhere(creatorId, q ? { q } : {}),
+    _count: { _all: true },
+  });
+  const products = await prisma.product.findMany({
+    where: { id: { in: [...new Set(groups.map((group) => group.productId))] } },
+    select: {
+      id: true,
+      productType: true,
+      brandId: true,
+      status: true,
+      brand: {
+        select: {
+          status: true,
+          partnerships: { where: { creatorId }, select: { status: true } },
+        },
+      },
+    },
+  });
+  const byId = new Map(products.map((product) => [product.id, product]));
+  return groups.flatMap((group) => {
+    const product = byId.get(group.productId);
+    if (!product) return [];
+    const active =
+      group.status === "ACTIVE" &&
+      product.status === "ACTIVE" &&
+      product.brand.status === "APPROVED" &&
+      product.brand.partnerships.some(
+        (partnership) => partnership.status === "APPROVED",
+      );
+    return [
+      {
+        productType: product.productType,
+        brandId: product.brandId,
+        commissionType: group.commissionType,
+        status: active ? "ACTIVE" : "DISABLED",
+        count: group._count._all,
+      },
+    ];
   });
 }
 

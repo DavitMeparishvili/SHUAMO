@@ -7,11 +7,13 @@ import {
   Button,
   CopyField,
   EmptyState,
+  Icon,
   MoneyAmount,
   StatusPill,
 } from "@/src/modules/design-system";
 import { Money } from "@/src/modules/shared";
 import { resolveLink, type DisableReason } from "../domain/disable-chain";
+import { CopyOfferLink } from "./discovery-card-actions";
 
 export function LinkList({
   locale,
@@ -20,7 +22,9 @@ export function LinkList({
   baseUrl,
   copy,
   brandControls,
+  variant = "default",
 }: {
+  variant?: "default" | "discovery";
   locale: string;
   brandControls?: {
     creator: string;
@@ -89,8 +93,14 @@ export function LinkList({
   if (links.length === 0)
     return <EmptyState title={copy.emptyTitle} body={copy.emptyBody} />;
   return (
-    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {links.map((link) => {
+    <div
+      className={
+        variant === "discovery"
+          ? "discovery-grid"
+          : "grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+      }
+    >
+      {links.map((link, index) => {
         const metrics = performance?.get(link.id);
         const partnership = link.creator.partnerships.find(
           ({ brandId }) => brandId === link.product.brand.id,
@@ -112,6 +122,115 @@ export function LinkList({
           typeof link.acceptedTerms.version === "number"
             ? link.acceptedTerms.version
             : 1;
+        if (variant === "discovery" && !brandControls) {
+          const href = `/${locale}/creator/products/${link.product.id}`;
+          const url = `${baseUrl.replace(/\/$/, "")}/r/${link.code}`;
+          const hasActivity =
+            metrics &&
+            (metrics.clicks > 0 ||
+              metrics.orders > 0 ||
+              metrics.confirmed !== "0.00");
+          return (
+            <article className="discovery-card tracking-card" key={link.id}>
+              <Link
+                className="discovery-product-image"
+                href={href}
+                aria-label={link.product.title}
+                tabIndex={-1}
+              >
+                {link.product.imageUrls[0] ? (
+                  <Image
+                    alt=""
+                    className="object-cover"
+                    fill
+                    loading={index === 0 ? "eager" : "lazy"}
+                    sizes="(max-width: 639px) 108px, (max-width: 1050px) 40vw, 25vw"
+                    src={link.product.imageUrls[0]}
+                    unoptimized
+                  />
+                ) : (
+                  <span className="discovery-image-fallback">
+                    <Icon name="box" />
+                    <span>{copy.imageFallback}</span>
+                  </span>
+                )}
+              </Link>
+              <div className="discovery-card-body">
+                <p className="discovery-brand">{link.product.brand.name}</p>
+                <h2>
+                  <Link href={href}>{link.product.title}</Link>
+                </h2>
+                <dl className="discovery-terms tracking-terms">
+                  <div className="tracking-status">
+                    <dt>{copy.status}</dt>
+                    <dd data-active={resolution.active}>
+                      {resolution.active
+                        ? copy.active
+                        : copy.reasons[resolution.reason]}
+                    </dd>
+                  </div>
+                  <div className="discovery-commission">
+                    <dt>{copy.rate}</dt>
+                    <dd>{rate}</dd>
+                  </div>
+                </dl>
+                <p className="discovery-cookie">
+                  {copy.acceptedTerms.replace(
+                    "{version}",
+                    String(acceptedVersion),
+                  )}
+                </p>
+                <div
+                  className="discovery-active-link tracking-copy-row"
+                  data-active={resolution.active}
+                >
+                  <code title={url} aria-label={`${copy.link}: ${url}`}>
+                    {url.replace(/^https?:\/\//, "")}
+                  </code>
+                  <CopyOfferLink
+                    url={url}
+                    label={copy.copy}
+                    copiedLabel={copy.copied}
+                    errorLabel={copy.copyError}
+                  />
+                </div>
+              </div>
+              <div className="tracking-performance">
+                <p className="tracking-period">{copy.last30Days}</p>
+                {hasActivity ? (
+                  <dl className="tracking-metrics">
+                    <div>
+                      <dt>{copy.clicks}</dt>
+                      <dd>{metrics.clicks}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.converted}</dt>
+                      <dd>{metrics.convertedClicks}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.orders}</dt>
+                      <dd>{metrics.orders}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.confirmed}</dt>
+                      <dd className="tracking-earned">
+                        {new Decimal(metrics.confirmed).toFixed(2)} ₾
+                      </dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="tracking-no-activity">{copy.noActivity}</p>
+                )}
+                <Link
+                  className="discovery-primary"
+                  href={`/${locale}/creator/earnings?link=${link.id}&view=links#breakdown`}
+                >
+                  {copy.viewPerformance}
+                </Link>
+              </div>
+            </article>
+          );
+        }
         return (
           <article
             className="group grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-hidden rounded-md border border-slate-200 bg-paper transition-[border-color,box-shadow] duration-200 hover:border-signal hover:shadow-sm"

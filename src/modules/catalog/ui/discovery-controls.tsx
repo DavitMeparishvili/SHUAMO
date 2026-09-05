@@ -22,6 +22,7 @@ export interface DiscoveryFilters {
   commission: string;
   brand: string;
   sort: string;
+  status?: string;
 }
 
 export function DiscoveryControls({
@@ -32,6 +33,8 @@ export function DiscoveryControls({
   productTypes,
   total,
   children,
+  statusOptions,
+  sortOptions = ["newest", "title", "price_low", "commission_high"],
 }: {
   filters: DiscoveryFilters;
   counts: {
@@ -39,12 +42,15 @@ export function DiscoveryControls({
     brandId: string;
     commissionType: string;
     count: number;
+    status?: string;
   }[];
   brands: { id: string; name: string }[];
   copy: Record<string, string>;
   productTypes: Record<ProductTypeValue, string>;
   total: number;
   children: ReactNode;
+  statusOptions?: { value: string; label: string }[];
+  sortOptions?: string[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -53,14 +59,20 @@ export function DiscoveryControls({
   const [pending, startTransition] = useTransition();
   const [selectedFilters, setSelectedFilters] = useOptimistic(filters);
   const activeCount = (value: DiscoveryFilters) =>
-    [value.category, value.type, value.commission, value.brand].filter(Boolean)
-      .length;
+    [
+      value.category,
+      value.type,
+      value.commission,
+      value.brand,
+      value.status,
+    ].filter(Boolean).length;
   const empty = {
     ...filters,
     category: "",
     type: "",
     commission: "",
     brand: "",
+    ...(statusOptions ? { status: "" } : {}),
   };
   function navigate(value: DiscoveryFilters) {
     if (pending) return;
@@ -85,7 +97,8 @@ export function DiscoveryControls({
         matchesType(row.productType, draft.category) &&
         (!draft.type || row.productType === draft.type) &&
         (!draft.commission || row.commissionType === draft.commission) &&
-        (!draft.brand || row.brandId === draft.brand),
+        (!draft.brand || row.brandId === draft.brand) &&
+        (!draft.status || row.status === draft.status),
     )
     .reduce((sum, row) => sum + row.count, 0);
   function filterFields(mobile: boolean) {
@@ -158,6 +171,15 @@ export function DiscoveryControls({
                 label: brand.name,
               })),
             },
+            ...(statusOptions
+              ? [
+                  {
+                    key: "status" as const,
+                    label: copy.status,
+                    options: statusOptions,
+                  },
+                ]
+              : []),
           ] as const
         ).map((field) => (
           <details
@@ -178,7 +200,7 @@ export function DiscoveryControls({
               <span className="sr-only">{field.label}</span>
               <select
                 aria-disabled={!mobile && pending}
-                value={current[field.key]}
+                value={current[field.key] ?? ""}
                 onChange={(event) =>
                   update({ [field.key]: event.target.value })
                 }
@@ -283,13 +305,11 @@ export function DiscoveryControls({
                 navigate({ ...filters, sort: event.target.value })
               }
             >
-              {["newest", "title", "price_low", "commission_high"].map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {copy[value === "title" ? "titleSort" : value]}
-                  </option>
-                ),
-              )}
+              {sortOptions.map((value) => (
+                <option key={value} value={value}>
+                  {copy[value === "title" ? "titleSort" : value]}
+                </option>
+              ))}
             </select>
           </label>
         </div>

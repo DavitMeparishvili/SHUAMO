@@ -17,6 +17,7 @@ export function SiteFrame({
 }) {
   const path = usePathname();
   const discovery = /^\/(ka|en)\/(creator\/)?products$/.test(path);
+  const trackingLinks = /^\/(ka|en)\/creator\/links$/.test(path);
   const drawer = useRef<HTMLDialogElement>(null);
   const [signingOut, setSigningOut] = useState(false);
   const label = (en: string, ka: string) => (locale === "ka" ? ka : en);
@@ -235,10 +236,14 @@ export function SiteFrame({
               <XurjinLogo />
             </Link>
           )}
-          {workspace && discovery ? (
+          {workspace && (discovery || trackingLinks) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
-              <span>{label("Discover", "აღმოჩენა")}</span>
+              <span>
+                {trackingLinks
+                  ? label("Tracking links", "ტრეკინგ ბმულები")
+                  : label("Discover", "აღმოჩენა")}
+              </span>
             </div>
           ) : workspace ? (
             <form
@@ -422,7 +427,7 @@ export function SiteFrame({
             >
               <Icon name={n.icon} />
               <span>
-                {discovery && !brand
+                {(discovery || trackingLinks) && !brand
                   ? n.icon === "search"
                     ? label("Discover", "აღმოჩენა")
                     : n.icon === "link"
@@ -432,7 +437,7 @@ export function SiteFrame({
               </span>
             </Link>
           ))}
-          {discovery && !brand ? (
+          {(discovery || trackingLinks) && !brand ? (
             <Link href={`${root}/profile`}>
               <Icon name="user" />
               <span>{label("Profile", "პროფილი")}</span>

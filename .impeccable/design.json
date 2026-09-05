@@ -2806,9 +2806,9 @@
       "name": "Discovery action",
       "kind": "button",
       "refersTo": "discovery-action",
-      "description": "Solid blue offer-detail action scoped to discovery; existing eligible links use a separate copy control.",
+      "description": "Solid discovery action at shared desktop control size, compact on mobile.",
       "html": "<button class=\"ds-discovery-action\">View offer</button>",
-      "css": ".ds-discovery-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:38px;padding:8px 10px;border:0;border-radius:6px;background:var(--discovery-accent,#1d5cff);color:var(--color-paper,#fff);font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),sans-serif;font-size:12px;font-weight:600;text-align:center;cursor:pointer}.ds-discovery-action:hover{background:var(--discovery-accent-hover,#1549d6)}.ds-discovery-action:focus-visible{outline:2px solid var(--discovery-accent,#1d5cff);outline-offset:3px}@media(max-width:639px){.ds-discovery-action{min-height:32px;padding:6px;font-size:11px}}"
+      "css": ".ds-discovery-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;padding:8px 10px;border:0;border-radius:6px;background:var(--discovery-accent,#1d5cff);color:var(--color-paper,#fff);font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),sans-serif;font-size:14px;font-weight:600;text-align:center;cursor:pointer}.ds-discovery-action:hover{background:var(--discovery-accent-hover,#1549d6)}.ds-discovery-action:focus-visible{outline:2px solid var(--discovery-accent,#1d5cff);outline-offset:3px}@media(max-width:639px){.ds-discovery-action{min-height:32px;padding:6px;font-size:11px}}"
     },
     {
       "name": "Discovery commission",
@@ -2816,7 +2816,7 @@
       "refersTo": "discovery-commission",
       "description": "Labelled commission panel paired with the exact product price. The specimen uses an empty factual value.",
       "html": "<dl class=\"ds-discovery-commission\"><dt>Commission</dt><dd>Not available</dd></dl>",
-      "css": ".ds-discovery-commission{margin:0;padding:5px 10px;border-radius:6px;background:var(--discovery-soft,#f0f5ff);font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),sans-serif;}.ds-discovery-commission dt{font-size:10px;line-height:1.5;color:var(--muted,#5c6d8b)}.ds-discovery-commission dd{margin:0;font-size:16px;font-weight:800;line-height:1.35;font-variant-numeric:tabular-nums;color:var(--discovery-accent,#1d5cff)}"
+      "css": ".ds-discovery-commission{margin:0;padding:5px 10px;border-radius:6px;background:var(--discovery-soft,#f0f5ff);font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),sans-serif;}.ds-discovery-commission dt{font-size:10px;line-height:1.5;color:var(--muted,#5c6d8b)}.ds-discovery-commission dd{margin:0;font-size:16px;font-weight:800;line-height:1.35;font-variant-numeric:tabular-nums;color:var(--discovery-accent,#1d5cff)}@media(min-width:640px){.ds-discovery-commission{padding:6px 10px}.ds-discovery-commission dt{font-size:12px}.ds-discovery-commission dd{font-size:18px}}"
     }
   ],
   "narrative": {
