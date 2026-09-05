@@ -130,6 +130,8 @@ describe("performance reporting", () => {
     ]);
 
     expect(creator.totals).toEqual({
+      confirmedSales: 2,
+      cancelledSales: 0,
       clicks: 2,
       convertedClicks: 2,
       orders: 2,
@@ -254,6 +256,8 @@ describe("performance reporting", () => {
     });
     expect(foreign.scope.links).toBe(0);
     expect(foreign.totals).toEqual({
+      confirmedSales: 0,
+      cancelledSales: 0,
       clicks: 0,
       convertedClicks: 0,
       orders: 0,

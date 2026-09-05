@@ -15,10 +15,192 @@ import type {
   PerformanceRole,
   PerformanceTotals,
   PerformanceTrendPoint,
+  SaleDetail,
 } from "../ports/performance";
 
 type Owner = { role: PerformanceRole; id: string };
+
+async function loadContext(owner: Owner) {
+  const where =
+    owner.role === "brand" ? { brandId: owner.id } : { creatorId: owner.id };
+  const [partnerships, profile] = await Promise.all([
+    prisma.partnership.findMany({
+      where,
+      select: { brandId: true, creatorId: true, status: true },
+    }),
+    owner.role === "brand"
+      ? prisma.brandProfile.findUnique({
+          where: { brandId: owner.id },
+          select: { status: true },
+        })
+      : prisma.creatorProfile.findUnique({
+          where: { creatorId: owner.id },
+          select: { status: true },
+        }),
+  ]);
+  const approved = partnerships.filter((p) => p.status === "APPROVED");
+  const links = approved.length
+    ? await prisma.trackingLink.findMany({
+        where: {
+          OR: approved.map((p) => ({
+            creatorId: p.creatorId,
+            product: { brandId: p.brandId },
+          })),
+        },
+        select: {
+          creatorId: true,
+          product: { select: { brandId: true } },
+          clicks: {
+            where: {
+              attributions: {
+                some: {
+                  status: "CANONICAL",
+                  conversionItem: { conversion: { status: "CONFIRMED" } },
+                },
+              },
+            },
+            take: 1,
+            select: { id: true },
+          },
+        },
+      })
+    : [];
+  const key = (l: (typeof links)[number]) =>
+    owner.role === "brand" ? l.creatorId : l.product.brandId;
+  return {
+    approved: approved.length,
+    pending: partnerships.filter((p) => p.status === "PENDING").length,
+    withLink: new Set(links.map(key)).size,
+    withSale: new Set(links.filter((l) => l.clicks.length).map(key)).size,
+    profilePublished: profile?.status === "PUBLISHED",
+  };
+}
+
+async function loadSale(
+  owner: Owner,
+  id: string,
+): Promise<SaleDetail | undefined> {
+  const row = await prisma.attribution.findFirst({
+    where: {
+      id,
+      status: "CANONICAL",
+      ...(owner.role === "creator"
+        ? { creatorId: owner.id }
+        : { conversionItem: { conversion: { brandId: owner.id } } }),
+    },
+    include: {
+      creator: true,
+      product: { include: { brand: true } },
+      click: { include: { trackingLink: true } },
+      conversionItem: { include: { conversion: { include: { items: true } } } },
+    },
+  });
+  if (!row?.click) return undefined;
+  const cv = row.conversionItem.conversion;
+  const link = row.click.trackingLink;
+  const cancellation =
+    cv.status === "CANCELLED"
+      ? await prisma.auditEvent.findFirst({
+          where: {
+            entityType: "conversion",
+            entityId: cv.id,
+            action: "conversion.cancelled",
+          },
+          orderBy: { at: "asc" },
+        })
+      : null;
+  const terms =
+    typeof link.acceptedTerms === "object" &&
+    link.acceptedTerms !== null &&
+    !Array.isArray(link.acceptedTerms)
+      ? (link.acceptedTerms as Record<string, unknown>)
+      : {};
+  const items = cv.items.filter((i) => i.sku === row.product.sku);
+  return {
+    id: row.id,
+    orderId: cv.orderId,
+    occurredAt: cv.occurredAt.toISOString(),
+    confirmedAt: cv.confirmedAt.toISOString(),
+    status: cv.status,
+    ...(cancellation ? { cancelledAt: cancellation.at.toISOString() } : {}),
+    clickAt: row.click.occurredAt.toISOString(),
+    brandId: row.product.brandId,
+    brandName: row.product.brand.name,
+    creatorId: row.creatorId,
+    creatorName: row.creator.displayName,
+    productId: row.productId,
+    productTitle: row.product.title,
+    ...(row.product.imageUrls[0] ? { imageUrl: row.product.imageUrls[0] } : {}),
+    sku: row.product.sku,
+    linkId: link.id,
+    linkCode: link.code,
+    clickId: row.click.id,
+    quantity: items.reduce((s, i) => s + i.qty, 0),
+    commissionableNet: items
+      .reduce((s, i) => s.plus(i.commissionableNet.toString()), new Decimal(0))
+      .toFixed(2),
+    commissionAmount: row.commissionAmount.toFixed(2),
+    commissionType: link.commissionType,
+    commissionValue: link.commissionValue.toString(),
+    termsAcceptedAt: link.termsAcceptedAt.toISOString(),
+    acceptedTerms: terms,
+    ...(typeof terms.termsVersion === "number"
+      ? { termsVersion: terms.termsVersion }
+      : {}),
+    ...(typeof terms.cookieWindowDays === "number"
+      ? { cookieWindowDays: terms.cookieWindowDays }
+      : {}),
+  };
+}
 type ReportWindow = { start?: Date; end: Date };
+
+async function loadActivity(
+  owner: Owner,
+  filters: PerformanceFilters,
+  now: Date,
+): Promise<NonNullable<PerformanceReport["activity"]>> {
+  const { start, end } = reportWindow(filters, now);
+  const rows = await prisma.$queryRaw<
+    {
+      sale_id: string;
+      product_title: string;
+      partner_name: string;
+      at: Date;
+      amount: Prisma.Decimal;
+      kind: "issued" | "reversed";
+    }[]
+  >(Prisma.sql`
+    SELECT a.id::text AS sale_id, p.title AS product_title,
+      ${owner.role === "creator" ? Prisma.sql`b.name` : Prisma.sql`cr.display_name`} AS partner_name,
+      activity.at, a.commission_amount AS amount, activity.kind
+    FROM attribution a
+    JOIN click c ON c.id=a.click_id
+    JOIN tracking_link tl ON tl.id=c.tracking_link_id
+    JOIN product p ON p.id=tl.product_id
+    JOIN brand b ON b.id=p.brand_id
+    JOIN creator cr ON cr.id=a.creator_id
+    JOIN conversion_item ci ON ci.id=a.conversion_item_id
+    JOIN conversion cv ON cv.id=ci.conversion_id
+    CROSS JOIN LATERAL (
+      SELECT cv.confirmed_at AS at, 'issued'::text AS kind
+      UNION ALL
+      SELECT MIN(audit.at), 'reversed'::text FROM audit_event audit
+      WHERE audit.entity_type='conversion' AND audit.entity_id=cv.id AND audit.action='conversion.cancelled' AND cv.status::text='CANCELLED'
+      HAVING COUNT(*) > 0
+    ) activity
+    WHERE a.status::text='CANONICAL' AND ${sourceConditions(owner, filters)} ${outcomeOwnerCondition(owner)}
+      ${dateCondition(Prisma.sql`activity.at`, start, end)}
+    ORDER BY activity.at DESC, a.id DESC LIMIT 5
+  `);
+  return rows.map((row) => ({
+    saleId: row.sale_id,
+    productTitle: row.product_title,
+    partnerName: row.partner_name,
+    at: row.at.toISOString(),
+    amount: moneyOf(row.amount),
+    kind: row.kind,
+  }));
+}
 
 type RawLinkRow = {
   id: string;
@@ -34,6 +216,8 @@ type RawLinkRow = {
   creator_name: string;
   clicks: number | bigint;
   converted_clicks: number | bigint;
+  confirmed_sales: number | bigint;
+  cancelled_sales: number | bigint;
   orders: number | bigint;
   units: number | bigint;
   sales: Prisma.Decimal | string;
@@ -42,6 +226,7 @@ type RawLinkRow = {
 };
 
 type RawTrendRow = {
+  sales: Prisma.Decimal | string;
   day: string;
   clicks: number | bigint;
   orders: number | bigint;
@@ -93,6 +278,8 @@ const ZERO_TOTALS: PerformanceTotals = {
   clicks: 0,
   convertedClicks: 0,
   orders: 0,
+  confirmedSales: 0,
+  cancelledSales: 0,
   units: 0,
   convertedClickRate: 0,
   sales: "0.00",
@@ -128,6 +315,7 @@ function sourceConditions(
     ${filters.brandId ? Prisma.sql`AND p.brand_id = CAST(${filters.brandId} AS uuid)` : Prisma.empty}
     ${filters.creatorId ? Prisma.sql`AND tl.creator_id = CAST(${filters.creatorId} AS uuid)` : Prisma.empty}
     ${filters.productId ? Prisma.sql`AND p.id = CAST(${filters.productId} AS uuid)` : Prisma.empty}
+    ${filters.linkStatus ? Prisma.sql`AND (tl.status::text = 'ACTIVE' AND p.status::text = 'ACTIVE' AND EXISTS(SELECT 1 FROM brand eligibility_brand WHERE eligibility_brand.id=p.brand_id AND eligibility_brand.status::text='APPROVED') AND EXISTS(SELECT 1 FROM partnership eligibility_partnership WHERE eligibility_partnership.brand_id=p.brand_id AND eligibility_partnership.creator_id=tl.creator_id AND eligibility_partnership.status::text='APPROVED')) = ${filters.linkStatus === "ACTIVE"}` : Prisma.empty}
     ${filters.linkId ? Prisma.sql`AND tl.id = CAST(${filters.linkId} AS uuid)` : Prisma.empty}
     ${linkIds?.length ? Prisma.sql`AND tl.id IN (${Prisma.join(linkIds.map((id) => Prisma.sql`CAST(${id} AS uuid)`))})` : Prisma.empty}
   `;
@@ -184,6 +372,7 @@ function reportWindow(filters: PerformanceFilters, now: Date): ReportWindow {
 function previousWindow(window: ReportWindow): ReportWindow | undefined {
   if (!window.start || window.start > window.end) return undefined;
   const duration = window.end.getTime() - window.start.getTime();
+  if (window.start.getTime() - duration < 0) return undefined;
   return {
     start: new Date(window.start.getTime() - duration),
     end: new Date(window.start.getTime() - 1),
@@ -212,7 +401,9 @@ async function loadLinkRows(
       SELECT
         c.tracking_link_id,
         COUNT(DISTINCT a.click_id)::int AS converted_clicks,
-        COUNT(DISTINCT cv.id)::int AS orders,
+        COUNT(DISTINCT a.id)::int AS orders,
+        COUNT(DISTINCT a.id) FILTER (WHERE cv.status::text = 'CONFIRMED')::int AS confirmed_sales,
+        COUNT(DISTINCT a.id) FILTER (WHERE cv.status::text = 'CANCELLED')::int AS cancelled_sales,
         COALESCE(SUM(item_totals.units), 0)::int AS units,
         COALESCE(SUM(CASE WHEN cv.status::text <> 'CANCELLED' THEN item_totals.sales ELSE 0 END), 0) AS sales,
         COALESCE(SUM(CASE WHEN cv.status::text = 'CONFIRMED' THEN a.commission_amount ELSE 0 END), 0) AS confirmed,
@@ -259,6 +450,8 @@ async function loadLinkRows(
       COALESCE(cc.clicks, 0)::int AS clicks,
       COALESCE(oc.converted_clicks, 0)::int AS converted_clicks,
       COALESCE(oc.orders, 0)::int AS orders,
+      COALESCE(oc.confirmed_sales, 0)::int AS confirmed_sales,
+      COALESCE(oc.cancelled_sales, 0)::int AS cancelled_sales,
       COALESCE(oc.units, 0)::int AS units,
       COALESCE(oc.sales, 0) AS sales,
       COALESCE(oc.confirmed, 0) AS confirmed,
@@ -294,6 +487,8 @@ async function loadLinkRows(
       clicks,
       convertedClicks,
       orders: numberOf(row.orders),
+      confirmedSales: numberOf(row.confirmed_sales),
+      cancelledSales: numberOf(row.cancelled_sales),
       units: numberOf(row.units),
       convertedClickRate: rateOf(convertedClicks, clicks),
       sales: moneyOf(row.sales),
@@ -309,6 +504,8 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
       clicks: sum.clicks + row.clicks,
       convertedClicks: sum.convertedClicks + row.convertedClicks,
       orders: sum.orders + row.orders,
+      confirmedSales: sum.confirmedSales + (row.confirmedSales ?? 0),
+      cancelledSales: sum.cancelledSales + (row.cancelledSales ?? 0),
       units: sum.units + row.units,
       sales: sum.sales.plus(row.sales),
       confirmed: sum.confirmed.plus(row.confirmed),
@@ -318,6 +515,8 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
       clicks: 0,
       convertedClicks: 0,
       orders: 0,
+      confirmedSales: 0,
+      cancelledSales: 0,
       units: 0,
       sales: new Decimal(0),
       confirmed: new Decimal(0),
@@ -328,6 +527,8 @@ function sumRows(rows: readonly LinkPerformanceRow[]): PerformanceTotals {
     clicks: total.clicks,
     convertedClicks: total.convertedClicks,
     orders: total.orders,
+    confirmedSales: total.confirmedSales,
+    cancelledSales: total.cancelledSales,
     units: total.units,
     convertedClickRate: rateOf(total.convertedClicks, total.clicks),
     sales: total.sales.toFixed(2),
@@ -400,7 +601,9 @@ function breakdownRows(
     }))
     .sort(
       (a, b) =>
-        new Decimal(b.confirmed).comparedTo(a.confirmed) ||
+        new Decimal(role === "brand" ? b.sales : b.confirmed).comparedTo(
+          role === "brand" ? a.sales : a.confirmed,
+        ) ||
         b.clicks - a.clicks ||
         a.label.localeCompare(b.label),
     );
@@ -421,7 +624,17 @@ async function loadTrend(
   now: Date,
 ): Promise<PerformanceTrendPoint[]> {
   const window = reportWindow(filters, now);
-  const start = performanceTrendStart(filters.period, window.end, window.start);
+  let start = window.start ?? performanceTrendStart("90d", window.end);
+  if (!window.start) {
+    const [first] = await prisma.$queryRaw<{ at: Date | null }[]>(Prisma.sql`
+      SELECT MIN(event.at) AS at FROM (
+        SELECT c.occurred_at AS at FROM click c JOIN tracking_link tl ON tl.id=c.tracking_link_id JOIN product p ON p.id=tl.product_id WHERE ${sourceConditions(owner, filters)}
+        UNION ALL
+        SELECT cv.occurred_at AS at FROM attribution a JOIN click c ON c.id=a.click_id JOIN tracking_link tl ON tl.id=c.tracking_link_id JOIN product p ON p.id=tl.product_id JOIN conversion_item ci ON ci.id=a.conversion_item_id JOIN conversion cv ON cv.id=ci.conversion_id WHERE a.status::text='CANONICAL' AND ${sourceConditions(owner, filters)} ${outcomeOwnerCondition(owner)}
+      ) event WHERE event.at <= ${window.end}
+    `);
+    if (first?.at) start = new Date(`${localDay(first.at)}T00:00:00+04:00`);
+  }
   const rows = await prisma.$queryRaw<RawTrendRow[]>(Prisma.sql`
     WITH click_daily AS (
       SELECT
@@ -437,8 +650,9 @@ async function loadTrend(
     outcome_daily AS (
       SELECT
         to_char(timezone('Asia/Tbilisi', cv.occurred_at), 'YYYY-MM-DD') AS day,
-        COUNT(DISTINCT cv.id)::int AS orders,
-        COALESCE(SUM(CASE WHEN cv.status::text = 'CONFIRMED' THEN a.commission_amount ELSE 0 END), 0) AS earnings
+        COUNT(DISTINCT a.id)::int AS orders,
+        COALESCE(SUM(CASE WHEN cv.status::text = 'CONFIRMED' THEN a.commission_amount ELSE 0 END), 0) AS earnings,
+        COALESCE(SUM(CASE WHEN cv.status::text = 'CONFIRMED' THEN (SELECT SUM(sci.commissionable_net) FROM conversion_item sci WHERE sci.conversion_id=cv.id AND sci.sku=p.sku) ELSE 0 END), 0) AS sales
       FROM attribution a
       JOIN click c ON c.id = a.click_id
       JOIN tracking_link tl ON tl.id = c.tracking_link_id
@@ -456,24 +670,60 @@ async function loadTrend(
       COALESCE(cd.day, od.day) AS day,
       COALESCE(cd.clicks, 0)::int AS clicks,
       COALESCE(od.orders, 0)::int AS orders,
-      COALESCE(od.earnings, 0) AS earnings
+      COALESCE(od.earnings, 0) AS earnings,
+      COALESCE(od.sales, 0) AS sales
     FROM click_daily cd
     FULL OUTER JOIN outcome_daily od ON od.day = cd.day
     ORDER BY day ASC
   `);
-  const byDay = new Map(rows.map((row) => [row.day, row]));
+  const firstDay = new Date(`${localDay(start)}T00:00:00+04:00`);
+  const days = Math.max(
+    0,
+    Math.floor((window.end.getTime() - firstDay.getTime()) / 86400000) + 1,
+  );
+  const bucketDays = Math.max(1, Math.ceil(days / 90));
+  const grouped = new Map<
+    number,
+    { clicks: number; orders: number; earnings: Decimal; sales: Decimal }
+  >();
+  for (const row of rows) {
+    const offset = Math.floor(
+      (new Date(`${row.day}T00:00:00+04:00`).getTime() - firstDay.getTime()) /
+        86400000,
+    );
+    const bucket = Math.floor(offset / bucketDays);
+    const value = grouped.get(bucket) ?? {
+      clicks: 0,
+      orders: 0,
+      earnings: new Decimal(0),
+      sales: new Decimal(0),
+    };
+    value.clicks += numberOf(row.clicks);
+    value.orders += numberOf(row.orders);
+    value.earnings = value.earnings.plus(row.earnings.toString());
+    value.sales = value.sales.plus(row.sales.toString());
+    grouped.set(bucket, value);
+  }
   const points: PerformanceTrendPoint[] = [];
-  const cursor = new Date(start);
-  while (cursor <= window.end) {
-    const date = localDay(cursor);
-    const row = byDay.get(date);
+  for (let offset = 0; offset < days; offset += bucketDays) {
+    const bucket = grouped.get(Math.floor(offset / bucketDays));
     points.push({
-      date,
-      clicks: row ? numberOf(row.clicks) : 0,
-      orders: row ? numberOf(row.orders) : 0,
-      earnings: row ? moneyOf(row.earnings) : "0.00",
+      date: localDay(new Date(firstDay.getTime() + offset * 86400000)),
+      ...(bucketDays > 1
+        ? {
+            endDate: localDay(
+              new Date(
+                firstDay.getTime() +
+                  Math.min(days - 1, offset + bucketDays - 1) * 86400000,
+              ),
+            ),
+          }
+        : {}),
+      clicks: bucket?.clicks ?? 0,
+      orders: bucket?.orders ?? 0,
+      earnings: bucket?.earnings.toFixed(2) ?? "0.00",
+      sales: bucket?.sales.toFixed(2) ?? "0.00",
     });
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
   return points;
 }
@@ -620,7 +870,7 @@ async function loadClickLedger(
 async function loadOptions(
   owner: Owner,
 ): Promise<Pick<PerformanceReport, "options" | "scope">> {
-  const [options, scopeRows] = await Promise.all([
+  const [options, scopeRows, allLinks] = await Promise.all([
     prisma.$queryRaw<RawFilterOption[]>(Prisma.sql`
       SELECT DISTINCT
         ${owner.role === "creator" ? Prisma.sql`b.id::text` : Prisma.sql`cr.id::text`} AS id,
@@ -642,13 +892,65 @@ async function loadOptions(
       JOIN product p ON p.id = tl.product_id
       WHERE ${ownerCondition(owner)}
     `),
+    prisma.trackingLink.findMany({
+      where:
+        owner.role === "creator"
+          ? { creatorId: owner.id }
+          : { product: { brandId: owner.id } },
+      select: {
+        id: true,
+        code: true,
+        creatorId: true,
+        product: { select: { id: true, title: true, brandId: true } },
+      },
+    }),
   ]);
   const scope = scopeRows[0];
   return {
     options:
       owner.role === "creator"
-        ? { brands: options, creators: [] }
-        : { brands: [], creators: options },
+        ? {
+            brands: options,
+            creators: [],
+            products: [
+              ...new Map(
+                allLinks.map((l) => [
+                  l.product.id,
+                  {
+                    id: l.product.id,
+                    label: l.product.title,
+                    parentId: l.product.brandId,
+                  },
+                ]),
+              ).values(),
+            ],
+            links: allLinks.map((l) => ({
+              id: l.id,
+              label: `${l.product.title} · ${l.code}`,
+              parentId: l.product.id,
+              partnerId:
+                owner.role === "creator" ? l.product.brandId : l.creatorId,
+            })),
+          }
+        : {
+            brands: [],
+            creators: options,
+            products: [
+              ...new Map(
+                allLinks.map((l) => [
+                  l.product.id,
+                  { id: l.product.id, label: l.product.title },
+                ]),
+              ).values(),
+            ],
+            links: allLinks.map((l) => ({
+              id: l.id,
+              label: `${l.product.title} · ${l.code}`,
+              parentId: l.product.id,
+              partnerId:
+                owner.role === "creator" ? l.product.brandId : l.creatorId,
+            })),
+          },
     scope: {
       brands: scope ? numberOf(scope.brands) : 0,
       creators: scope ? numberOf(scope.creators) : 0,
@@ -663,20 +965,45 @@ async function performanceReport(
   filters: PerformanceFilters,
   now = new Date(),
 ): Promise<PerformanceReport> {
+  const summaryFilters = { ...filters };
+  delete summaryFilters.status;
+  delete summaryFilters.ledgerQuery;
   const currentWindow = reportWindow(filters, now);
   const comparisonWindow = previousWindow(currentWindow);
-  const [links, comparisonLinks, trend, clickLedger, ledger, optionData] =
-    await Promise.all([
-      loadLinkRows(owner, filters, now),
-      comparisonWindow
-        ? loadLinkRows(owner, filters, now, undefined, comparisonWindow)
-        : Promise.resolve([]),
-      loadTrend(owner, filters, now),
-      loadClickLedger(owner, filters, now),
-      loadLedger(owner, filters, now),
-      loadOptions(owner),
-    ]);
+  const [
+    links,
+    comparisonLinks,
+    trend,
+    clickLedger,
+    ledger,
+    optionData,
+    context,
+    sale,
+    summaryLinks,
+    activity,
+  ] = await Promise.all([
+    loadLinkRows(owner, filters, now),
+    comparisonWindow
+      ? loadLinkRows(owner, filters, now, undefined, comparisonWindow)
+      : Promise.resolve([]),
+    loadTrend(owner, filters, now),
+    loadClickLedger(owner, filters, now),
+    loadLedger(owner, filters, now),
+    loadOptions(owner),
+    loadContext(owner),
+    filters.saleId
+      ? loadSale(owner, filters.saleId)
+      : Promise.resolve(undefined),
+    filters.status || filters.ledgerQuery
+      ? loadLinkRows(owner, summaryFilters, now)
+      : Promise.resolve(undefined),
+    loadActivity(owner, filters, now),
+  ]);
   return {
+    context,
+    activity,
+    ...(summaryLinks ? { summaryTotals: sumRows(summaryLinks) } : {}),
+    ...(sale ? { sale } : {}),
     role: owner.role,
     generatedAt: now.toISOString(),
     period: filters.period,

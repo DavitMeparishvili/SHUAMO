@@ -128,9 +128,25 @@ export async function publishCreatorProfileAction(
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const messages = getMessages(locale);
-  const result = await prismaProfileRepository.publishCreatorSafely(
-    allowed.value.creatorId,
-  );
+  let result;
+  try {
+    result = await prismaProfileRepository.publishCreatorSafely(
+      allowed.value.creatorId,
+    );
+  } catch (error) {
+    const conflict =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002";
+    return errorState(
+      t(
+        messages,
+        conflict ? "profile.editor.slugTaken" : "profile.editor.saveFailed",
+      ),
+      conflict ? "slug" : undefined,
+    );
+  }
   if (result.kind === "not-found")
     return errorState(t(messages, "profile.editor.saveBeforePublish"));
   if (result.kind === "incomplete")

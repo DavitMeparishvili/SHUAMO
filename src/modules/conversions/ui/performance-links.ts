@@ -17,6 +17,9 @@ export function performanceHref(
   const query = new URLSearchParams();
   const values: Record<string, string | number | undefined> = {
     period: filters.period === "30d" ? undefined : filters.period,
+    tab: filters.tab,
+    sale: filters.saleId,
+    linkStatus: filters.linkStatus,
     from: filters.from,
     to: filters.to,
     brand: filters.brandId,

@@ -36,6 +36,7 @@
     "seed:phase-6": "tsx scripts/seed-phase-06.ts",
     "seed:phase-6.5": "tsx scripts/seed-phase-06-5.ts",
     "seed:media": "tsx scripts/seed-demo-media.ts",
+    "seed:redesign": "tsx scripts/seed-redesign.ts",
     "seed:brands": "tsx scripts/seed-brands.ts",
     "measure:redirect": "tsx scripts/measure-redirect-latency.ts",
     "measure:conversions": "tsx scripts/measure-conversions-latency.ts",

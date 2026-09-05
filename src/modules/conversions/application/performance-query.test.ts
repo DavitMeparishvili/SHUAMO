@@ -68,6 +68,6 @@ describe("parsePerformanceQuery", () => {
       },
       "creator",
     );
-    expect(state.filters).toEqual({ period: "30d" });
+    expect(state.filters).toEqual({ period: "30d", tab: "summary" });
   });
 });

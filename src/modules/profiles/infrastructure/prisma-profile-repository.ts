@@ -1,5 +1,5 @@
 import { prisma } from "@/src/infrastructure/db/client";
-import type { Prisma } from "@/src/generated/prisma/client";
+import { Prisma } from "@/src/generated/prisma/client";
 import type { Locale } from "@/src/modules/localization";
 import type {
   BrandProfileInput,
@@ -168,16 +168,16 @@ async function saveBrandSafely(brandId: string, input: BrandProfileInput) {
   return serializable(async (tx) => {
     const current = await tx.brandProfile.findUnique({
       where: { brandId },
-      select: { status: true, publishedAt: true },
+      select: { status: true },
     });
-    const demoted =
-      current?.status === "PUBLISHED" &&
-      (await brandPublicationIssues(tx, brandId, input)).length > 0;
-    const statusData = demoted
-      ? ({ status: "DRAFT", publishedAt: null } as const)
-      : current
-        ? { status: current.status, publishedAt: current.publishedAt }
-        : {};
+    if (current?.status === "PUBLISHED") {
+      const profile = await tx.brandProfile.update({
+        where: { brandId },
+        data: { draftData: input as unknown as Prisma.InputJsonValue },
+        select: brandSelect,
+      });
+      return { profile, demoted: false };
+    }
     if (input.profileName !== undefined)
       await tx.brand.update({
         where: { id: brandId },
@@ -185,11 +185,11 @@ async function saveBrandSafely(brandId: string, input: BrandProfileInput) {
       });
     const profile = await tx.brandProfile.upsert({
       where: { brandId },
-      create: { brandId, ...brandData(input), ...statusData },
-      update: { ...brandData(input), ...statusData },
+      create: { brandId, ...brandData(input) },
+      update: { ...brandData(input), draftData: Prisma.DbNull },
       select: brandSelect,
     });
-    return { profile, demoted };
+    return { profile, demoted: false };
   });
 }
 
@@ -200,15 +200,16 @@ async function saveCreatorSafely(
   return serializable(async (tx) => {
     const current = await tx.creatorProfile.findUnique({
       where: { creatorId },
-      select: { status: true, publishedAt: true },
+      select: { status: true },
     });
-    const demoted =
-      current?.status === "PUBLISHED" && publicationIssues(input).length > 0;
-    const statusData = demoted
-      ? ({ status: "DRAFT", publishedAt: null } as const)
-      : current
-        ? { status: current.status, publishedAt: current.publishedAt }
-        : {};
+    if (current?.status === "PUBLISHED") {
+      const profile = await tx.creatorProfile.update({
+        where: { creatorId },
+        data: { draftData: input as unknown as Prisma.InputJsonValue },
+        select: creatorSelect,
+      });
+      return { profile, demoted: false };
+    }
     if (input.profileName !== undefined)
       await tx.creator.update({
         where: { id: creatorId },
@@ -216,11 +217,11 @@ async function saveCreatorSafely(
       });
     const profile = await tx.creatorProfile.upsert({
       where: { creatorId },
-      create: { creatorId, ...creatorData(input), ...statusData },
-      update: { ...creatorData(input), ...statusData },
+      create: { creatorId, ...creatorData(input) },
+      update: { ...creatorData(input), draftData: Prisma.DbNull },
       select: creatorSelect,
     });
-    return { profile, demoted };
+    return { profile, demoted: false };
   });
 }
 
@@ -228,15 +229,27 @@ async function publishBrandSafely(brandId: string) {
   return serializable(async (tx) => {
     const row = await tx.brandProfile.findUnique({
       where: { brandId },
-      select: brandSelect,
+      select: { ...brandSelect, draftData: true },
     });
     if (!row) return { kind: "not-found" as const };
-    const profile = databaseBrandProfile(row);
+    const profile = row.draftData
+      ? brandProfileInputSchema.parse(row.draftData)
+      : databaseBrandProfile(row);
     const issues = await brandPublicationIssues(tx, brandId, profile);
     if (issues.length) return { kind: "incomplete" as const, issues };
+    if (profile.profileName !== undefined)
+      await tx.brand.update({
+        where: { id: brandId },
+        data: { name: profile.profileName },
+      });
     await tx.brandProfile.update({
       where: { brandId },
-      data: { status: "PUBLISHED", publishedAt: new Date() },
+      data: {
+        ...brandData(profile),
+        draftData: Prisma.DbNull,
+        status: "PUBLISHED",
+        publishedAt: new Date(),
+      },
     });
     return { kind: "published" as const, profile };
   });
@@ -246,28 +259,61 @@ async function publishCreatorSafely(creatorId: string) {
   return serializable(async (tx) => {
     const row = await tx.creatorProfile.findUnique({
       where: { creatorId },
-      select: creatorSelect,
+      select: { ...creatorSelect, draftData: true },
     });
     if (!row) return { kind: "not-found" as const };
-    const profile = databaseCreatorProfile(row);
+    const profile = row.draftData
+      ? creatorProfileInputSchema.parse(row.draftData)
+      : databaseCreatorProfile(row);
     const issues = publicationIssues(profile);
     if (issues.length) return { kind: "incomplete" as const, issues };
+    if (profile.profileName !== undefined)
+      await tx.creator.update({
+        where: { id: creatorId },
+        data: { displayName: profile.profileName },
+      });
     await tx.creatorProfile.update({
       where: { creatorId },
-      data: { status: "PUBLISHED", publishedAt: new Date() },
+      data: {
+        ...creatorData(profile),
+        draftData: Prisma.DbNull,
+        status: "PUBLISHED",
+        publishedAt: new Date(),
+      },
     });
     return { kind: "published" as const, profile };
   });
 }
 
 export const prismaProfileRepository = {
-  getBrandForOwner: (brandId: string) =>
-    prisma.brandProfile.findUnique({ where: { brandId }, select: brandSelect }),
-  getCreatorForOwner: (creatorId: string) =>
-    prisma.creatorProfile.findUnique({
+  getBrandForOwner: async (brandId: string) => {
+    const row = await prisma.brandProfile.findUnique({
+      where: { brandId },
+      select: { ...brandSelect, draftData: true },
+    });
+    if (!row?.draftData) return row;
+    const draft = brandProfileInputSchema.parse(row.draftData);
+    return {
+      ...row,
+      ...brandData(draft),
+      brand: { name: draft.profileName ?? row.brand.name },
+      hasUnpublishedChanges: true,
+    };
+  },
+  getCreatorForOwner: async (creatorId: string) => {
+    const row = await prisma.creatorProfile.findUnique({
       where: { creatorId },
-      select: creatorSelect,
-    }),
+      select: { ...creatorSelect, draftData: true },
+    });
+    if (!row?.draftData) return row;
+    const draft = creatorProfileInputSchema.parse(row.draftData);
+    return {
+      ...row,
+      ...creatorData(draft),
+      creator: { displayName: draft.profileName ?? row.creator.displayName },
+      hasUnpublishedChanges: true,
+    };
+  },
   saveBrand: saveBrandSafely,
   saveCreator: saveCreatorSafely,
   saveBrandSafely,

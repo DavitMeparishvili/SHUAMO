@@ -15,15 +15,18 @@ import { decideAction, inviteAction } from "./actions";
 
 export default async function BrandCreatorsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ status?: string; activation?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const allowed = requireBrand(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
+  const filters = await searchParams;
   const [partnerships, candidates] = await Promise.all([
-    listPartnershipsForBrand(allowed.value.brandId),
+    listPartnershipsForBrand(allowed.value.brandId, filters),
     listApprovedCreatorsForBrand(allowed.value.brandId),
   ]);
   const messages = getMessages(locale);
@@ -34,13 +37,65 @@ export default async function BrandCreatorsPage({
       intro={t(messages, "partnership.brand.intro")}
     >
       <div className="grid gap-10">
+        <nav
+          className="insight-tabs"
+          aria-label={
+            locale === "ka" ? "განაცხადის სტატუსი" : "Application status"
+          }
+        >
+          {[
+            ["", "All", "ყველა"],
+            ["PENDING", "Pending", "მოლოდინში"],
+            ["APPROVED", "Approved", "დამტკიცებული"],
+            ["REJECTED", "Rejected", "უარყოფილი"],
+          ].map(([status, en, ka]) => (
+            <a
+              key={status}
+              aria-current={
+                (filters.status ?? "") === status ? "page" : undefined
+              }
+              href={`/${locale}/brand/creators${status ? `?status=${status}` : ""}`}
+            >
+              {locale === "ka" ? ka : en}
+            </a>
+          ))}
+        </nav>
+        {filters.activation ? (
+          <p>
+            {locale === "ka" ? "აქტივობის ფილტრი" : "Activity filter"}:{" "}
+            {filters.activation === "no-link"
+              ? locale === "ka"
+                ? "ბმულის გარეშე"
+                : "No tracking link"
+              : filters.activation === "has-sale"
+                ? locale === "ka"
+                  ? "გაყიდვის მქონე"
+                  : "Has a confirmed sale"
+                : locale === "ka"
+                  ? "ბმულის მქონე"
+                  : "Has a tracking link"}{" "}
+            ·{" "}
+            <a href={`/${locale}/brand/creators?status=APPROVED`}>
+              {locale === "ka" ? "გასუფთავება" : "Clear"}
+            </a>
+          </p>
+        ) : null}
         <section className="grid gap-4">
           <h2 className="m-0 type-h2 text-ink">
             {t(messages, "partnership.applications")}
           </h2>
           <PartnershipQueue
+            locale={locale}
             partnerships={partnerships.map((partnership) => ({
               ...partnership,
+              submittedAt: new Intl.DateTimeFormat(
+                locale === "ka" ? "ka-GE" : "en-GB",
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  timeZone: "Asia/Tbilisi",
+                },
+              ).format(partnership.createdAt),
               creator: {
                 ...partnership.creator,
                 ...(partnership.creator.profile?.status === "PUBLISHED" &&

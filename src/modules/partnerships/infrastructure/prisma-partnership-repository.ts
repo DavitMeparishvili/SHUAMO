@@ -80,9 +80,46 @@ export const prismaCreatorLookup = {
   },
 };
 
-export async function listPartnershipsForBrand(brandId: string) {
+export async function listPartnershipsForBrand(
+  brandId: string,
+  filters: { status?: string; activation?: string } = {},
+) {
   return prisma.partnership.findMany({
-    where: { brandId },
+    where: {
+      brandId,
+      ...(["PENDING", "APPROVED", "REJECTED"].includes(filters.status ?? "")
+        ? { status: filters.status as "PENDING" | "APPROVED" | "REJECTED" }
+        : {}),
+      ...(filters.activation === "no-link"
+        ? { creator: { links: { none: { product: { brandId } } } } }
+        : {}),
+      ...(filters.activation === "has-link"
+        ? { creator: { links: { some: { product: { brandId } } } } }
+        : {}),
+      ...(filters.activation === "has-sale"
+        ? {
+            creator: {
+              links: {
+                some: {
+                  product: { brandId },
+                  clicks: {
+                    some: {
+                      attributions: {
+                        some: {
+                          status: "CANONICAL",
+                          conversionItem: {
+                            conversion: { status: "CONFIRMED" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }
+        : {}),
+    },
     include: {
       creator: {
         include: { profile: { select: { slug: true, status: true } } },

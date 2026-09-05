@@ -6,6 +6,9 @@ export type PerformanceBreakdownKind =
   "brands" | "creators" | "products" | "links";
 
 export interface PerformanceFilters {
+  tab?: "summary" | "sales" | "activity";
+  saleId?: string;
+  linkStatus?: "ACTIVE" | "DISABLED";
   period: PerformancePeriod;
   from?: string;
   to?: string;
@@ -21,6 +24,8 @@ export interface PerformanceFilters {
 }
 
 export interface PerformanceTotals {
+  confirmedSales?: number;
+  cancelledSales?: number;
   clicks: number;
   convertedClicks: number;
   orders: number;
@@ -55,6 +60,8 @@ export interface PerformanceBreakdownRow extends PerformanceTotals {
 }
 
 export interface PerformanceTrendPoint {
+  endDate?: string;
+  sales?: string;
   date: string;
   clicks: number;
   orders: number;
@@ -62,6 +69,7 @@ export interface PerformanceTrendPoint {
 }
 
 export interface EarningsLedgerRow {
+  imageUrl?: string;
   id: string;
   orderId: string;
   occurredAt: string;
@@ -93,11 +101,30 @@ export interface ClickLedgerRow {
 }
 
 export interface PerformanceFilterOption {
+  partnerId?: string;
   id: string;
   label: string;
+  parentId?: string;
 }
 
 export interface PerformanceReport {
+  summaryTotals?: PerformanceTotals;
+  activity?: readonly {
+    saleId: string;
+    productTitle: string;
+    partnerName: string;
+    at: string;
+    amount: string;
+    kind: "issued" | "reversed";
+  }[];
+  context?: {
+    approved: number;
+    pending: number;
+    withLink: number;
+    withSale: number;
+    profilePublished: boolean;
+  };
+  sale?: SaleDetail;
   role: PerformanceRole;
   generatedAt: string;
   period: PerformancePeriod;
@@ -123,8 +150,22 @@ export interface PerformanceReport {
     total: number;
   };
   options: {
+    products?: readonly PerformanceFilterOption[];
+    links?: readonly PerformanceFilterOption[];
     brands: readonly PerformanceFilterOption[];
     creators: readonly PerformanceFilterOption[];
   };
   scope: { brands: number; creators: number; products: number; links: number };
+}
+
+export interface SaleDetail extends EarningsLedgerRow {
+  confirmedAt: string;
+  cancelledAt?: string;
+  clickAt?: string;
+  commissionType: "PERCENT" | "FIXED";
+  commissionValue: string;
+  termsAcceptedAt: string;
+  termsVersion?: number;
+  cookieWindowDays?: number;
+  acceptedTerms: Record<string, unknown>;
 }

@@ -103,7 +103,7 @@ describe("public profile persistence", () => {
     ]);
   });
 
-  it("demotes a published profile when saved content is no longer publishable", async () => {
+  it("stages incomplete edits without changing the published profile", async () => {
     const creator = await seedCreator();
     await prisma.creatorProfile.create({
       data: {
@@ -130,13 +130,13 @@ describe("public profile persistence", () => {
       contentFormats: [],
       featuredWork: [],
     });
-    expect(result.demoted).toBe(true);
+    expect(result.demoted).toBe(false);
     await expect(
       prisma.creatorProfile.findUnique({
         where: { creatorId: creator.id },
         select: { status: true, publishedAt: true },
       }),
-    ).resolves.toEqual({ status: "DRAFT", publishedAt: null });
+    ).resolves.toEqual({ status: "PUBLISHED", publishedAt: expect.any(Date) });
   });
 
   it("never leaves invalid content published when save and publish race", async () => {
@@ -175,7 +175,11 @@ describe("public profile persistence", () => {
         where: { creatorId: creator.id },
         select: { status: true, publishedAt: true, slug: true },
       }),
-    ).resolves.toEqual({ status: "DRAFT", publishedAt: null, slug: null });
+    ).resolves.toEqual({
+      status: "PUBLISHED",
+      publishedAt: expect.any(Date),
+      slug: "publication-race",
+    });
   });
 
   it("counts only active owned products as brand publication evidence", async () => {

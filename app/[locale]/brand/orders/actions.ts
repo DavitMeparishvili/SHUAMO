@@ -20,5 +20,8 @@ export async function decideOrderAction(
   );
   if (!result.ok) throw new Error(result.error);
   revalidatePath(`/${locale}/brand/orders`);
+  revalidatePath(`/${locale}/brand/orders/source`);
+  revalidatePath(`/${locale}/brand/performance`);
+  revalidatePath(`/${locale}/brand`);
   revalidatePath(`/${locale}/creator/earnings`);
 }

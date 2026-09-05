@@ -31,7 +31,7 @@ export default async function BrandProfileEditorPage({
       <ProfileEditor
         role="brand"
         locale={locale}
-        name={allowed.value.brandName}
+        name={profile?.brand.name ?? allowed.value.brandName}
         brandCopy={brandCopy(messages)}
         profile={record}
         products={products}

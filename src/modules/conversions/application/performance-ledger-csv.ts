@@ -12,7 +12,9 @@ const HEADERS = [
   "Cited click",
   "Quantity",
   "Commissionable net (GEL)",
-  "Commission (GEL)",
+  "Issued commission (GEL)",
+  "Reversed commission (GEL)",
+  "Net earned commission (GEL)",
 ] as const;
 
 function csvCell(value: string | number): string {
@@ -36,6 +38,8 @@ export function performanceLedgerCsv(rows: readonly EarningsLedgerRow[]) {
       row.quantity,
       row.commissionableNet,
       row.commissionAmount,
+      row.status === "CANCELLED" ? row.commissionAmount : "0.00",
+      row.status === "CANCELLED" ? "0.00" : row.commissionAmount,
     ]
       .map(csvCell)
       .join(","),

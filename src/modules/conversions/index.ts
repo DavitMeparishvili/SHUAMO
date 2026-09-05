@@ -68,9 +68,6 @@ export { OrdersQueue } from "./ui/orders-queue";
 export { EarningsList } from "./ui/earnings-list";
 export { EarningsLedger } from "./ui/earnings-ledger";
 export { ClickLedger } from "./ui/click-ledger";
-export { PerformanceDashboard } from "./ui/performance-dashboard";
-export {
-  WorkspaceOverview,
-  ProductDistribution,
-  type HomeProduct,
-} from "./ui/workspace-overview";
+export { PerformanceDashboard } from "./ui/insight-dashboard";
+export { ProductDistribution, type HomeProduct } from "./ui/workspace-overview";
+export { WorkspaceOverview } from "./ui/insight-overview";

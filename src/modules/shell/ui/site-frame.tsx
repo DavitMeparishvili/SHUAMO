@@ -47,7 +47,7 @@ export function SiteFrame({
     {
       href: `${root}/${brand ? "creators" : "brands"}`,
       text: brand
-        ? label("Collaborations", "თანამშრომლობები")
+        ? label("Creators", "თანამშრომლობები")
         : label("Brands", "ბრენდები"),
       icon: "users",
     },
@@ -60,14 +60,14 @@ export function SiteFrame({
       ? [
           {
             href: `${root}/orders`,
-            text: label("Orders", "შეკვეთები"),
+            text: label("Sales", "შეკვეთები"),
             icon: "cart" as const,
           },
         ]
       : []),
     {
       href: `${root}/${brand ? "performance" : "earnings"}`,
-      text: label("Analytics", "ანალიტიკა"),
+      text: label("Performance", "ანალიტიკა"),
       icon: "chart",
     },
     {
@@ -440,8 +440,8 @@ export function SiteFrame({
           {[
             nav[0]!,
             nav[1]!,
-            nav.find((n) => n.icon === (brand ? "link" : "users"))!,
-            nav.find((n) => n.icon === (brand ? "chart" : "link"))!,
+            nav.find((n) => n.icon === "users")!,
+            nav.find((n) => n.icon === (brand ? "cart" : "link"))!,
           ].map((n) => (
             <Link
               key={n.href}

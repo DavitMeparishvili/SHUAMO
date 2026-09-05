@@ -33,6 +33,7 @@ function uuid(value: string | undefined): string | undefined {
 
 function calendarDate(value: string | undefined): string | undefined {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  if (value < "1970-01-01") return undefined;
   const parsed = new Date(`${value}T12:00:00.000Z`);
   return Number.isNaN(parsed.getTime()) ||
     parsed.toISOString().slice(0, 10) !== value
@@ -77,6 +78,16 @@ export function parsePerformanceQuery(
   return {
     filters: {
       period,
+      tab:
+        query.tab === "sales" || query.tab === "activity"
+          ? query.tab
+          : "summary",
+      ...(uuid(scalar(query.sale))
+        ? { saleId: uuid(scalar(query.sale))! }
+        : {}),
+      ...(query.linkStatus === "ACTIVE" || query.linkStatus === "DISABLED"
+        ? { linkStatus: query.linkStatus }
+        : {}),
       ...(period === "custom" && from && to ? { from, to } : {}),
       ...(role === "creator" && brandId ? { brandId } : {}),
       ...(role === "brand" && creatorId ? { creatorId } : {}),

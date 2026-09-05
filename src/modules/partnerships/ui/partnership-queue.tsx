@@ -4,10 +4,13 @@ export function PartnershipQueue({
   partnerships,
   decideAction,
   copy,
+  locale = "en",
 }: {
+  locale?: string;
   partnerships: readonly {
     id: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
+    submittedAt?: string;
     creator: {
       displayName: string;
       profile?: { slug: string | null; status: string } | null;
@@ -84,16 +87,53 @@ export function PartnershipQueue({
             ) : null}
           </div>
           {partnership.status === "PENDING" ? (
-            <div className="flex flex-wrap gap-2">
-              <form action={decideAction.bind(null, partnership.id, "APPROVE")}>
-                <Button type="submit">{copy.approve}</Button>
-              </form>
-              <form action={decideAction.bind(null, partnership.id, "REJECT")}>
-                <Button type="submit" variant="outline">
-                  {copy.reject}
-                </Button>
-              </form>
-            </div>
+            <details className="partnership-review">
+              <summary>
+                {locale === "ka" ? "განაცხადის განხილვა" : "Review application"}
+              </summary>
+              <div className="partnership-review-content">
+                <h3>{partnership.creator.displayName}</h3>
+                {partnership.submittedAt ? (
+                  <p>
+                    {locale === "ka" ? "განაცხადის თარიღი" : "Submitted"}:{" "}
+                    {partnership.submittedAt}
+                  </p>
+                ) : null}
+                {partnership.creator.profileHref ? (
+                  <a href={partnership.creator.profileHref}>
+                    {locale === "ka"
+                      ? "საჯარო პროფილის გადახედვა"
+                      : "Preview public creator profile"}{" "}
+                    →
+                  </a>
+                ) : (
+                  <p>
+                    {locale === "ka"
+                      ? "კრეატორს საჯარო პროფილი ჯერ არ გამოუქვეყნებია."
+                      : "This creator has not published a public profile yet."}
+                  </p>
+                )}
+                <p>
+                  {locale === "ka"
+                    ? "დამტკიცების შემდეგ კრეატორს შეეძლება თქვენი კატალოგის პრომოცია. პროდუქტის პირობებს კრეატორი ცალკე მიიღებს."
+                    : "This creator can promote your catalogue after approval. They will accept each product’s terms when creating a link."}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <form
+                    action={decideAction.bind(null, partnership.id, "APPROVE")}
+                  >
+                    <Button type="submit">{copy.approve}</Button>
+                  </form>
+                  <form
+                    action={decideAction.bind(null, partnership.id, "REJECT")}
+                  >
+                    <Button type="submit" variant="outline">
+                      {copy.reject}
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </details>
           ) : partnership.status === "APPROVED" ? (
             <form action={decideAction.bind(null, partnership.id, "REJECT")}>
               <Button type="submit" variant="danger">

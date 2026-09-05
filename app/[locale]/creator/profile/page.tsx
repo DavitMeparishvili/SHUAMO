@@ -26,7 +26,7 @@ export default async function CreatorProfileEditorPage({
       <ProfileEditor
         role="creator"
         locale={locale}
-        name={allowed.value.displayName}
+        name={profile?.creator.displayName ?? allowed.value.displayName}
         creatorCopy={creatorCopy(messages)}
         profile={profile as Parameters<typeof ProfileEditor>[0]["profile"]}
         saveAction={saveCreatorProfileAction.bind(null, locale)}

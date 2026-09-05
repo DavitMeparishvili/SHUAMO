@@ -27,6 +27,7 @@ import { ProfileMediaField, type MediaUploadCopy } from "./profile-media-field";
 import { SocialLinksEditor } from "./social-links-editor";
 
 type ProfileEditorRecord = {
+  hasUnpublishedChanges?: boolean;
   slug?: string | null;
   status?: string;
   taglineKa?: string;
@@ -358,7 +359,15 @@ export function ProfileEditor({
                   : ui.privatePreview}
             </strong>
             {isPublic ? (
-              <small>{dirty ? ui.preview : ui.previewInfo}</small>
+              <small>
+                {profile?.hasUnpublishedChanges
+                  ? locale === "ka"
+                    ? "შენახული ცვლილებები ჯერ არ გამოქვეყნებულა."
+                    : "Your saved changes have not been published yet."
+                  : dirty
+                    ? ui.preview
+                    : ui.previewInfo}
+              </small>
             ) : null}
           </div>
           <button
@@ -664,7 +673,13 @@ export function ProfileEditor({
               <span className="save-status-dot" />
               <span>
                 {dirty ? ui.unsaved : ui.saved}
-                <small>{isPublic ? ui.publicHint : ui.privateHint}</small>
+                <small>
+                  {isPublic
+                    ? locale === "ka"
+                      ? "მონახაზი პირადია. საჯარო ვერსია იცვლება მხოლოდ გამოქვეყნებით."
+                      : "Draft edits stay private until you publish changes."
+                    : ui.privateHint}
+                </small>
               </span>
             </div>
             <button
@@ -677,7 +692,7 @@ export function ProfileEditor({
             </button>
             <SubmitButton
               disabled={uploads.size > 0}
-              label={isPublic ? ui.save : ui.saveDraft}
+              label={ui.saveDraft}
               pendingLabel={copy.pending}
             />
           </footer>
@@ -693,6 +708,25 @@ export function ProfileEditor({
           </summary>
           <div className="profile-section-content">
             <p>{isPublic ? ui.public : ui.draft}</p>
+            {isPublic ? (
+              <form action={publicationFormAction}>
+                <p>
+                  {locale === "ka"
+                    ? "გამოაქვეყნეთ შენახული მონახაზი საჯარო პროფილის გასაახლებლად."
+                    : "Publish your saved draft to update the public profile."}
+                </p>
+                <input type="hidden" name="publication" value="publish" />
+                <SubmitButton
+                  label={
+                    locale === "ka"
+                      ? "ცვლილებების გამოქვეყნება"
+                      : "Publish changes"
+                  }
+                  pendingLabel={copy.pending}
+                  disabled={dirty || uploads.size > 0}
+                />
+              </form>
+            ) : null}
             <ActionMessage
               state={publicationState}
               fieldLabels={fieldLabels(copy)}
