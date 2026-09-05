@@ -3,6 +3,7 @@
 @import "@fontsource/noto-sans-georgian/georgian.css";
 @import "@fontsource/manrope/latin.css";
 @import "./xurjin.css";
+@import "./discovery.css";
 
 :root {
   color-scheme: light;

@@ -40,6 +40,7 @@ export {
   listCreatorLinkBrands,
   listLinkOffersForCreator,
   listPublicProductOffers,
+  getPublicCatalogFacets,
   listProductOffersForCreator,
   getPublicProductOffer,
   getProductOfferForCreator,

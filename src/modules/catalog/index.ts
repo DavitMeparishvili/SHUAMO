@@ -58,4 +58,8 @@ export {
 export { ProductList } from "./ui/product-list";
 export { CatalogPagination } from "./ui/catalog-pagination";
 export { MobileFilterSheet } from "./ui/mobile-filter-sheet";
+export {
+  DiscoveryControls,
+  type DiscoveryFilters,
+} from "./ui/discovery-controls";
 export { ProductImageGallery } from "./ui/product-image-gallery";

@@ -381,6 +381,8 @@ export async function listLinkOffersForCreator(creatorId: string) {
 export interface CreatorOfferCatalogQuery {
   q?: string;
   productType?: ProductTypeValue;
+  productTypes?: ProductTypeValue[];
+  brandId?: string;
   commissionType?: "PERCENT" | "FIXED";
   sort?: "newest" | "title" | "price_low" | "commission_high";
   page?: number;
@@ -416,6 +418,10 @@ function publicCatalogWhere(
   return {
     status: "ACTIVE",
     brand: { status: "APPROVED" },
+    ...(query.brandId ? { brandId: query.brandId } : {}),
+    ...(query.productTypes?.length
+      ? { productType: { in: query.productTypes } }
+      : {}),
     ...(query.productType ? { productType: query.productType } : {}),
     ...(query.commissionType ? { commissionType: query.commissionType } : {}),
     ...(query.q
@@ -508,6 +514,29 @@ function catalogOrderBy(
       : sort === "commission_high"
         ? [{ commissionValue: "desc" }, { title: "asc" }]
         : [{ createdAt: "desc" }, { title: "asc" }];
+}
+
+export async function getPublicCatalogFacets(q?: string) {
+  const where = publicCatalogWhere(q ? { q } : {});
+  const [counts, brands] = await Promise.all([
+    prisma.product.groupBy({
+      by: ["productType", "brandId", "commissionType"],
+      where,
+      _count: { _all: true },
+    }),
+    prisma.brand.findMany({
+      where: { status: "APPROVED", products: { some: { status: "ACTIVE" } } },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+  return {
+    counts: counts.map(({ _count, ...facet }) => ({
+      ...facet,
+      count: _count._all,
+    })),
+    brands,
+  };
 }
 
 export async function listPublicProductOffers(

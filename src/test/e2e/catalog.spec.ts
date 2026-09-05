@@ -59,7 +59,9 @@ test("@phase-3 a creator explicitly accepts one product rate", async ({
     .locator("article")
     .filter({ hasText: chosenProduct });
   await expect(chosenOffer).toContainText(agreedRate);
-  await chosenOffer.getByRole("link").click();
+  await chosenOffer
+    .getByRole("link", { name: "View offer", exact: true })
+    .click();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Create link at this rate" }).click();
   await expect(page.getByText("Link active", { exact: true })).toBeVisible();

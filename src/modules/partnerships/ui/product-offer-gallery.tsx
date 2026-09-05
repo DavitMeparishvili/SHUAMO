@@ -1,13 +1,9 @@
 import Decimal from "decimal.js";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  EmptyState,
-  MoneyAmount,
-  StatusPill,
-} from "@/src/modules/design-system";
-import { Money } from "@/src/modules/shared";
+import { EmptyState, Icon } from "@/src/modules/design-system";
 import type { ProductTypeValue } from "@/src/modules/catalog";
+import { CopyOfferLink, SaveProductButton } from "./discovery-card-actions";
 
 export interface CatalogProductOffer {
   id: string;
@@ -20,16 +16,20 @@ export interface CatalogProductOffer {
   commissionType: "PERCENT" | "FIXED";
   commissionValue: string;
   cookieWindowDays: number;
-  links: readonly { id: string }[];
+  links: readonly { id: string; code?: string }[];
 }
 
 export function ProductOfferGallery({
   locale,
   offers,
   copy,
+  baseUrl = "",
+  savedScope = "guest",
 }: {
   locale: string;
   offers: readonly CatalogProductOffer[];
+  baseUrl?: string;
+  savedScope?: string;
   copy: {
     emptyTitle: string;
     emptyBody: string;
@@ -41,103 +41,94 @@ export function ProductOfferGallery({
     activeLink: string;
     imageFallback: string;
     productTypes: Record<ProductTypeValue, string>;
+    save: string;
+    unsave: string;
+    copyLink: string;
+    copied: string;
+    copyError: string;
   };
 }) {
-  if (offers.length === 0)
+  if (!offers.length)
     return <EmptyState title={copy.emptyTitle} body={copy.emptyBody} />;
   return (
-    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" role="list">
-      {offers.map((offer) => {
-        const rate =
+    <div className="discovery-grid" role="list">
+      {offers.map((offer, index) => {
+        const commission =
           offer.commissionType === "PERCENT"
             ? `${new Decimal(offer.commissionValue).times(100).toString()}%`
             : `${new Decimal(offer.commissionValue).toFixed(2)} ₾`;
+        const href = `/${locale}/products/${offer.id}`;
+        const activeLink = offer.links[0];
         return (
-          <article
-            className="group overflow-hidden rounded-md bg-paper shadow-xs"
-            key={offer.id}
-            role="listitem"
-          >
+          <article className="discovery-card" key={offer.id} role="listitem">
             <Link
-              className="block text-inherit no-underline"
-              href={`/${locale}/products/${offer.id}`}
+              className="discovery-product-image"
+              href={href}
+              aria-label={offer.title}
+              tabIndex={-1}
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                {offer.imageUrls[0] ? (
-                  <Image
-                    alt=""
-                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.025]"
-                    fill
-                    sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 33vw"
-                    src={offer.imageUrls[0]}
-                    unoptimized
-                  />
-                ) : (
-                  <div className="grid size-full place-items-center text-slate-500">
-                    <svg
-                      aria-hidden="true"
-                      className="size-9"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="m5 16 4-4 3 3 2-2 5 5"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                    <span className="sr-only">{copy.imageFallback}</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between gap-3 type-caption text-slate-600">
-                  <span>{offer.brandName}</span>
-                  <span>{copy.productTypes[offer.productType]}</span>
-                </div>
-                <h2 className="mb-0 mt-2 type-h3 text-ink group-hover:text-signal">
-                  {offer.title}
-                </h2>
-                {offer.description ? (
-                  <p className="mb-0 mt-2 line-clamp-2 type-small text-slate-600">
-                    {offer.description}
-                  </p>
-                ) : null}
-                <dl className="mb-0 mt-5 grid grid-cols-2 gap-4 border-t border-slate-200 pt-4 type-caption">
-                  <div>
-                    <dt className="text-slate-600">{copy.price}</dt>
-                    <dd className="m-0 mt-1">
-                      <MoneyAmount size="sm" value={Money.of(offer.priceGel)} />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-600">{copy.commission}</dt>
-                    <dd className="m-0 mt-1 type-mono font-semibold text-ink">
-                      {rate}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                  <span className="type-caption text-slate-600">
-                    {offer.cookieWindowDays} {copy.days} {copy.cookieWindow}
-                  </span>
-                  {offer.links.length > 0 ? (
-                    <StatusPill label={copy.activeLink} state="active" />
-                  ) : (
-                    <span className="type-small font-semibold text-signal">
-                      {copy.viewOffer} →
-                    </span>
-                  )}
-                </div>
-              </div>
+              {offer.imageUrls[0] ? (
+                <Image
+                  alt=""
+                  className="object-cover"
+                  fill
+                  loading={index === 0 ? "eager" : "lazy"}
+                  sizes="(max-width: 639px) 108px, (max-width: 1050px) 40vw, 25vw"
+                  src={offer.imageUrls[0]}
+                  unoptimized
+                />
+              ) : (
+                <span className="discovery-image-fallback">
+                  <Icon name="box" />
+                  <span>{copy.imageFallback}</span>
+                </span>
+              )}
             </Link>
+            <SaveProductButton
+              id={offer.id}
+              scope={savedScope}
+              saveLabel={`${copy.save}: ${offer.title}`}
+              unsaveLabel={`${copy.unsave}: ${offer.title}`}
+            />
+            <div className="discovery-card-body">
+              <p className="discovery-brand">{offer.brandName}</p>
+              <h2>
+                <Link href={href}>{offer.title}</Link>
+              </h2>
+              <dl className="discovery-terms">
+                <div>
+                  <dt>{copy.price}</dt>
+                  <dd>{new Decimal(offer.priceGel).toFixed(2)} ₾</dd>
+                </div>
+                <div className="discovery-commission">
+                  <dt>{copy.commission}</dt>
+                  <dd>{commission}</dd>
+                </div>
+              </dl>
+              <p className="discovery-cookie">
+                {offer.cookieWindowDays} {copy.days} {copy.cookieWindow}
+              </p>
+              {activeLink ? (
+                <div className="discovery-active-link">
+                  <Link href={href}>
+                    <Icon name="link" />
+                    <span>{copy.activeLink}</span>
+                  </Link>
+                  {activeLink.code ? (
+                    <CopyOfferLink
+                      url={`${baseUrl.replace(/\/$/, "")}/r/${activeLink.code}`}
+                      label={copy.copyLink}
+                      copiedLabel={copy.copied}
+                      errorLabel={copy.copyError}
+                    />
+                  ) : null}
+                </div>
+              ) : (
+                <Link className="discovery-primary" href={href}>
+                  {copy.viewOffer}
+                </Link>
+              )}
+            </div>
           </article>
         );
       })}

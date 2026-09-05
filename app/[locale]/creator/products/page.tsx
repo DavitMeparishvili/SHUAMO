@@ -1,113 +1,31 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button, Field, Select } from "@/src/modules/design-system";
 import {
   CatalogPagination,
+  DiscoveryControls,
   isProductType,
-  MobileFilterSheet,
   PRODUCT_TYPES,
+  PRODUCT_TYPE_GROUPS,
   productTypeMessageKey,
   type ProductTypeValue,
 } from "@/src/modules/catalog";
-import { currentViewer, WorkspaceShell } from "@/src/modules/identity";
+import { currentViewer } from "@/src/modules/identity";
+import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
-  getMessages,
-  isLocale,
-  t,
-  type Messages,
-} from "@/src/modules/localization";
-import {
+  getPublicCatalogFacets,
   listPublicProductOffers,
   ProductOfferGallery,
 } from "@/src/modules/partnerships";
+import { serverEnv } from "@/src/config/env";
 
 type Query = {
   q?: string;
+  category?: string;
   type?: string;
   commission?: string;
+  brand?: string;
   sort?: string;
   page?: string;
 };
-
-function validPage(value: string | undefined) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
-}
-
-function FilterForm({
-  messages,
-  query,
-  suffix,
-  clearHref,
-}: {
-  messages: Messages;
-  query: Query;
-  suffix: string;
-  clearHref: string;
-}) {
-  return (
-    <form
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_repeat(3,minmax(160px,auto))_auto] lg:items-end"
-      method="get"
-    >
-      <Field
-        defaultValue={query.q}
-        id={`offer-search-${suffix}`}
-        label={t(messages, "catalog.filter.search")}
-        name="q"
-        placeholder={t(messages, "catalog.filter.searchPlaceholder")}
-        type="search"
-      />
-      <Select
-        defaultValue={query.type ?? ""}
-        id={`offer-type-${suffix}`}
-        label={t(messages, "catalog.filter.productType")}
-        name="type"
-      >
-        <option value="">{t(messages, "catalog.filter.anyType")}</option>
-        {PRODUCT_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {t(messages, productTypeMessageKey(type))}
-          </option>
-        ))}
-      </Select>
-      <Select
-        defaultValue={query.commission ?? ""}
-        id={`offer-commission-${suffix}`}
-        label={t(messages, "catalog.field.rateType")}
-        name="commission"
-      >
-        <option value="">{t(messages, "catalog.filter.anyCommission")}</option>
-        <option value="PERCENT">{t(messages, "catalog.rate.percent")}</option>
-        <option value="FIXED">{t(messages, "catalog.rate.fixed")}</option>
-      </Select>
-      <Select
-        defaultValue={query.sort ?? "newest"}
-        id={`offer-sort-${suffix}`}
-        label={t(messages, "catalog.filter.sort")}
-        name="sort"
-      >
-        <option value="newest">{t(messages, "catalog.sort.newest")}</option>
-        <option value="title">{t(messages, "catalog.sort.title")}</option>
-        <option value="price_low">
-          {t(messages, "catalog.sort.priceLow")}
-        </option>
-        <option value="commission_high">
-          {t(messages, "catalog.sort.commissionHigh")}
-        </option>
-      </Select>
-      <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-1">
-        <Button type="submit">{t(messages, "catalog.filter.apply")}</Button>
-        <Link
-          className="inline-flex min-h-11 items-center px-3 type-small font-semibold text-slate-600 hover:text-ink"
-          href={clearHref}
-        >
-          {t(messages, "catalog.filter.clear")}
-        </Link>
-      </div>
-    </form>
-  );
-}
 
 export default async function CreatorProductsPage({
   params,
@@ -123,8 +41,15 @@ export default async function CreatorProductsPage({
   ]);
   if (!isLocale(locale)) notFound();
   const messages = getMessages(locale);
+  const category = PRODUCT_TYPE_GROUPS.find(
+    (group) => group.key === query.category,
+  );
   const productType =
-    query.type && isProductType(query.type) ? query.type : undefined;
+    query.type &&
+    isProductType(query.type) &&
+    (!category || (category.values as readonly string[]).includes(query.type))
+      ? query.type
+      : undefined;
   const commissionType =
     query.commission === "PERCENT" || query.commission === "FIXED"
       ? query.commission
@@ -134,132 +59,130 @@ export default async function CreatorProductsPage({
   )
     ? (query.sort as "newest" | "title" | "price_low" | "commission_high")
     : "newest";
-  const search = query.q?.trim();
-  const catalog = await listPublicProductOffers(
-    {
-      ...(search ? { q: search } : {}),
-      ...(productType ? { productType } : {}),
-      ...(commissionType ? { commissionType } : {}),
-      sort,
-      page: validPage(query.page),
-    },
-    viewer.kind === "creator" ? viewer.creatorId : undefined,
-  );
+  const search = query.q?.trim() ?? "";
+  const brandId =
+    query.brand &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      query.brand,
+    )
+      ? query.brand
+      : undefined;
+  const requestedPage = Number(query.page);
+  const [catalog, facets] = await Promise.all([
+    listPublicProductOffers(
+      {
+        ...(search ? { q: search } : {}),
+        ...(category ? { productTypes: [...category.values] } : {}),
+        ...(productType ? { productType } : {}),
+        ...(commissionType ? { commissionType } : {}),
+        ...(brandId ? { brandId } : {}),
+        sort,
+        page:
+          Number.isInteger(requestedPage) && requestedPage > 0
+            ? requestedPage
+            : 1,
+      },
+      viewer.kind === "creator" ? viewer.creatorId : undefined,
+    ),
+    getPublicCatalogFacets(search),
+  ]);
   const productTypes = Object.fromEntries(
     PRODUCT_TYPES.map((type) => [
       type,
       t(messages, productTypeMessageKey(type)),
     ]),
   ) as Record<ProductTypeValue, string>;
-  const queryWith = (updates: Record<string, string | undefined>) => {
-    const values = new URLSearchParams();
-    for (const [key, value] of Object.entries({
-      q: query.q,
-      type: productType,
-      commission: commissionType,
-      sort: query.sort && query.sort !== "newest" ? query.sort : undefined,
-      ...updates,
-    }))
-      if (value) values.set(key, value);
-    const serialized = values.toString();
-    const catalogPath = `/${locale}/products`;
-    return serialized ? `${catalogPath}?${serialized}` : catalogPath;
+  const filters = {
+    q: search,
+    category: category?.key ?? "",
+    type: productType ?? "",
+    commission: commissionType ?? "",
+    brand: brandId ?? "",
+    sort,
   };
-  const activeFilterCount = [
-    query.q,
-    productType,
-    commissionType,
-    query.sort && query.sort !== "newest",
-  ].filter(Boolean).length;
+  const copy = Object.fromEntries(
+    [
+      "title",
+      "intro",
+      "filters",
+      "clear",
+      "all",
+      "any",
+      "category",
+      "beauty",
+      "fashion",
+      "home",
+      "other",
+      "brand",
+      "productType",
+      "commissionType",
+      "percent",
+      "fixed",
+      "search",
+      "searchPlaceholder",
+      "sort",
+      "newest",
+      "titleSort",
+      "price_low",
+      "commission_high",
+      "results",
+      "products",
+      "close",
+      "showProducts",
+    ].map((key) => [key, t(messages, `discovery.${key}`)]),
+  );
   return (
-    <WorkspaceShell
-      name={t(messages, "app.name")}
-      showName={false}
-      title={t(messages, "catalog.discover.title")}
-      intro={t(messages, "catalog.discover.intro")}
+    <DiscoveryControls
+      filters={filters}
+      counts={facets.counts}
+      brands={facets.brands}
+      copy={copy}
+      productTypes={productTypes}
+      total={catalog.total}
     >
-      <div className="grid gap-7">
-        <nav
-          aria-label={t(messages, "catalog.filter.productType")}
-          className="-mx-2 flex gap-1 overflow-x-auto px-2 pb-2"
-        >
-          <Link
-            aria-current={!productType ? "page" : undefined}
-            className={`shrink-0 border-b-2 px-4 py-3 type-small font-semibold no-underline ${!productType ? "border-signal text-ink" : "border-transparent text-slate-600 hover:text-ink"}`}
-            href={queryWith({ type: undefined, page: undefined })}
-          >
-            {t(messages, "catalog.filter.all")}
-          </Link>
-          {PRODUCT_TYPES.map((type) => (
-            <Link
-              aria-current={productType === type ? "page" : undefined}
-              className={`shrink-0 border-b-2 px-4 py-3 type-small font-semibold no-underline ${productType === type ? "border-signal text-ink" : "border-transparent text-slate-600 hover:text-ink"}`}
-              href={queryWith({ type, page: undefined })}
-              key={type}
-            >
-              {productTypes[type]}
-            </Link>
-          ))}
-        </nav>
-        <div className="hidden sm:block">
-          <FilterForm
-            clearHref={`/${locale}/products`}
-            messages={messages}
-            query={query}
-            suffix="desktop"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <p className="m-0 type-small text-slate-600">
-            {t(messages, "catalog.results").replace(
-              "{count}",
-              String(catalog.total),
-            )}
-          </p>
-          <MobileFilterSheet
-            activeCount={activeFilterCount}
-            closeLabel={t(messages, "catalog.filter.close")}
-            label={t(messages, "catalog.filter.mobile")}
-          >
-            <FilterForm
-              clearHref={`/${locale}/products`}
-              messages={messages}
-              query={query}
-              suffix="mobile"
-            />
-          </MobileFilterSheet>
-        </div>
-        <ProductOfferGallery
-          locale={locale}
-          offers={catalog.items}
-          copy={{
-            emptyTitle: t(messages, "catalog.discover.emptyTitle"),
-            emptyBody: t(messages, "catalog.discover.emptyBody"),
-            price: t(messages, "catalog.field.price"),
-            commission: t(messages, "catalog.field.rate"),
-            cookieWindow: t(messages, "catalog.terms.cookieWindow"),
-            days: t(messages, "catalog.terms.days"),
-            viewOffer: t(messages, "catalog.viewOffer"),
-            activeLink: t(messages, "catalog.activeLink"),
-            imageFallback: t(messages, "catalog.image.fallback"),
-            productTypes,
-          }}
-        />
-        <CatalogPagination
-          page={catalog.page}
-          pageCount={catalog.pageCount}
-          hrefForPage={(page) =>
-            queryWith({ page: page > 1 ? String(page) : undefined })
-          }
-          copy={{
-            label: t(messages, "catalog.pagination.label"),
-            previous: t(messages, "catalog.pagination.previous"),
-            next: t(messages, "catalog.pagination.next"),
-            page: t(messages, "catalog.pagination.page"),
-            of: t(messages, "catalog.pagination.of"),
-          }}
-        />
-      </div>
-    </WorkspaceShell>
+      <ProductOfferGallery
+        locale={locale}
+        offers={catalog.items}
+        baseUrl={serverEnv().APP_URL}
+        savedScope={viewer.kind === "creator" ? viewer.creatorId : "guest"}
+        copy={{
+          emptyTitle: t(messages, "catalog.discover.emptyTitle"),
+          emptyBody: t(messages, "catalog.discover.emptyBody"),
+          price: t(messages, "catalog.field.price"),
+          commission: t(messages, "discovery.commission"),
+          cookieWindow: t(messages, "catalog.terms.cookieWindow"),
+          days: t(messages, "catalog.terms.days"),
+          viewOffer: t(messages, "catalog.viewOffer"),
+          activeLink: t(messages, "catalog.activeLink"),
+          imageFallback: t(messages, "catalog.image.fallback"),
+          productTypes,
+          save: t(messages, "discovery.save"),
+          unsave: t(messages, "discovery.unsave"),
+          copyLink: t(messages, "discovery.copyLink"),
+          copied: t(messages, "discovery.copied"),
+          copyError: t(messages, "discovery.copyError"),
+        }}
+      />
+      <CatalogPagination
+        page={catalog.page}
+        pageCount={catalog.pageCount}
+        hrefForPage={(page) => {
+          const values = new URLSearchParams();
+          Object.entries(filters).forEach(([key, value]) => {
+            if (value && !(key === "sort" && value === "newest"))
+              values.set(key, value);
+          });
+          if (page > 1) values.set("page", String(page));
+          return `/${locale}/products${values.size ? `?${values}` : ""}`;
+        }}
+        copy={{
+          label: t(messages, "catalog.pagination.label"),
+          previous: t(messages, "catalog.pagination.previous"),
+          next: t(messages, "catalog.pagination.next"),
+          page: t(messages, "catalog.pagination.page"),
+          of: t(messages, "catalog.pagination.of"),
+        }}
+      />
+    </DiscoveryControls>
   );
 }
