@@ -8,7 +8,7 @@
 	}
 }
 
-xu.ge {
+xurjin.com {
 	encode gzip zstd
 
 	# X-Real-IP is the only client address the application reads. Both headers

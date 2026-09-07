@@ -47,6 +47,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!/deploy/.env.droplet.example
+/deploy/.env.droplet
+/deploy/secrets/
 
 # vercel
 .vercel
