@@ -16,6 +16,8 @@ public HTTPS:
 | A    | `s3`  | `64.227.17.241` |
 
 Caddy obtains and renews TLS certificates automatically after DNS resolves.
+The bare domain redirects to the Georgian landing page at `/ka`; `/en` remains
+available directly.
 
 ## Droplet layout
 
