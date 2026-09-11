@@ -17,6 +17,9 @@ export function SiteFrame({
 }) {
   const path = usePathname();
   const discovery = /^\/(ka|en)\/(creator\/)?products$/.test(path);
+  const brandManagement = /^\/(ka|en)\/brand\/(products|creators|links)$/.test(
+    path,
+  );
   const productDetail = /^\/(ka|en)\/(creator\/)?products\/[^/]+$/.test(path);
   const trackingLinks = /^\/(ka|en)\/creator\/links$/.test(path);
   const brandsPage = /^\/(ka|en)\/creator\/brands$/.test(path);
@@ -177,7 +180,9 @@ export function SiteFrame({
       className={
         (workspace ? "site-frame workspace-frame" : "site-frame public-frame") +
         (productDetail ? " product-detail-frame" : "") +
-        (brandsPage ? " brands-frame" : "")
+        (brandsPage || path === `/${locale}/brand/creators`
+          ? " brands-frame"
+          : "")
       }
     >
       <a className="skip-link" href="#main">
@@ -261,15 +266,18 @@ export function SiteFrame({
               <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
             </div>
           ) : null}
-          {workspace && (discovery || trackingLinks || brandsPage) ? (
+          {workspace &&
+          (discovery || trackingLinks || brandsPage || brandManagement) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
               <span>
-                {brandsPage
-                  ? label("Brands", "ბრენდები")
-                  : trackingLinks
-                    ? label("Tracking links", "ტრეკინგ ბმულები")
-                    : label("Discover", "აღმოჩენა")}
+                {brandManagement
+                  ? nav.find((item) => item.href === path)?.text
+                  : brandsPage
+                    ? label("Brands", "ბრენდები")
+                    : trackingLinks
+                      ? label("Tracking links", "ტრეკინგ ბმულები")
+                      : label("Discover", "აღმოჩენა")}
               </span>
             </div>
           ) : workspace ? (

@@ -35,11 +35,17 @@ const productTypes = Object.fromEntries(
 ) as Record<ProductTypeValue, string>;
 
 describe("LinkList", () => {
-  it.each([false, true])(
-    "keeps role-specific destinations and separate controls (brand: %s)",
-    (isBrand) => {
+  it.each([
+    [false, "default"],
+    [true, "default"],
+    [false, "discovery"],
+    [true, "discovery"],
+  ] as const)(
+    "keeps role-specific destinations and separate controls (brand: %s, variant: %s)",
+    (isBrand, variant) => {
       const html = renderToStaticMarkup(
         <LinkList
+          variant={variant}
           {...(isBrand
             ? {
                 brandControls: {
@@ -102,9 +108,9 @@ describe("LinkList", () => {
       );
 
       expect(html).toContain("Amber perfume");
-      expect(html).toContain("Aroma");
+      if (!isBrand || variant === "default") expect(html).toContain("Aroma");
       expect(html).toContain("12.5%");
-      expect(html).toContain("View product");
+      if (variant === "default") expect(html).toContain("View product");
       expect(html).toContain(
         `href="/en/${isBrand ? "brand" : "creator"}/products/p1"`,
       );

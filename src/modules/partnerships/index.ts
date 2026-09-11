@@ -51,6 +51,8 @@ export {
 } from "./infrastructure/prisma-link-repository";
 export { PartnershipQueue } from "./ui/partnership-queue";
 export { BrandsDirectory } from "./ui/brands-directory";
+export { CreatorsDirectory } from "./ui/creators-directory";
+export { listCreatorDirectoryForBrand } from "./infrastructure/prisma-creator-directory";
 export { BrandLinkList, LinkList } from "./ui/link-list";
 export { LinkOfferList, type CreatorProductOffer } from "./ui/link-offer-list";
 export {

@@ -31,7 +31,7 @@ function ImagePlaceholder({ label }: { label: string }) {
           strokeWidth="1.5"
         />
       </svg>
-      <span className="sr-only">{label}</span>
+      <span className="discovery-cookie">{label}</span>
     </div>
   );
 }
@@ -74,7 +74,7 @@ export function ProductList({
   if (products.length === 0)
     return <EmptyState title={copy.emptyTitle} body={copy.emptyBody} />;
   return (
-    <div className="grid gap-3" role="list">
+    <div className="discovery-grid management-products" role="list">
       {products.map((product) => {
         const commission = new Decimal(product.commissionValue.toString());
         const rate =
@@ -83,17 +83,17 @@ export function ProductList({
             : `${commission.toFixed(2)} ₾`;
         return (
           <article
-            className="grid gap-4 rounded-md bg-paper p-3 shadow-xs sm:grid-cols-[112px_minmax(0,1fr)_auto] sm:items-center sm:p-4"
+            className="discovery-card management-product"
             key={product.id}
             role="listitem"
           >
-            <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-slate-100 sm:aspect-square">
+            <div className="discovery-product-image">
               {product.imageUrls[0] ? (
                 <Image
                   alt=""
                   className="object-cover"
                   fill
-                  sizes="(max-width: 639px) 100vw, 112px"
+                  sizes="(max-width: 639px) 108px, (max-width: 1050px) 40vw, 25vw"
                   src={product.imageUrls[0]}
                   unoptimized
                 />
@@ -101,8 +101,8 @@ export function ProductList({
                 <ImagePlaceholder label={copy.imageFallback} />
               )}
             </div>
-            <div className="min-w-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2 type-caption text-slate-600">
+            <div className="discovery-card-body">
+              <div className="management-product-meta">
                 <span>{copy.productTypes[product.productType]}</span>
                 <span aria-hidden="true">·</span>
                 <span className="type-mono">{product.sku}</span>
@@ -113,18 +113,20 @@ export function ProductList({
                   state={product.status === "ACTIVE" ? "active" : "disabled"}
                 />
               </div>
-              <Link
-                className="type-h3 text-ink no-underline hover:text-signal"
-                href={`/${locale}/brand/products/${product.id}`}
-              >
-                {product.title}
-              </Link>
+              <h2>
+                <Link
+                  className="text-ink no-underline hover:text-signal"
+                  href={`/${locale}/brand/products/${product.id}`}
+                >
+                  {product.title}
+                </Link>
+              </h2>
               {product.description ? (
                 <p className="mb-0 mt-2 line-clamp-2 max-w-[64ch] type-small text-slate-600">
                   {product.description}
                 </p>
               ) : null}
-              <dl className="mb-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-2 type-caption sm:flex sm:flex-wrap sm:gap-6">
+              <dl className="discovery-terms">
                 <div>
                   <dt className="text-slate-600">{copy.price}</dt>
                   <dd className="m-0 mt-1">
@@ -155,7 +157,7 @@ export function ProductList({
               </dl>
             </div>
             <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-pill border border-slate-300 px-5 type-small font-semibold text-ink no-underline hover:border-ink sm:self-center"
+              className="discovery-primary management-product-action"
               href={`/${locale}/brand/products/${product.id}`}
             >
               {copy.manage}

@@ -122,8 +122,8 @@ export function LinkList({
           typeof link.acceptedTerms.version === "number"
             ? link.acceptedTerms.version
             : 1;
-        if (variant === "discovery" && !brandControls) {
-          const href = `/${locale}/creator/products/${link.product.id}`;
+        if (variant === "discovery") {
+          const href = `/${locale}/${brandControls ? "brand" : "creator"}/products/${link.product.id}`;
           const url = `${baseUrl.replace(/\/$/, "")}/r/${link.code}`;
           const hasActivity =
             metrics &&
@@ -156,7 +156,11 @@ export function LinkList({
                 )}
               </Link>
               <div className="discovery-card-body">
-                <p className="discovery-brand">{link.product.brand.name}</p>
+                <p className="discovery-brand">
+                  {brandControls
+                    ? `${brandControls.creator}: ${link.creator.displayName}`
+                    : link.product.brand.name}
+                </p>
                 <h2>
                   <Link href={href}>{link.product.title}</Link>
                 </h2>
@@ -223,11 +227,30 @@ export function LinkList({
                 )}
                 <Link
                   className="discovery-primary"
-                  href={`/${locale}/creator/earnings?link=${link.id}&view=links#breakdown`}
+                  href={`/${locale}/${brandControls ? "brand/performance" : "creator/earnings"}?link=${link.id}&view=links#breakdown`}
                 >
                   {copy.viewPerformance}
                 </Link>
               </div>
+              {brandControls ? (
+                <form
+                  className="management-link-action"
+                  action={brandControls.setStatusAction.bind(
+                    null,
+                    link.id,
+                    link.status === "ACTIVE" ? "DISABLED" : "ACTIVE",
+                  )}
+                >
+                  <Button
+                    type="submit"
+                    variant={link.status === "ACTIVE" ? "danger" : "outline"}
+                  >
+                    {link.status === "ACTIVE"
+                      ? brandControls.disable
+                      : brandControls.enable}
+                  </Button>
+                </form>
+              ) : null}
             </article>
           );
         }

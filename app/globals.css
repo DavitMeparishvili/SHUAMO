@@ -9,6 +9,7 @@
 @import "./brands.css";
 @import "./insights.css";
 @import "./integration.css";
+@import "./brand-management.css";
 
 :root {
   color-scheme: light;

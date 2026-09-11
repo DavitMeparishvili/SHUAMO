@@ -19,3 +19,5 @@ export {
   TYPE_SCALE,
 } from "./domain/tokens";
 export { XurjinLogo, Icon, type IconName } from "./ui/brand";
+
+export { ManagementDiscovery } from "./ui/management-discovery";

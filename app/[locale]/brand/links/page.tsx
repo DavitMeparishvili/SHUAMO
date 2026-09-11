@@ -1,29 +1,18 @@
 import Decimal from "decimal.js";
-import Link from "next/link";
 import { setLinkStatusAction } from "./actions";
 import { notFound, redirect } from "next/navigation";
 import { serverEnv } from "@/src/config/env";
-import { Button, Field, Select } from "@/src/modules/design-system";
+import { ManagementDiscovery } from "@/src/modules/design-system";
 import { brandLinkPerformanceSnapshots } from "@/src/modules/conversions";
 import {
   CatalogPagination,
   isProductType,
-  MobileFilterSheet,
   PRODUCT_TYPES,
   productTypeMessageKey,
   type ProductTypeValue,
 } from "@/src/modules/catalog";
-import {
-  currentViewer,
-  requireBrand,
-  WorkspaceShell,
-} from "@/src/modules/identity";
-import {
-  getMessages,
-  isLocale,
-  t,
-  type Messages,
-} from "@/src/modules/localization";
+import { currentViewer, requireBrand } from "@/src/modules/identity";
+import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
   LinkList,
   listResolvedLinksForBrand,
@@ -45,86 +34,6 @@ const UUID =
 function validPage(value: string | undefined) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
-}
-
-function FilterForm({
-  messages,
-  query,
-  creators,
-  suffix,
-  locale,
-}: {
-  messages: Messages;
-  query: Query;
-  creators: readonly { id: string; name: string }[];
-  suffix: string;
-  locale: string;
-}) {
-  return (
-    <form
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_repeat(3,minmax(150px,auto))_auto] lg:items-end"
-      method="get"
-    >
-      {query.type ? (
-        <input type="hidden" name="type" value={query.type} />
-      ) : null}
-      <Field
-        defaultValue={query.q}
-        id={`link-search-${suffix}`}
-        label={t(messages, "catalog.filter.search")}
-        name="q"
-        placeholder={t(messages, "catalog.filter.searchPlaceholder")}
-        type="search"
-      />
-      <Select
-        defaultValue={query.creator ?? ""}
-        id={`link-creator-${suffix}`}
-        label={t(messages, "links.creator")}
-        name="creator"
-      >
-        <option value="">{t(messages, "links.filter.anyCreator")}</option>
-        {creators.map((creator) => (
-          <option key={creator.id} value={creator.id}>
-            {creator.name}
-          </option>
-        ))}
-      </Select>
-      <Select
-        defaultValue={query.status ?? ""}
-        id={`link-status-${suffix}`}
-        label={t(messages, "links.filter.status")}
-        name="status"
-      >
-        <option value="">{t(messages, "links.filter.anyStatus")}</option>
-        <option value="ACTIVE">{t(messages, "links.active")}</option>
-        <option value="DISABLED">
-          {t(messages, "links.filter.unavailable")}
-        </option>
-      </Select>
-      <Select
-        defaultValue={query.sort ?? "newest"}
-        id={`link-sort-${suffix}`}
-        label={t(messages, "catalog.filter.sort")}
-        name="sort"
-      >
-        <option value="newest">{t(messages, "catalog.sort.newest")}</option>
-        <option value="title">{t(messages, "catalog.sort.title")}</option>
-        <option value="creator">{t(messages, "links.sort.creator")}</option>
-        <option value="commission_high">
-          {t(messages, "catalog.sort.commissionHigh")}
-        </option>
-      </Select>
-      <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-1">
-        <Button type="submit">{t(messages, "catalog.filter.apply")}</Button>
-        <Link
-          className="inline-flex min-h-11 items-center px-3 type-small font-semibold text-slate-600 hover:text-ink"
-          href={`/${locale}/brand/links`}
-        >
-          {t(messages, "catalog.filter.clear")}
-        </Link>
-      </div>
-    </form>
-  );
 }
 
 export default async function BrandLinksPage({
@@ -255,127 +164,135 @@ export default async function BrandLinksPage({
   ].filter(Boolean).length;
   const hasFilters = activeFilterCount > 0;
   return (
-    <WorkspaceShell
-      name={allowed.value.brandName}
+    <ManagementDiscovery
       title={t(messages, "links.brandTitle")}
       intro={t(messages, "links.brandIntro")}
-      contentVariant="plain"
-      showName={false}
-    >
-      <div className="grid gap-7">
-        <nav
-          aria-label={t(messages, "catalog.filter.productType")}
-          className="-mx-2 flex gap-1 overflow-x-auto px-2 pb-2"
-        >
-          <Link
-            aria-current={!productType ? "page" : undefined}
-            className={`shrink-0 border-b-2 px-4 py-3 type-small font-semibold no-underline ${!productType ? "border-signal text-ink" : "border-transparent text-slate-600 hover:text-ink"}`}
-            href={queryWith({ type: undefined, page: undefined })}
-          >
-            {t(messages, "catalog.filter.all")}
-          </Link>
-          {PRODUCT_TYPES.map((type) => (
-            <Link
-              aria-current={productType === type ? "page" : undefined}
-              className={`shrink-0 border-b-2 px-4 py-3 type-small font-semibold no-underline ${productType === type ? "border-signal text-ink" : "border-transparent text-slate-600 hover:text-ink"}`}
-              href={queryWith({ type, page: undefined })}
-              key={type}
-            >
-              {productTypes[type]}
-            </Link>
-          ))}
-        </nav>
-        <div className="hidden sm:block">
-          <FilterForm
-            creators={creators}
-            locale={locale}
-            messages={messages}
-            query={query}
-            suffix="desktop"
-          />
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <p className="m-0 type-small text-slate-600">
-            {t(messages, "links.results").replace(
-              "{count}",
-              String(catalog.total),
-            )}
-          </p>
-          <MobileFilterSheet
-            activeCount={activeFilterCount}
-            closeLabel={t(messages, "catalog.filter.close")}
-            label={t(messages, "catalog.filter.mobile")}
-          >
-            <FilterForm
-              creators={creators}
-              locale={locale}
-              messages={messages}
-              query={query}
-              suffix="mobile"
-            />
-          </MobileFilterSheet>
-        </div>
-        <LinkList
-          brandControls={{
-            creator: t(messages, "links.creator"),
-            enable: t(messages, "links.enable"),
-            disable: t(messages, "links.disable"),
-            setStatusAction: setLinkStatusAction.bind(null, locale),
-          }}
-          locale={locale}
-          links={catalog.items}
-          performance={performance}
-          baseUrl={serverEnv().APP_URL}
-          copy={{
-            emptyTitle: t(
-              messages,
-              hasFilters ? "links.noMatchesTitle" : "links.brandEmptyTitle",
-            ),
-            emptyBody: t(
-              messages,
-              hasFilters ? "links.brandNoMatchesBody" : "links.brandEmptyBody",
-            ),
-            active: t(messages, "links.active"),
-            link: t(messages, "links.link"),
-            rate: t(messages, "links.rate"),
-            status: t(messages, "links.filter.status"),
-            viewProduct: t(messages, "links.viewProduct"),
-            imageFallback: t(messages, "catalog.image.fallback"),
-            acceptedTerms: t(messages, "links.acceptedTerms"),
-            copy: t(messages, "design.copy.copy"),
-            copied: t(messages, "design.copy.copied"),
-            copyError: t(messages, "design.copy.error"),
-            productTypes,
-            reasons: {
-              BRAND_DISABLED: t(messages, "links.reason.BRAND_DISABLED"),
-              CREATOR_REMOVED: t(messages, "links.reason.CREATOR_REMOVED"),
-              PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
-              LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
+      values={{
+        q: search ?? "",
+        type: productType ?? "",
+        creator: creatorId ?? "",
+        status: resolution ?? "",
+        sort,
+      }}
+      total={catalog.total}
+      filters={[
+        {
+          name: "type",
+          label: t(messages, "catalog.filter.productType"),
+          options: [
+            { value: "", label: t(messages, "catalog.filter.anyType") },
+            ...PRODUCT_TYPES.map((value) => ({
+              value,
+              label: productTypes[value],
+            })),
+          ],
+        },
+        {
+          name: "creator",
+          label: t(messages, "links.creator"),
+          options: [
+            { value: "", label: t(messages, "links.filter.anyCreator") },
+            ...creators.map((creator) => ({
+              value: creator.id,
+              label: creator.name,
+            })),
+          ],
+        },
+        {
+          name: "status",
+          label: t(messages, "links.filter.status"),
+          options: [
+            { value: "", label: t(messages, "links.filter.anyStatus") },
+            { value: "ACTIVE", label: t(messages, "links.active") },
+            {
+              value: "DISABLED",
+              label: t(messages, "links.filter.unavailable"),
             },
-            last30Days: t(messages, "performance.period.30d"),
-            clicks: t(messages, "performance.metric.clicks"),
-            converted: t(messages, "performance.metric.convertedClicks"),
-            orders: t(messages, "performance.metric.orders"),
-            confirmed: t(messages, "performance.metric.confirmed"),
-            noActivity: t(messages, "performance.link.noActivity"),
-            viewPerformance: t(messages, "performance.link.view"),
-          }}
-        />
-        <CatalogPagination
-          page={catalog.page}
-          pageCount={catalog.pageCount}
-          hrefForPage={(page) =>
-            queryWith({ page: page > 1 ? String(page) : undefined })
-          }
-          copy={{
-            label: t(messages, "links.pagination.label"),
-            previous: t(messages, "catalog.pagination.previous"),
-            next: t(messages, "catalog.pagination.next"),
-            page: t(messages, "catalog.pagination.page"),
-            of: t(messages, "catalog.pagination.of"),
-          }}
-        />
-      </div>
-    </WorkspaceShell>
+          ],
+        },
+      ]}
+      sortOptions={["newest", "title", "creator", "commission_high"].map(
+        (value) => ({
+          value,
+          label: t(
+            messages,
+            value === "creator"
+              ? "links.sort.creator"
+              : `catalog.sort.${value === "commission_high" ? "commissionHigh" : value}`,
+          ),
+        }),
+      )}
+      copy={{
+        search: t(messages, "links.search"),
+        filters: t(messages, "discovery.filters"),
+        clear: t(messages, "catalog.filter.clear"),
+        close: t(messages, "catalog.filter.close"),
+        apply: t(messages, "catalog.filter.apply"),
+        sort: t(messages, "catalog.filter.sort"),
+        results: t(messages, "links.results"),
+      }}
+    >
+      <LinkList
+        variant="discovery"
+        brandControls={{
+          creator: t(messages, "links.creator"),
+          enable: t(messages, "links.enable"),
+          disable: t(messages, "links.disable"),
+          setStatusAction: setLinkStatusAction.bind(null, locale),
+        }}
+        locale={locale}
+        links={catalog.items}
+        performance={performance}
+        baseUrl={serverEnv().APP_URL}
+        copy={{
+          emptyTitle: t(
+            messages,
+            hasFilters ? "links.noMatchesTitle" : "links.brandEmptyTitle",
+          ),
+          emptyBody: t(
+            messages,
+            hasFilters ? "links.brandNoMatchesBody" : "links.brandEmptyBody",
+          ),
+          active: t(messages, "links.active"),
+          link: t(messages, "links.link"),
+          rate: t(messages, "links.rate"),
+          status: t(messages, "links.filter.status"),
+          viewProduct: t(messages, "links.viewProduct"),
+          imageFallback: t(messages, "catalog.image.fallback"),
+          acceptedTerms: t(messages, "links.acceptedTerms"),
+          copy: t(messages, "design.copy.copy"),
+          copied: t(messages, "design.copy.copied"),
+          copyError: t(messages, "design.copy.error"),
+          productTypes,
+          reasons: {
+            BRAND_DISABLED: t(messages, "links.reason.BRAND_DISABLED"),
+            CREATOR_REMOVED: t(messages, "links.reason.CREATOR_REMOVED"),
+            PRODUCT_ARCHIVED: t(messages, "links.reason.PRODUCT_ARCHIVED"),
+            LINK_DISABLED: t(messages, "links.reason.LINK_DISABLED"),
+          },
+          last30Days: t(messages, "performance.period.30d"),
+          clicks: t(messages, "performance.metric.clicks"),
+          converted: t(messages, "performance.metric.convertedClicks"),
+          orders: t(messages, "performance.metric.orders"),
+          confirmed: t(messages, "performance.metric.confirmed"),
+          noActivity: t(messages, "performance.link.noActivity"),
+          viewPerformance: t(messages, "performance.link.view"),
+        }}
+      />
+      <CatalogPagination
+        page={catalog.page}
+        pageCount={catalog.pageCount}
+        hrefForPage={(page) =>
+          queryWith({ page: page > 1 ? String(page) : undefined })
+        }
+        copy={{
+          label: t(messages, "links.pagination.label"),
+          previous: t(messages, "catalog.pagination.previous"),
+          next: t(messages, "catalog.pagination.next"),
+          page: t(messages, "catalog.pagination.page"),
+          of: t(messages, "catalog.pagination.of"),
+        }}
+      />
+    </ManagementDiscovery>
   );
 }
