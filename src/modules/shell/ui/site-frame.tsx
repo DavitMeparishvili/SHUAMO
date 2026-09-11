@@ -79,7 +79,7 @@ export function SiteFrame({
       ? [
           {
             href: `${root}/settings`,
-            text: label("Settings", "პარამეტრები"),
+            text: label("Integration", "ინტეგრაცია"),
             icon: "settings" as const,
           },
         ]

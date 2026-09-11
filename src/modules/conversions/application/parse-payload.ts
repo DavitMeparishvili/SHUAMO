@@ -29,13 +29,31 @@ const payloadSchema = z.object({
   clickId: z.string().trim().min(1).max(255).optional(),
   items: z
     .array(
-      z.object({
-        sku: z.string().trim().min(1).max(255),
-        qty: z.number().int().positive(),
-        unitPrice: moneySchema,
-        lineDiscount: moneySchema,
-        lineVat: moneySchema.optional(),
-      }),
+      z
+        .object({
+          sku: z.string().trim().min(1).max(255),
+          qty: z.number().int().positive().max(2147483647),
+          unitPrice: moneySchema,
+          lineDiscount: moneySchema,
+          lineVat: moneySchema.optional(),
+        })
+        .superRefine((item, context) => {
+          // Cap the line subtotal before inferred VAT so every accepted payload
+          // fits numeric(12,2) for either brand VAT setting, including lines
+          // that do not match the referral product.
+          try {
+            const gross = item.unitPrice
+              .times(item.qty)
+              .minus(item.lineDiscount);
+            if (!gross.isNegative()) gross.toStorageString();
+          } catch {
+            context.addIssue({
+              code: "custom",
+              path: ["unitPrice"],
+              message: "line subtotal exceeds storage limit",
+            });
+          }
+        }),
     )
     .min(1)
     .max(500),

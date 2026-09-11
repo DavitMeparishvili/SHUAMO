@@ -33,7 +33,7 @@
     "seed:phase-2": "tsx scripts/seed-phase-02.ts",
     "seed:phase-3": "tsx scripts/seed-phase-03.ts",
     "seed:phase-4": "tsx scripts/seed-phase-04.ts",
-    "seed:phase-6": "tsx scripts/seed-phase-06.ts",
+    "seed:phase-6": "node --import ./scripts/register-style-stubs.mjs --import tsx scripts/seed-phase-06.ts",
     "seed:phase-6.5": "tsx scripts/seed-phase-06-5.ts",
     "seed:media": "tsx scripts/seed-demo-media.ts",
     "seed:redesign": "tsx scripts/seed-redesign.ts",

@@ -63,8 +63,22 @@ model Brand {
   clicks       Click[]
   conversions  Conversion[]
   profile      BrandProfile?
+  integrationRequests IntegrationRequest[]
 
   @@map("brand")
+}
+
+model IntegrationRequest {
+  id      String   @id @db.Uuid
+  brandId String   @map("brand_id") @db.Uuid
+  mode    String
+  status  Int
+  outcome String
+  at      DateTime @default(now()) @db.Timestamptz(6)
+  brand   Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, at(sort: Desc)], map: "integration_request_brand_at_idx")
+  @@map("integration_request")
 }
 
 model Creator {

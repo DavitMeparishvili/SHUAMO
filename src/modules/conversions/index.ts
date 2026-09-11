@@ -1,4 +1,14 @@
 export { intakeConversion } from "./application/intake-conversion";
+export { IntegrationGuide } from "./ui/integration-guide";
+export { integrationCopy } from "./ui/integration-copy";
+export { validateConversion } from "./application/validate-conversion";
+export type { ValidationResult } from "./application/validate-conversion";
+export {
+  recordIntegrationRequest,
+  recentIntegrationRequests,
+  isClickAttributed,
+} from "./infrastructure/integration-requests";
+export type { IntegrationRequestView } from "./ports/integration-request";
 export type { IntakeResult } from "./application/intake-conversion";
 export { decideOrder } from "./application/decide-order";
 export {

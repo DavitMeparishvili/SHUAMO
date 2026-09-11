@@ -72,3 +72,10 @@ export async function brandKeyPrefix(
   });
   return brand?.keyPrefix;
 }
+
+export async function brandIntegrationIdentity(brandId: string) {
+  return prisma.brand.findUnique({
+    where: { id: brandId },
+    select: { id: true, status: true, vatRegistered: true },
+  });
+}

@@ -7,6 +7,7 @@ export { currentViewer } from "./infrastructure/auth";
 export { auth } from "./infrastructure/auth";
 export {
   brandKeyPrefix,
+  brandIntegrationIdentity,
   prismaAccountRepository,
   prismaBrandRepository,
 } from "./infrastructure/prisma-account-repository";

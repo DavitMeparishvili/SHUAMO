@@ -8,6 +8,7 @@
 @import "./profiles.css";
 @import "./brands.css";
 @import "./insights.css";
+@import "./integration.css";
 
 :root {
   color-scheme: light;
