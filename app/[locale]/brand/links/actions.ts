@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { setLinkStatusForBrand } from "@/src/infrastructure/phase-3-services";
+import { setOwnedBrandLinkStatus } from "@/src/modules/partnerships";
 import { currentViewer, requireBrand } from "@/src/modules/identity";
 
 export async function setLinkStatusAction(
@@ -11,8 +11,8 @@ export async function setLinkStatusAction(
 ) {
   const allowed = requireBrand(await currentViewer());
   if (!allowed.ok) throw new Error("unauthenticated");
-  const result = await setLinkStatusForBrand(
-    { kind: "brand", id: allowed.value.brandId },
+  const result = await setOwnedBrandLinkStatus(
+    allowed.value.brandId,
     linkId,
     status,
   );

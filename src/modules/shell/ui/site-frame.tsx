@@ -88,6 +88,11 @@ export function SiteFrame({
         ]
       : []),
   ];
+  // Brand link management now starts at Products; legacy URLs remain under Performance.
+  if (brand) {
+    const trackingIndex = nav.findIndex((item) => item.icon === "link");
+    if (trackingIndex !== -1) nav.splice(trackingIndex, 1);
+  }
   const marketing = [
     {
       href: `/${locale}/#why-xurjin`,

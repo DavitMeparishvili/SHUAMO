@@ -22,6 +22,7 @@ export {
   type ProductLinkCreateFailure,
 } from "./ports/link-repository";
 export { setLinkStatus } from "./application/set-link-status";
+export { setOwnedBrandLinkStatus } from "./infrastructure/brand-link-status";
 export {
   createPrismaPartnershipRepository,
   listBrandsForCreator,

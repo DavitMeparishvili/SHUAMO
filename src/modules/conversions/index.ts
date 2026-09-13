@@ -1,5 +1,12 @@
 export { intakeConversion } from "./application/intake-conversion";
 export { IntegrationGuide } from "./ui/integration-guide";
+export { brandProductCatalogue, brandProductCreators } from "./infrastructure/prisma-product-workspace";
+export type { ProductCatalogueData, ProductCreatorsData, ProductSummary, ProductLinkRow, CreatorLinkGroup, WorkspaceMetrics } from "./infrastructure/prisma-product-workspace";
+export { productWorkspaceQuery, catalogueReturnPath } from "./application/product-workspace-query";
+export type { ProductWorkspaceQuery } from "./application/product-workspace-query";
+export { BrandProductCatalogue } from "./ui/brand-product-catalogue";
+export { ProductCreatorsView } from "./ui/product-creators-view";
+export { ProductCreatorsDrawer, ProductCreatorsLink } from "./ui/product-creators-navigation";
 export { integrationCopy } from "./ui/integration-copy";
 export { validateConversion } from "./application/validate-conversion";
 export type { ValidationResult } from "./application/validate-conversion";

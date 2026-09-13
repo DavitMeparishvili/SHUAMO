@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import {
   brandPerformanceReport,
   parsePerformanceQuery,
@@ -37,6 +38,7 @@ export default async function BrandPerformancePage({
       showName={false}
       title={t(messages, "performance.title")}
     >
+      <Link className="pl-legacy-link" href={`/${locale}/brand/links`}>{locale === "ka" ? "ყველა თვალთვალის ბმული" : "All tracking links"}</Link>
       <PerformanceDashboard
         basePath={`/${locale}/brand/performance`}
         locale={locale}

@@ -379,15 +379,15 @@ function previousWindow(window: ReportWindow): ReportWindow | undefined {
   };
 }
 
-async function loadLinkRows(
+export function linkActivityCtes(
   owner: Owner,
   filters: PerformanceFilters,
   now: Date,
   linkIds?: readonly string[],
   requestedWindow?: ReportWindow,
-): Promise<LinkPerformanceRow[]> {
+): Prisma.Sql {
   const { start, end } = requestedWindow ?? reportWindow(filters, now);
-  const rows = await prisma.$queryRaw<RawLinkRow[]>(Prisma.sql`
+  return Prisma.sql`
     WITH click_counts AS (
       SELECT c.tracking_link_id, COUNT(*)::int AS clicks
       FROM click c
@@ -428,6 +428,18 @@ async function loadLinkRows(
         ${outcomeStatusCondition(filters)}
       GROUP BY c.tracking_link_id
     )
+  `;
+}
+
+export async function loadLinkRows(
+  owner: Owner,
+  filters: PerformanceFilters,
+  now: Date,
+  linkIds?: readonly string[],
+  requestedWindow?: ReportWindow,
+): Promise<LinkPerformanceRow[]> {
+  const rows = await prisma.$queryRaw<RawLinkRow[]>(Prisma.sql`
+    ${linkActivityCtes(owner, filters, now, linkIds, requestedWindow)}
     SELECT
       tl.id::text AS id,
       tl.code,
