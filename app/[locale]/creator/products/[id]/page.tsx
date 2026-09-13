@@ -28,8 +28,10 @@ export default async function CreatorProductPage({
   const offer = await getPublicProductOffer(
     id,
     viewer.kind === "creator" ? viewer.creatorId : undefined,
+    viewer.kind === "brand" ? viewer.brandId : undefined,
   );
   if (!offer) notFound();
+  const canEdit = viewer.kind === "brand" && viewer.brandId === offer.brandId;
   const copy = (key: string) => t(messages, key);
   const activeLink = offer.links[0];
   const accepted = parseAcceptedOfferTerms(activeLink?.acceptedTerms);
@@ -111,10 +113,28 @@ export default async function CreatorProductPage({
     ];
   return (
     <div className="product-detail">
-      <Link className="product-detail-back" href={`/${locale}/products`}>
-        <Icon name="arrow" />
-        {copy("catalog.backToProducts")}
-      </Link>
+      <div className="product-detail-toolbar">
+        <Link
+          className="product-detail-back"
+          href={canEdit ? `/${locale}/brand/products` : `/${locale}/products`}
+        >
+          <Icon name="arrow" />
+          {copy("catalog.backToProducts")}
+        </Link>
+        {canEdit && (
+          <Link
+            className="product-detail-edit"
+            href={`/${locale}/brand/products/${offer.id}`}
+          >
+            {copy("catalog.detail.edit")}
+          </Link>
+        )}
+      </div>
+      {offer.status === "ARCHIVED" && (
+        <p className="product-detail-owner-notice" role="status">
+          {copy("catalog.detail.archivedOwner")}
+        </p>
+      )}
       <div className="product-detail-grid">
         <header className="product-detail-heading">
           <div className="product-detail-category">

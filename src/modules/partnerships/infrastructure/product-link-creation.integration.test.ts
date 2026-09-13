@@ -44,6 +44,50 @@ async function expectBlocked<T>(operation: Promise<T>) {
 }
 
 describe("creator product link creation", () => {
+  it("shows archived details only to the owning approved brand and preserves all images", async () => {
+    const { brand, creator } = await seedApprovedPartnership();
+    const other = await seedApprovedPartnership();
+    const imageUrls = [
+      "https://shop.example.ge/primary.jpg",
+      "https://shop.example.ge/second.jpg",
+      "https://shop.example.ge/third.jpg",
+    ];
+    const product = await prisma.product.create({
+      data: {
+        brandId: brand.id,
+        sku: `OWNER-DETAIL-${crypto.randomUUID()}`,
+        title: "Owner details",
+        priceGel: "100.00",
+        backlinkUrl: "https://shop.example.ge/owner-details",
+        commissionType: "FIXED",
+        commissionValue: "8.0000",
+        imageUrls,
+      },
+    });
+    expect(await getPublicProductOffer(product.id)).toMatchObject({
+      imageUrls,
+    });
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { status: "ARCHIVED" },
+    });
+    expect(await getPublicProductOffer(product.id)).toBeUndefined();
+    expect(await getPublicProductOffer(product.id, creator.id)).toBeUndefined();
+    expect(
+      await getPublicProductOffer(product.id, undefined, other.brand.id),
+    ).toBeUndefined();
+    expect(
+      await getPublicProductOffer(product.id, undefined, brand.id),
+    ).toMatchObject({ status: "ARCHIVED", imageUrls, links: [] });
+    await prisma.brand.update({
+      where: { id: brand.id },
+      data: { status: "SUSPENDED" },
+    });
+    expect(
+      await getPublicProductOffer(product.id, undefined, brand.id),
+    ).toBeUndefined();
+  });
+
   it("product details preserve the viewer's accepted terms after the brand changes its offer", async () => {
     const { brand, creator } = await seedApprovedPartnership();
     const product = await prisma.product.create({

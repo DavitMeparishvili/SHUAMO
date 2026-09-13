@@ -28,6 +28,16 @@ A reviewer with no inherited conversation reviewed the guide, boards, source, an
 
 Evidence is under `.impeccable/review/editor-*.png` and `gallery-arrows-*.png`.
 
-## Deployment
+## Product details follow-up (local)
+
+- Brand catalogue photo/title links now open the same product ID on the shared details page. Only the owning approved brand sees Edit product; the editor includes View product with unsaved-change protection. Brand Back controls and the shell breadcrumb return to the brand catalogue on desktop/mobile.
+- Archived details are available only to the approved owning brand, with an explicit notice. Anonymous viewers, creators, other brands, and suspended owners cannot retrieve them. Public active-product visibility and creator accepted terms remain unchanged.
+- The two reported URLs identify different records: `e2bd4814-eb99-4bdc-b255-d3b0a83f2cd1` is the archived three-image QA product; `32000000-0000-4000-8000-000000000001` has one image. Gallery arrows correctly appear only for multiple images. No images were copied between products.
+- Fresh reviewer with no inherited conversation found no critical/high issues. Its mobile Back destination finding was fixed and accepted on re-review; final disposition has no unresolved findings.
+- Production build, scoped ESLint, module boundaries and 12 focused product-link integration tests passed. All 16 detail/editor browser checks passed across desktop/mobile; the 10 checks touching product details passed again after final CSS adjustments. Axe reported no violations in the tested surfaces.
+- Playwright MCP verified owner catalogue/details/editor/return navigation in EN/KA at 1440px and 390px, next/previous/wraparound/keyboard/lightbox image controls, single-image arrow absence, and creator/anonymous access restrictions. Separate mobile touch contexts verified taps on catalogue entries, arrows, Edit, View product and Back in both languages. Georgian details/editor also passed a 320px overflow check.
+- Final screenshots: `.impeccable/review/owner-details-{en,ka}-{1440,390}.png` and `owner-editor-{en,ka}-{1440,390}.png`. The Georgian mobile Edit action was given the available width to avoid unnecessary wrapping. The design hook's existing 30px mobile commission value was corrected to the documented 28px step; no findings were suppressed or left standing.
+
+## Deployment status
 
 Production deployment is postponed at the user's request. Post-deployment Playwright MCP verification remains for that deployment. Local verification above is not a production verification claim.

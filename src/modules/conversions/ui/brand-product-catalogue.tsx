@@ -173,19 +173,18 @@ export function BrandProductCatalogue({
     },
   ].filter((chip) => chip.value);
   const identity = (p: ProductSummary) => (
-    <div className="pl-product-identity">
+    <Link
+      className="pl-product-identity pl-product-details-link"
+      href={`/${locale}/products/${p.id}`}
+      aria-label={p.title}
+    >
       <ProductThumb src={p.image} />
       <div>
-        <Link
-          className="pl-product-name"
-          href={`/${locale}/brand/products/${p.id}`}
-        >
-          {p.title}
-        </Link>
+        <span className="pl-product-name">{p.title}</span>
         <ProductStatus status={p.status} copy={c} />
         <span className="pl-price">{gel(p.price, locale)}</span>
       </div>
-    </div>
+    </Link>
   );
   const counts = (p: ProductSummary) => (
     <div className="pl-link-counts">

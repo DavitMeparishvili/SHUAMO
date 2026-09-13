@@ -786,3 +786,36 @@ body:has(.product-editor-page) .workspace-frame {
 .editor-estimate [data-amount] {
   white-space: nowrap;
 }
+
+.editor-heading-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.editor-view-product {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 7px;
+  background: var(--color-paper);
+  color: var(--color-signal);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+.editor-view-product:hover {
+  border-color: var(--color-signal);
+}
+@media (max-width: 760px) {
+  .editor-heading-row {
+    flex-wrap: wrap;
+  }
+  .editor-heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

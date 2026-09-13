@@ -682,29 +682,37 @@ export function ProductForm({
             <p>{editing ? JSON.parse(baseline).fields.title : ui.intro}</p>
           </div>
           {editing && (
-            <details className="editor-overflow">
-              <summary aria-label={ui.more}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="5" r="1.6" />
-                  <circle cx="12" cy="12" r="1.6" />
-                  <circle cx="12" cy="19" r="1.6" />
-                </svg>
-              </summary>
-              <div>
-                <a href={`/${locale}/brand/products/${initial.id}/creators`}>
-                  {ui.creators}
-                </a>
-                {archiveAction && (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => archiveRef.current?.showModal()}
-                  >
-                    {copy.archive}
-                  </button>
-                )}
-              </div>
-            </details>
+            <div className="editor-heading-actions">
+              <a
+                className="editor-view-product"
+                href={`/${locale}/products/${initial.id}`}
+              >
+                {ui.viewProduct}
+              </a>
+              <details className="editor-overflow">
+                <summary aria-label={ui.more}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="5" r="1.6" />
+                    <circle cx="12" cy="12" r="1.6" />
+                    <circle cx="12" cy="19" r="1.6" />
+                  </svg>
+                </summary>
+                <div>
+                  <a href={`/${locale}/brand/products/${initial.id}/creators`}>
+                    {ui.creators}
+                  </a>
+                  {archiveAction && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => archiveRef.current?.showModal()}
+                    >
+                      {copy.archive}
+                    </button>
+                  )}
+                </div>
+              </details>
+            </div>
           )}
         </div>
       </header>

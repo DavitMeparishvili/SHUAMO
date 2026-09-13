@@ -237,7 +237,7 @@ export function SiteFrame({
           {workspace && productDetail ? (
             <Link
               className="product-detail-mobile-back icon-button"
-              href={`/${locale}/products`}
+              href={brand ? `${root}/products` : `/${locale}/products`}
               aria-label={label("Back to products", "პროდუქტებზე დაბრუნება")}
             >
               <Icon name="arrow" />
@@ -271,8 +271,10 @@ export function SiteFrame({
           {workspace && productDetail ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
-              <Link href={`/${locale}/products`}>
-                {label("Discover", "აღმოჩენა")}
+              <Link href={brand ? `${root}/products` : `/${locale}/products`}>
+                {brand
+                  ? label("Products", "პროდუქტები")
+                  : label("Discover", "აღმოჩენა")}
               </Link>
               <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
             </div>

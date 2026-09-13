@@ -293,6 +293,8 @@
   "catalog.table.caption": "Products, offered rates and creator-selected links",
   "catalog.field.sku": "SKU",
   "catalog.editor.productName": "Product name",
+  "catalog.detail.edit": "Edit product",
+  "catalog.detail.archivedOwner": "Archived product · Only your brand can view this page. This product is unavailable to creators.",
   "catalog.editor.price": "Price (GEL)",
   "catalog.editor.primary": "Primary",
   "catalog.gallery.previous": "Previous image",

@@ -1,5 +1,6 @@
 export const editorCopy = {
   en: {
+    viewProduct: "View product",
     attributionLimit:
       "This value is saved in the offered terms. Conversion attribution currently uses 30 days, regardless of this value.",
     products: "Products",
@@ -61,6 +62,7 @@ export const editorCopy = {
     fixed: "Fixed amount (GEL)",
   },
   ka: {
+    viewProduct: "პროდუქტის ნახვა",
     attributionLimit:
       "ეს მნიშვნელობა ინახება შეთავაზების პირობებში. გაყიდვის ატრიბუცია ამჟამად იყენებს 30 დღეს, ამ მნიშვნელობის მიუხედავად.",
     products: "პროდუქტები",

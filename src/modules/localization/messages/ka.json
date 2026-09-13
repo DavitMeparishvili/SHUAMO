@@ -293,6 +293,8 @@
   "catalog.table.caption": "პროდუქტები, შეთავაზებული ტარიფები და კრეატორების მიერ არჩეული ბმულები",
   "catalog.field.sku": "პროდუქტის კოდი (SKU)",
   "catalog.editor.productName": "პროდუქტის სახელი",
+  "catalog.detail.edit": "პროდუქტის რედაქტირება",
+  "catalog.detail.archivedOwner": "დაარქივებული პროდუქტი · ამ გვერდს მხოლოდ თქვენი ბრენდი ხედავს. პროდუქტი კრეატორებისთვის მიუწვდომელია.",
   "catalog.editor.price": "ფასი (GEL)",
   "catalog.editor.primary": "მთავარი",
   "catalog.gallery.previous": "წინა სურათი",

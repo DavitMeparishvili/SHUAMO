@@ -1176,3 +1176,11 @@
     transition: none;
   }
 }
+
+.pl-product-details-link {
+  color: inherit;
+  text-decoration: none;
+}
+.pl-product-details-link:hover .pl-product-name {
+  color: var(--color-signal);
+}

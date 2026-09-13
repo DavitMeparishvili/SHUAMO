@@ -625,12 +625,23 @@ export async function listPublicProductOffers(
 export async function getPublicProductOffer(
   productId: string,
   creatorId?: string,
+  ownerBrandId?: string,
 ) {
   if (!UUID.test(productId)) return undefined;
   const product = await prisma.product.findFirst({
-    where: { id: productId, ...publicCatalogWhere() },
+    // The server supplies the authenticated brand id, never a route/query value.
+    // Owners may inspect archived products without making them public again.
+    where: {
+      id: productId,
+      brand: { status: "APPROVED" },
+      OR: [
+        { status: "ACTIVE" },
+        ...(ownerBrandId ? [{ brandId: ownerBrandId }] : []),
+      ],
+    },
     select: {
       ...creatorOfferSelect,
+      status: true,
       brand: {
         select: {
           name: true,
