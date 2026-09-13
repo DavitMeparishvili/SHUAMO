@@ -533,3 +533,41 @@
     transition: none;
   }
 }
+
+/* Small directional controls supplement the existing thumbnail gallery. */
+.product-gallery-stage {
+  position: relative;
+  min-width: 0;
+}
+.product-gallery-stage > .product-gallery-image {
+  display: block;
+  width: 100%;
+}
+.product-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 50%;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  cursor: pointer;
+  z-index: 2;
+}
+.product-gallery-arrow.is-previous {
+  left: 12px;
+}
+.product-gallery-arrow.is-next {
+  right: 12px;
+}
+.product-gallery-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+.product-gallery-arrow:hover {
+  background: var(--color-slate-100);
+}

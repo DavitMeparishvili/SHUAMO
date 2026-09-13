@@ -64,3 +64,5 @@ export {
 } from "./ui/discovery-controls";
 export { ProductImageGallery } from "./ui/product-image-gallery";
 export { ProductTermGroup } from "./ui/product-term-group";
+
+export { productFormInput } from "./application/product-form-input";

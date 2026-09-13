@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProductForm, type ProductFormCopy } from "./product-form";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+beforeEach(() => {
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+});
 const copy: ProductFormCopy = {
   sku: "SKU",
   title: "Title",
@@ -123,11 +134,13 @@ const initial = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("ProductForm image flow", () => {
-  it("defers uploads until a real product exists", () => {
-    render(<ProductForm action={() => undefined} copy={copy} />);
-
-    expect(screen.queryByLabelText(copy.addImage)).not.toBeInTheDocument();
-    expect(screen.getByText(copy.imageAfterPublishBody)).toBeVisible();
+  it("allows selecting images before publication without creating a product", () => {
+    const action = vi.fn();
+    render(
+      <ProductForm action={action} copy={copy} uploadReservation="reserved" />,
+    );
+    expect(screen.getByLabelText(copy.addImage)).toBeEnabled();
+    expect(action).not.toHaveBeenCalled();
   });
 
   it("rejects files over 5 MB before requesting a presign URL", async () => {
@@ -165,7 +178,64 @@ describe("ProductForm image flow", () => {
       <ProductForm action={() => undefined} copy={copy} initial={initial} />,
     );
 
-    expect(screen.getByText("100.00 ₾")).toHaveClass("type-mono");
-    expect(screen.getByText("10.00 ₾")).toHaveClass("type-mono");
+    expect(screen.getAllByText("100.00 ₾")[0]).toHaveClass("type-mono");
+    expect(screen.getAllByText("10.00 ₾")[0]).toHaveClass("type-mono");
+  });
+});
+
+describe("Product editor save state", () => {
+  it("disables unchanged saves and preserves values after server errors", async () => {
+    const action = vi.fn().mockResolvedValue({ error: "duplicate_sku" });
+    render(<ProductForm action={action} copy={copy} initial={initial} />);
+    expect(screen.getByRole("button", { name: copy.save })).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: copy.sku }), {
+      target: { value: "duplicate" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: copy.save }));
+    await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: copy.sku })).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
+    );
+    expect(screen.getByRole("textbox", { name: copy.sku })).toHaveValue(
+      "duplicate",
+    );
+    expect(screen.getByRole("textbox", { name: copy.title })).toHaveValue(
+      "Product",
+    );
+  });
+  it("expands invalid offer fields and prevents incomplete submission", async () => {
+    const action = vi.fn();
+    render(<ProductForm action={action} copy={copy} initial={initial} />);
+    fireEvent.change(document.getElementById("commissionDisplay")!, {
+      target: { value: "101" },
+    });
+    const offer = document.getElementById(
+      "commission-offer",
+    ) as HTMLDetailsElement;
+    offer.open = false;
+    fireEvent.click(screen.getByRole("button", { name: copy.save }));
+    expect(action).not.toHaveBeenCalled();
+    expect(offer.open).toBe(true);
+    expect(document.getElementById("commissionDisplay")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+  });
+  it("keeps description optional and enables saves only when the form differs", () => {
+    render(
+      <ProductForm action={() => undefined} copy={copy} initial={initial} />,
+    );
+    expect(screen.getByLabelText(copy.description)).not.toBeRequired();
+    fireEvent.change(screen.getByRole("textbox", { name: copy.title }), {
+      target: { value: "Changed" },
+    });
+    expect(screen.getByRole("button", { name: copy.save })).toBeEnabled();
+    fireEvent.change(screen.getByRole("textbox", { name: copy.title }), {
+      target: { value: initial.title },
+    });
+    expect(screen.getByRole("button", { name: copy.save })).toBeDisabled();
   });
 });

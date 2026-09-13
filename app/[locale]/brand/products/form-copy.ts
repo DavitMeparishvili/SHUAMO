@@ -12,7 +12,7 @@ import { t, type Messages } from "@/src/modules/localization";
 export function formCopy(messages: Messages): ProductFormCopy {
   return {
     sku: t(messages, "catalog.field.sku"),
-    title: t(messages, "catalog.field.title"),
+    title: t(messages, "catalog.editor.productName"),
     description: t(messages, "catalog.field.description"),
     sectionProduct: t(messages, "catalog.form.productSection"),
     sectionProductIntro: t(messages, "catalog.form.productIntro"),
@@ -26,7 +26,7 @@ export function formCopy(messages: Messages): ProductFormCopy {
         t(messages, productTypeMessageKey(value)),
       ]),
     ) as Record<ProductTypeValue, string>,
-    price: t(messages, "catalog.field.price"),
+    price: t(messages, "catalog.editor.price"),
     backlink: t(messages, "catalog.field.backlink"),
     rateType: t(messages, "catalog.field.rateType"),
     percent: t(messages, "catalog.rate.percent"),
@@ -68,7 +68,7 @@ export function formCopy(messages: Messages): ProductFormCopy {
     estimateSale: t(messages, "catalog.rate.estimateSale"),
     estimateEarnings: t(messages, "catalog.rate.estimateEarnings"),
     addImage: t(messages, "catalog.image.add"),
-    primaryImage: t(messages, "catalog.image.primary"),
+    primaryImage: t(messages, "catalog.editor.primary"),
     moveEarlier: t(messages, "catalog.image.moveEarlier"),
     moveLater: t(messages, "catalog.image.moveLater"),
     removeImage: t(messages, "catalog.image.remove"),

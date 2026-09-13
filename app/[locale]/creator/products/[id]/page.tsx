@@ -133,6 +133,8 @@ export default async function CreatorProductPage({
               image: copy("catalog.gallery.image"),
               of: copy("catalog.pagination.of"),
               enlarge: copy("catalog.gallery.enlarge"),
+              previous: copy("catalog.gallery.previous"),
+              next: copy("catalog.gallery.next"),
               close: copy("catalog.filter.close"),
               empty: copy("catalog.image.fallback"),
             }}

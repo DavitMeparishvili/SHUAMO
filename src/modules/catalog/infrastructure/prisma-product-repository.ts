@@ -64,11 +64,12 @@ export function createPrismaProductRepository(
         ? undefined
         : { ...offer, commissionValue: offer.commissionValue.toFixed(4) };
     },
-    async create(input) {
+    async create(input, reservedId) {
       return toRecord(
         await database.product.create({
           data: {
             ...input,
+            ...(reservedId ? { id: reservedId } : {}),
             priceGel: new Prisma.Decimal(input.priceGel),
             commissionValue: new Prisma.Decimal(input.commissionValue),
           },

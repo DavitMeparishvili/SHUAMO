@@ -1,3 +1,4 @@
+import { verifyProductImages } from "./verify-product-images";
 import { prisma } from "@/src/infrastructure/db/client";
 import {
   archiveProduct,
@@ -26,8 +27,27 @@ const random = {
 export async function createProductForBrand(
   brandId: string,
   input: ProductInput,
+  reservedId?: string,
 ) {
-  return createProduct({ products: prismaProductRepository })(brandId, input);
+  const env = serverEnv();
+  if (
+    (input.imageUrls?.length ?? 0) > 0 &&
+    (!reservedId ||
+      !(await verifyProductImages(brandId, reservedId, input.imageUrls ?? [])))
+  )
+    return { ok: false as const, error: "invalid_images" as const };
+  return createProduct({
+    products: prismaProductRepository,
+    reservedId,
+    validateImages: (values) =>
+      parseProductImageUrls({
+        values,
+        brandId,
+        productId: reservedId ?? "",
+        publicEndpoint: env.STORAGE_PUBLIC_ENDPOINT,
+        bucket: env.STORAGE_BUCKET,
+      }).ok,
+  })(brandId, input);
 }
 
 export async function updateProductForBrand(
@@ -36,6 +56,13 @@ export async function updateProductForBrand(
   input: ProductInput,
 ) {
   const env = serverEnv();
+  const current = await prismaProductRepository.findOwned(brandId, productId);
+  if (!current) return { ok: false as const, error: "not_found" as const };
+  const newImages = (input.imageUrls ?? []).filter(
+    (url) => !current.imageUrls.includes(url),
+  );
+  if (!(await verifyProductImages(brandId, productId, newImages)))
+    return { ok: false as const, error: "invalid_images" as const };
   return updateProduct({
     products: prismaProductRepository,
     validateImageUrls: ({

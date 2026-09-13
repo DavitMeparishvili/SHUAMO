@@ -41,7 +41,7 @@ export interface ProductRepository {
       }
     | undefined
   >;
-  create(input: ProductWriteInput): Promise<ProductRecord>;
+  create(input: ProductWriteInput, reservedId?: string): Promise<ProductRecord>;
   update(
     id: string,
     input: Omit<ProductWriteInput, "brandId">,

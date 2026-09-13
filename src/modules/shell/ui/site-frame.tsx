@@ -159,6 +159,12 @@ export function SiteFrame({
     </Link>
   ));
   async function signOut() {
+    if (
+      !window.dispatchEvent(
+        new Event("workspace:before-leave", { cancelable: true }),
+      )
+    )
+      return;
     setSigningOut(true);
     try {
       const r = await fetch("/api/auth/sign-out", {

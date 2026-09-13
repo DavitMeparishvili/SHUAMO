@@ -60,3 +60,31 @@ describe("createProduct", () => {
     expect(created).toBe(false);
   });
 });
+
+it("persists validated reserved images in order with the reserved product id", async () => {
+  const images = [
+    "https://storage.example/first.jpg",
+    "https://storage.example/second.jpg",
+  ];
+  let persisted;
+  const result = await createProduct({
+    reservedId: "reserved-product",
+    validateImages: (values) =>
+      JSON.stringify(values) === JSON.stringify(images),
+    products: {
+      findBrandSku: async () => undefined,
+      create: async (input, id) => {
+        persisted = input.imageUrls;
+        return {
+          ...input,
+          id: id!,
+          status: "ACTIVE",
+          termsVersion: 1,
+          termsUpdatedAt: new Date(0),
+        };
+      },
+    },
+  })("brand-a", { ...valid, imageUrls: images });
+  expect(result).toEqual({ ok: true, value: { id: "reserved-product" } });
+  expect(persisted).toEqual(images);
+});

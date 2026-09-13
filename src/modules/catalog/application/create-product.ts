@@ -8,7 +8,11 @@ interface CreateProductScope {
 }
 
 export interface CreateProductDeps extends CreateProductScope {
-  transaction?<T>(work: (scope: CreateProductScope) => Promise<T>): Promise<T>;
+  reservedId?: string | undefined;
+  validateImages?: ((values: readonly string[]) => boolean) | undefined;
+  transaction?:
+    | (<T>(work: (scope: CreateProductScope) => Promise<T>) => Promise<T>)
+    | undefined;
 }
 
 export type CreateProductError = "duplicate_sku" | ProductInputError;
@@ -19,21 +23,28 @@ export function createProduct(deps: CreateProductDeps) {
     input: ProductInput,
   ): Promise<Result<{ id: string }, CreateProductError>> => {
     if (deps.transaction) {
-      return deps.transaction((scope) => createProduct(scope)(brandId, input));
+      return deps.transaction((scope) =>
+        createProduct({ ...deps, ...scope, transaction: undefined })(
+          brandId,
+          input,
+        ),
+      );
     }
-    // Images can only be uploaded after the database has assigned the real
-    // product id. Reject forged create requests instead of accepting URLs
-    // that could never have come from this product's presign route.
-    if ((input.imageUrls?.length ?? 0) > 0) {
+    // Only the server-authorized reservation flow can attach images on create.
+    // The ordinary API continues rejecting unscoped image URLs.
+    if (
+      (input.imageUrls?.length ?? 0) > 0 &&
+      (!deps.reservedId || !deps.validateImages?.(input.imageUrls ?? []))
+    ) {
       return { ok: false, error: "invalid_images" };
     }
-    const parsed = validateProductInput(brandId, { ...input, imageUrls: [] });
+    const parsed = validateProductInput(brandId, input);
     if (!parsed.ok) return parsed;
     if (await deps.products.findBrandSku(brandId, parsed.value.sku)) {
       return { ok: false, error: "duplicate_sku" };
     }
 
-    const product = await deps.products.create(parsed.value);
+    const product = await deps.products.create(parsed.value, deps.reservedId);
     return { ok: true, value: { id: product.id } };
   };
 }
