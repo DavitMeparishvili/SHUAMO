@@ -3,6 +3,12 @@ import { err, ok, type Result } from "@/src/modules/shared";
 
 export type ViewerRejection = "unauthenticated" | "wrong_capability";
 
+export function requireAdmin(viewer: Viewer): Result<{ userId: string }, ViewerRejection> {
+  if (viewer.kind === "anonymous") return err("unauthenticated");
+  if (viewer.kind === "admin" || viewer.isAdmin) return ok({ userId: viewer.userId });
+  return err("wrong_capability");
+}
+
 export function requireBrand(
   viewer: Viewer,
 ): Result<Extract<Viewer, { kind: "brand" }>, ViewerRejection> {

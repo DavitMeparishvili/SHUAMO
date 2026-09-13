@@ -11,7 +11,7 @@ export {
   prismaAccountRepository,
   prismaBrandRepository,
 } from "./infrastructure/prisma-account-repository";
-export { requireBrand, requireCreator } from "./http/require-viewer";
+export { requireBrand, requireCreator, requireAdmin } from "./http/require-viewer";
 export { createBrandKeyPostHandler } from "./http/brand-key-handlers";
 export { webCryptoRandom } from "./ports/random-source";
 export type { RandomSource } from "./ports/random-source";

@@ -80,3 +80,5 @@ Then use the everyday startup commands above. Phase 2 creates base accounts, Pha
 ## Prompt to use next time
 
 > Start Xurjin from C:\Users\mefar\repos\SHUAMO using the existing seeded shuamo_dev database. Follow docs/local-development.md. Start or reuse PostgreSQL and MinIO, preserve all database and image volumes, and run the app at http://localhost:3001 with APP_URL matching that origin and XURJIN_BUILD_DIR=.next-discovery. Do not reset or reseed the data. Check the sign-in page and give me the URL and demo account details.
+
+See [Manual finance and admin reporting](manual-finance.md) for local fixtures, administrator access, payments, invoices and CSV exports.

@@ -678,5 +678,6 @@
   "catalog.detail.promotionGroup": "Promotion & channels",
   "catalog.detail.promotionIntro": "Channels, content approvals and coupon policy.",
   "catalog.detail.conditionsGroup": "Regions & other conditions",
-  "catalog.detail.conditionsIntro": "Availability, returns and special conditions."
+  "catalog.detail.conditionsIntro": "Availability, returns and special conditions.",
+  "nav.finance": "Finance"
 }

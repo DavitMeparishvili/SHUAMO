@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Icon, XurjinLogo, type IconName } from "@/src/modules/design-system";
 import type { Viewer } from "@/src/modules/identity";
@@ -16,6 +16,7 @@ export function SiteFrame({
   children: ReactNode;
 }) {
   const path = usePathname();
+  const searchParams = useSearchParams();
   const discovery = /^\/(ka|en)\/(creator\/)?products$/.test(path);
   const brandManagement = /^\/(ka|en)\/brand\/(products|creators|links)$/.test(
     path,
@@ -26,12 +27,13 @@ export function SiteFrame({
   const drawer = useRef<HTMLDialogElement>(null);
   const [signingOut, setSigningOut] = useState(false);
   const label = (en: string, ka: string) => (locale === "ka" ? ka : en);
-  const workspace =
+  const admin = (/^\/(ka|en)\/admin\/(?!login(?:$|\/))/.test(path) || /^\/(ka|en)\/finance\/invoices\//.test(path)) && (viewer.kind === "admin" || (viewer.kind !== "anonymous" && viewer.isAdmin));
+  const workspace = admin || (
     (viewer.kind === "brand" || viewer.kind === "creator") &&
-    !["", "sign-up", "sign-in"].includes(path.split("/")[2] ?? "");
+    !["", "sign-up", "sign-in"].includes(path.split("/")[2] ?? "") && !path.endsWith("/admin/login"));
   const brand = viewer.kind === "brand";
   const root = `/${locale}/${brand ? "brand" : viewer.kind === "admin" ? "workspace" : "creator"}`;
-  const name =
+  const name = admin ? label("Finance administrator", "ფინანსების ადმინისტრატორი") :
     viewer.kind === "brand"
       ? viewer.brandName
       : viewer.kind === "creator"
@@ -88,6 +90,14 @@ export function SiteFrame({
         ]
       : []),
   ];
+  if (admin) nav.splice(0,nav.length,
+    { href: `/${locale}/admin/finance`,text: label("Finance","ფინანსები"),icon: "chart" },
+    { href: `/${locale}/admin/products`,text: label("Products","პროდუქტები"),icon: "box" },
+    { href: `/${locale}/admin/performance`,text: label("Performance","ანალიტიკა"),icon: "chart" });
+  else if (workspace) {
+    nav.push({ href: `${root}/finance`,text: label("Finance","ფინანსები"),icon: "chart" });
+    if (viewer.kind === "admin" || viewer.isAdmin) nav.push({ href: `/${locale}/admin/finance`,text: label("Admin finance","ადმინისტრატორის ფინანსები"),icon: "settings" });
+  }
   // Brand link management now starts at Products; legacy URLs remain under Performance.
   if (brand) {
     const trackingIndex = nav.findIndex((item) => item.icon === "link");
@@ -152,7 +162,18 @@ export function SiteFrame({
           ? "page"
           : undefined
       }
-      onClick={() => drawer.current?.close()}
+      onClick={(event) => {
+        drawer.current?.close();
+        if (admin && /\/admin\/(performance|products)/.test(path) && /\/admin\/(performance|products)$/.test(n.href)) {
+          event.preventDefault();
+          const query = new URLSearchParams(searchParams.toString());
+          const products = n.href.endsWith("/products");
+          query.set("tab", products ? "products" : "overview");
+          query.set("page", products ? query.get("listPage") || query.get("page") || "1" : "1");
+          query.delete("returnTo");query.delete("listPage");
+          window.location.assign(`${n.href}?${query}`);
+        }
+      }}
     >
       <Icon name={n.icon} />
       <span>{n.text}</span>
@@ -179,9 +200,9 @@ export function SiteFrame({
   }
   const account = (
     <div className="rail-account">
-      <span className="avatar">{name.slice(0, 1)}</span>
+      <span className="avatar">{admin ? "FA" : name.slice(0, 1)}</span>
       <strong>{name}</strong>
-      <Link href={`${root}/profile`}>
+      <Link href={admin ? `/${locale}/workspace` : `${root}/profile`}>
         {label("View profile", "პროფილის ნახვა")} →
       </Link>
     </div>
@@ -190,6 +211,7 @@ export function SiteFrame({
     <div
       className={
         (workspace ? "site-frame workspace-frame" : "site-frame public-frame") +
+        (admin ? " admin-frame" : "") +
         (productDetail ? " product-detail-frame" : "") +
         (brandsPage || path === `/${locale}/brand/creators`
           ? " brands-frame"
@@ -204,18 +226,19 @@ export function SiteFrame({
           <Link className="brand-link" href={`/${locale}`} aria-label="Xurjin">
             <XurjinLogo />
           </Link>
-          {account}
+          {admin ? <p className="admin-workspace-label">{label("Admin workspace","ადმინისტრატორის სივრცე")}</p> : account}
           <nav
             className="rail-nav"
             aria-label={label("Primary navigation", "მთავარი ნავიგაცია")}
           >
             {navLinks}
-            <Link href={`/${locale}/coming-soon?feature=notifications`}>
+            {!admin && <Link href={`/${locale}/coming-soon?feature=notifications`}>
               <Icon name="bell" />
               <span>{label("Notifications", "შეტყობინებები")}</span>
               <span className="nav-soon">{label("Soon", "მალე")}</span>
-            </Link>
+            </Link>}
           </nav>
+          {admin && viewer.kind !== "admin" && <Link className="rail-help" href={`/${locale}/workspace`}>{label("Back to workspace","სამუშაო სივრცეში დაბრუნება")}</Link>}
           <div className="rail-bottom">
             <Link
               className="rail-help"
@@ -279,7 +302,7 @@ export function SiteFrame({
               <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
             </div>
           ) : null}
-          {workspace &&
+          {admin ? <div className="admin-workspace-breadcrumb">{label("Admin workspace","ადმინისტრატორის სივრცე")}</div> : workspace &&
           (discovery || trackingLinks || brandsPage || brandManagement) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
@@ -321,7 +344,7 @@ export function SiteFrame({
           )}
           <div className="header-actions">
             {localeControl}
-            {workspace ? (
+            {admin ? <div className="topbar-account"><span className="avatar small">FA</span><strong>{name}</strong></div> : workspace ? (
               <>
                 <Link
                   className="icon-button notification-button"
@@ -334,7 +357,7 @@ export function SiteFrame({
                   <Icon name="bell" />
                 </Link>
                 <Link href={`${root}/profile`} className="topbar-account">
-                  <span className="avatar small">{name.slice(0, 1)}</span>
+                  <span className="avatar small">{admin ? "FA" : name.slice(0, 1)}</span>
                   <span>
                     <strong>{name}</strong>
                     <small>
@@ -458,12 +481,12 @@ export function SiteFrame({
           className="workspace-bottom-nav"
           aria-label={label("Mobile navigation", "მობილური ნავიგაცია")}
         >
-          {[
+          {(admin ? nav : [
             nav[0]!,
             nav[1]!,
             nav.find((n) => n.icon === "users")!,
             nav.find((n) => n.icon === (brand ? "cart" : "link"))!,
-          ].map((n) => (
+          ]).map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -518,14 +541,14 @@ export function SiteFrame({
               aria-label={label("All destinations", "ყველა გვერდი")}
             >
               {navLinks}
-              <Link
+              {!admin && <Link
                 href={`/${locale}/coming-soon?feature=notifications`}
                 onClick={() => drawer.current?.close()}
               >
                 <Icon name="bell" />
                 {label("Notifications — soon", "შეტყობინებები — მალე")}
               </Link>
-              <button onClick={signOut} disabled={signingOut}>
+              }<button onClick={signOut} disabled={signingOut}>
                 <Icon name="logout" />
                 {label("Sign out", "გასვლა")}
               </button>

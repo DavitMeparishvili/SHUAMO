@@ -1,3 +1,6 @@
+import { readOwnFinance } from "@/src/infrastructure/finance-services";
+import { FinanceSummary } from "@/src/modules/finance";
+import "@/app/finance.css";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer, requireCreator } from "@/src/modules/identity";
 import { isLocale } from "@/src/modules/localization";
@@ -26,13 +29,14 @@ export default async function CreatorWorkspace({
   const allowed = requireCreator(viewer);
   if (!allowed.ok)
     redirect("/" + locale + (viewer.kind === "brand" ? "/brand" : "/sign-in"));
-  const [report, links, offers] = await Promise.all([
+  const [report, links, offers, finance] = await Promise.all([
     creatorPerformanceReport(allowed.value.creatorId, state.filters),
     listCreatorLinkCatalog(allowed.value.creatorId, {
       resolution: "ACTIVE",
       pageSize: 100,
     }),
     listPublicProductOffers({ pageSize: 3 }, allowed.value.creatorId),
+    readOwnFinance(viewer, { page: 1 }, true),
   ]);
   const ranking = new Map(report.breakdowns.products.map((p, i) => [p.id, i]));
   const products = [...links.items]
@@ -54,6 +58,7 @@ export default async function CreatorWorkspace({
     }));
   return (
     <WorkspaceOverview
+      finance={finance.ok ? <FinanceSummary account={finance.value} locale={locale} /> : null}
       state={state}
       locale={locale}
       name={allowed.value.displayName}

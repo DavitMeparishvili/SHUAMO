@@ -1,0 +1,22 @@
+export interface AdminPerformanceFinance {
+  period: {
+    from: string;
+    to: string;
+    brandReceipts: string;
+    creatorPayouts: string;
+  };
+  current: {
+    brandOutstanding: string;
+    brandCredits: string;
+    creatorUnpaid: string;
+    creatorOverpayments: string;
+  };
+  brands: { id: string; periodReceipts: string; outstanding: string }[];
+  creators: { id: string; periodPayouts: string; unpaid: string }[];
+}
+export interface PerformanceFinanceQuery {
+  from: string;
+  to: string;
+  brandIds: string[];
+  creatorIds: string[];
+}

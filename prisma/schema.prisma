@@ -32,6 +32,8 @@ enum ProfileStatus {
 
 /// SHUAMO's product account. Better Auth owns credentials and sessions.
 model AppUser {
+  financePayments FinancePayment[] @relation("PaymentActor")
+  financeInvoices FinanceInvoice[] @relation("InvoiceActor")
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
   locale    String   @default("ka")
@@ -48,6 +50,8 @@ model AppUser {
 }
 
 model Brand {
+  financePayments FinancePayment[]
+  financeInvoices FinanceInvoice[]
   id            String         @id @default(uuid()) @db.Uuid
   userId        String         @unique @map("user_id") @db.Uuid
   name          String
@@ -82,6 +86,8 @@ model IntegrationRequest {
 }
 
 model Creator {
+  financePayments FinancePayment[]
+  financeInvoices FinanceInvoice[]
   id          String         @id @default(uuid()) @db.Uuid
   userId      String         @unique @map("user_id") @db.Uuid
   displayName String         @map("display_name")
@@ -349,6 +355,7 @@ model ConversionItem {
 /// The submitted click is the sole source of creator, product and immutable
 /// commission terms. commissionAmount is immutable after insert.
 model Attribution {
+  financeInvoiceLines FinanceInvoiceLine[]
   id                     String            @id @default(uuid()) @db.Uuid
   conversionItemId       String            @unique @map("conversion_item_id") @db.Uuid
   clickId                String?           @unique(map: "attribution_click_id_key") @map("click_id")
@@ -451,4 +458,86 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+enum FinancePaymentKind {
+  PAYMENT
+  REVERSAL
+}
+
+enum FinanceInvoicePartyKind {
+  BRAND
+  CREATOR
+}
+
+model FinancePayment {
+  id String @id @default(uuid()) @db.Uuid
+  requestKey String @unique @map("request_key") @db.Uuid
+  requestHash String @map("request_hash") @db.Char(64)
+  kind FinancePaymentKind
+  brandId String? @map("brand_id") @db.Uuid
+  creatorId String? @map("creator_id") @db.Uuid
+  amount Decimal @db.Decimal(12, 2)
+  transferredOn DateTime @map("transferred_on") @db.Date
+  bankReference String? @map("bank_reference") @db.VarChar(160)
+  note String? @db.VarChar(1000)
+  partySnapshot Json @map("party_snapshot")
+  invoiceId String? @map("invoice_id") @db.Uuid
+  reversesId String? @unique @map("reverses_id") @db.Uuid
+  recordedById String @map("recorded_by_id") @db.Uuid
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  invoice FinanceInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  reverses FinancePayment? @relation("PaymentReversal", fields: [reversesId], references: [id], onDelete: Restrict)
+  reversal FinancePayment? @relation("PaymentReversal")
+  recordedBy AppUser @relation("PaymentActor", fields: [recordedById], references: [id], onDelete: Restrict)
+  @@index([brandId, transferredOn])
+  @@index([creatorId, transferredOn])
+  @@index([invoiceId])
+  @@map("finance_payment")
+}
+
+model FinanceInvoice {
+  id String @id @default(uuid()) @db.Uuid
+  requestKey String @unique @map("request_key") @db.Uuid
+  requestHash String @map("request_hash") @db.Char(64)
+  previewHash String @map("preview_hash") @db.Char(64)
+  number String @unique
+  brandId String? @map("brand_id") @db.Uuid
+  creatorId String? @map("creator_id") @db.Uuid
+  payerSnapshot Json @map("payer_snapshot")
+  payeeSnapshot Json @map("payee_snapshot")
+  total Decimal @db.Decimal(18, 2)
+  currency String @default("GEL")
+  issuedById String @map("issued_by_id") @db.Uuid
+  issuedAt DateTime @default(now()) @map("issued_at") @db.Timestamptz(6)
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  issuedBy AppUser @relation("InvoiceActor", fields: [issuedById], references: [id], onDelete: Restrict)
+  lines FinanceInvoiceLine[]
+  payments FinancePayment[]
+  @@index([brandId, issuedAt])
+  @@index([creatorId, issuedAt])
+  @@map("finance_invoice")
+}
+
+model FinanceInvoiceLine {
+  id String @id @default(uuid()) @db.Uuid
+  invoiceId String @map("invoice_id") @db.Uuid
+  attributionId String @map("attribution_id") @db.Uuid
+  amount Decimal @db.Decimal(12, 2)
+  snapshot Json
+  invoice FinanceInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  attribution Attribution @relation(fields: [attributionId], references: [id], onDelete: Restrict)
+  @@unique([invoiceId, attributionId])
+  @@index([attributionId])
+  @@map("finance_invoice_line")
+}
+
+model FinanceInvoiceCounter {
+  kind FinanceInvoicePartyKind
+  year Int
+  lastValue Int @map("last_value")
+  @@id([kind, year])
+  @@map("finance_invoice_counter")
 }

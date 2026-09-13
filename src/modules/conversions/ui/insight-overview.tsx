@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Locale } from "@/src/modules/localization";
 import type { PerformanceReport } from "../ports/performance";
@@ -23,6 +24,7 @@ export function WorkspaceOverview({
   report,
   products,
   state,
+  finance,
 }: {
   locale: Locale;
   name: string;
@@ -30,6 +32,7 @@ export function WorkspaceOverview({
   products: HomeProduct[];
   discover: HomeProduct[];
   state?: PerformancePageState;
+  finance?: ReactNode;
 }) {
   const text = insightText(locale),
     brand = report.role === "brand",
@@ -70,6 +73,7 @@ export function WorkspaceOverview({
           locale={locale}
         />
       </header>
+      {finance}
       <InsightMetrics
         overview
         report={report}

@@ -1,3 +1,6 @@
+import { readOwnFinance } from "@/src/infrastructure/finance-services";
+import { FinanceSummary } from "@/src/modules/finance";
+import "@/app/finance.css";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer, requireBrand } from "@/src/modules/identity";
 import { isLocale } from "@/src/modules/localization";
@@ -24,12 +27,14 @@ export default async function BrandWorkspace({
     redirect(
       "/" + locale + (viewer.kind === "creator" ? "/creator" : "/sign-in"),
     );
-  const [report, catalog] = await Promise.all([
+  const [report, catalog, finance] = await Promise.all([
     brandPerformanceReport(allowed.value.brandId, state.filters),
     listProductsForBrand(allowed.value.brandId, { pageSize: 100 }),
+    readOwnFinance(viewer, { page: 1 }, true),
   ]);
   return (
     <WorkspaceOverview
+      finance={finance.ok ? <FinanceSummary account={finance.value} locale={locale} /> : null}
       state={state}
       locale={locale}
       name={allowed.value.brandName}

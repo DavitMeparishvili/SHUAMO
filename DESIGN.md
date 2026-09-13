@@ -2,6 +2,13 @@
 name: Xurjin
 description: "Reference-led creator commerce with navy framing, blue-purple light and traceable working surfaces."
 colors:
+  finance-ink: "#10213d"
+  finance-muted: "#526680"
+  finance-border: "#dce3ee"
+  finance-cobalt: "#2f5fe8"
+  finance-credit: "#176653"
+  finance-commission: "#7854cb"
+  finance-navy: "#0b172b"
   profile-accent: "#1d5cff"
   profile-action-border: "#a8bdf1"
   profile-approved-soft: "#e6f8e9"
@@ -186,6 +193,20 @@ colors:
   chart-series-4: "#8196b8"
   chart-series-5: "#e6ebf5"
 typography:
+  finance-heading:
+    fontSize: "32px"
+    fontWeight: 750
+    lineHeight: 1.25
+    letterSpacing: "-0.025em"
+  finance-heading-mobile:
+    fontSize: "27px"
+    fontWeight: 750
+    lineHeight: 1.25
+    letterSpacing: "-0.025em"
+  finance-metric:
+    fontSize: "clamp(20px, 2.2vw, 32px)"
+    fontWeight: 700
+    lineHeight: 1.25
   profile-creator-heading:
     fontSize: "44px"
     fontWeight: 800
@@ -376,6 +397,32 @@ spacing:
   space-64: "64px"
   space-96: "96px"
 components:
+  finance-action:
+    backgroundColor: "{colors.finance-cobalt}"
+    textColor: "{colors.paper}"
+    rounded: "{rounded.sm}"
+    padding: "10px 16px"
+  finance-action-hover:
+    backgroundColor: "{colors.signal-hover}"
+    textColor: "{colors.paper}"
+  finance-field:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.finance-ink}"
+    rounded: "{rounded.sm}"
+    padding: "10px 12px"
+  finance-metric:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.md}"
+    padding: "22px"
+    typography: "{typography.finance-metric}"
+  finance-panel:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.md}"
+    padding: "24px"
+  finance-document:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.md}"
+    padding: "36px"
   discovery-action:
     backgroundColor: "{colors.discovery-accent}"
     textColor: "{colors.paper}"
@@ -469,6 +516,8 @@ Signal blue carries links, focus and solid operational actions. Gradient blue an
 
 Product discovery has a scoped solid discovery accent, darker hover and pale blue supporting fill. These tokens color its actions, selected filters and commission panels. The shared Xurjin identity, marketing gradients and other workspace accents retain their established roles.
 
+Manual finance uses its scoped cobalt for solid actions, links, active tab underlines and the sales chart. Its credit green supplements explicit Credit or Paid above current earnings labels; the scoped commission purple identifies the separate commission chart. Finance navy frames the administrator rail. These four supplied-reference colors extend the existing workspace palette only within finance and admin reporting; finance ink, muted text and borders preserve the scoped handoff tones. Other supporting surfaces retain their local tonal equivalents and shared state tokens.
+
 ### Secondary
 
 Soft cyan and lavender washes organize audience steps, quick actions and Coming soon panels. Chart colors identify series alongside legends; their presence does not imply financial state.
@@ -495,6 +544,8 @@ The frontmatter records both the shared component scale and the direct surface s
 
 **The Equal Script Rule.** Georgian and English share hierarchy, weight and usable space; allow wrapping instead of reducing one language to fit.
 
+Finance inherits the same font stack. Its page heading uses the scoped desktop/mobile roles, section headings use 19px at weight 700, and monetary figures use tabular numerals with the scoped metric role (24px on mobile). Labels remain beside their amounts. Charts use 12 SVG units for desktop text and 20 SVG units below the finance mobile breakpoint, giving approximately 12px rendered labels at a typical mobile chart width; SVG units are not a fixed CSS pixel guarantee.
+
 ## Layout
 
 Creator Brands keeps the established workspace shell around a centered directory capped at 1600px, with 28px desktop gutters. A 230px filter sidebar sits beside compact horizontal rows; between 901px and 1350px the sidebar narrows to 205px and row metadata wraps beneath identity. At 900px and below, 16px gutters, wrapping application-state pills and separate white rows replace the desktop list panel; filters move to a bottom sheet. Photographs step from 88px by 72px on wide desktop to 64px by 72px on mobile. At 380px and below, 12px gutters and 56px by 64px images leave room for translated names, with the row action below the metadata. The Brands mobile top bar is 76px tall. These are surface-specific adaptations of the shared shell.
@@ -509,6 +560,8 @@ At 1250px the rail narrows to 220px and content padding becomes 24px. At 1050px 
 
 Discovery shares the normal desktop workspace navigation: a 244px rail (220px at 1250px and below) and 78px top bar. Its catalog fills the available workspace width rather than centering the filter sidebar inside a 1480px cap. An explicit `auto 1fr` row layout keeps the heading at its content height on tall screens. The filter sidebar uses `clamp(200px, 16.9vw, 244px)`, beside three photographic card columns. The results container grows to four columns at 1280px of available width and five at 2200px, so wider monitors add columns instead of stretching three cards. Photos retain a 3:2 crop with a 280px maximum height and fill the card width. From 640px through 900px there are two columns. Below 640px, compact horizontal rows replace the gallery, with 96px-wide by 108px-high photographs (94px wide below 360px), a 52px top bar and 16px working gutters (12px below 360px). Mobile filtering moves into a bottom sheet with a scrollable body and a persistent safe-area-aware apply footer. Desktop discovery product titles and amounts use 18px type, with 14px card padding and 16px gaps; supporting labels use 12px, filters use 14px and primary actions have a 44px minimum. Mobile retains its compact row density.
 
+Finance content is capped at 1440px with 32px gutters, reducing to 24px at 1100px and 16px at 700px. Three account metrics become a full-width remaining balance above two supporting metrics on mobile; four commercial metrics become a two-column grid. Histories and invoice preview columns stack at 1100px. At 700px, report tables become labeled cards, charts stack, report filters move into a bottom sheet, and transfer entry fills the viewport. Owner home summaries reuse these components at compact density. The administrator shell uses menu navigation without the owner bottom bar. The [manual-finance surface brief](.impeccable/surfaces/manual-finance.md) owns route composition and the supplied handoff contract.
+
 ## Elevation & Depth
 
 Brands rows and filter panels stay flat, separated by fine borders. Its native filter and application dialogs use a translucent navy backdrop. The filter sheet enters from a 16px vertical offset over 180ms only when reduced motion is not requested. Search focus surrounds the whole field; keyboard controls have a visible blue outline.
@@ -518,6 +571,8 @@ Depth comes from navy framing, pale canvas, white panels and soft borders. Dashb
 The sidecar records exact shadows, motion and breakpoints. Controls transition color and borders over 150ms; audience photos use a 300ms crop transform and scale to 1.025 on hover. Reduced-motion preferences suppress these transitions and smooth scrolling. All keyboard-operable controls retain the shared visible focus outline and halo; the programmatically focused registration heading intentionally omits that ring.
 
 Discovery cards stay flat with a pale border. Its filter sheet is separated by a translucent navy backdrop and enters over 220ms; reduced motion removes the entrance animation. Discovery controls use a visible accent outline, and the search field has a focus-within outline.
+
+Finance panels remain flat, separated by thin cool borders. Native dialogs use a translucent finance-navy backdrop at 45% opacity. Finance keyboard focus is a 3px cobalt outline with a 3px offset. No finance-specific entrance animation or shadow is added.
 
 ## Shapes
 
@@ -529,7 +584,21 @@ The geometric X is the identity's fixed silhouette. Cards use 10?12px corners, p
 
 Discovery retains 12px card corners, 6px commission/action corners and circular save controls. Its mobile filter sheet uses the scoped discovery-sheet radius on its two top corners, with square bottom corners. This reference-approved sheet shape is a local exception, not a change to the shared card radius.
 
+Finance panels, metrics, documents and compact dialogs use the shared 12px corner; fields, actions and contextual notes use 8px corners. The desktop transfer drawer has square edges. Its mobile filter sheet has 12px top corners and square bottom corners. These are local adaptations of the workspace shapes.
+
 ## Components
+
+### Manual finance and admin reporting
+
+Finance actions use solid cobalt with white text and the shared darker signal hover. Outline actions retain a white surface and cool border. Actions and native fields have a 44px minimum height; fields use explicit labels and local 8px corners. Tabs use a cobalt underline and a programmatic current-page state. Disabled submissions preserve the form and expose pending feedback; errors retain their text near the form.
+
+Account summaries lead with remaining balance, followed by earned obligation and recorded payments, with All time and recording scope adjacent. Credit and paid-above-earnings states retain positive magnitudes and explicit words. Transaction histories expand with native details controls; invoices use separate linked rows. Compact home histories remain separate from performance filters. Empty histories report their factual absence without invented pending states.
+
+Transfer entry is a right-hand native dialog up to 580px wide on desktop and a full-height mobile form with safe-area padding. Account direction and the explanation that recording sends no money precede editable fields; a contextual note previews the resulting balance. Reversal uses a compact native dialog with the original identity, amount and required correction reason. Original and correction rows remain discoverable with worded states.
+
+Invoice preview places the white document beside a distinct live-balance panel. The document pairs Payable by and Payable to, lists source references and signed commission/correction amounts, and ends with its own total. Issued documents retain their snapshot identity. Print removes shell chrome and non-document actions, borders and card padding; the live balance never enters the document region. No invoice payment-state badge is implied.
+
+Admin reporting keeps filtered commercial results, recorded platform transfers and current all-time balances in separately labeled regions. Brand and creator tables visibly group commercial columns apart from account-wide finance columns; mobile cards retain those labels. Sales value and commission have separate aligned, zero-based charts with shared dates, exact per-point titles and expandable data tables. Products stay read-only and show commercial metrics, with no payment allocation columns. Download CSV sits near its All matching rows scope. The source for these conventions is `app/finance.css` and `src/modules/finance/ui`, interpreted through the supplied finance guide and handoff.
 
 ### Creator Brands directory
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-05T20:57:53.796Z",
+  "generatedAt": "2026-09-13T19:14:04.478749Z",
   "title": "Design System: Xurjin",
   "extensions": {
     "colorMeta": {
@@ -2493,6 +2493,111 @@
           "oklch(84% 0.0144 264.50)",
           "oklch(95% 0.0144 264.50)"
         ]
+      },
+      "finance-ink": {
+        "role": "neutral",
+        "displayName": "Finance ink",
+        "canonical": "#10213d",
+        "tonalRamp": [
+          "oklch(15% 0.0581 259.87)",
+          "oklch(26% 0.0581 259.87)",
+          "oklch(38% 0.0581 259.87)",
+          "oklch(49% 0.0581 259.87)",
+          "oklch(61% 0.0581 259.87)",
+          "oklch(72% 0.0581 259.87)",
+          "oklch(84% 0.0581 259.87)",
+          "oklch(95% 0.0581 259.87)"
+        ]
+      },
+      "finance-muted": {
+        "role": "neutral",
+        "displayName": "Finance muted text",
+        "canonical": "#526680",
+        "tonalRamp": [
+          "oklch(15% 0.0482 255.17)",
+          "oklch(26% 0.0482 255.17)",
+          "oklch(38% 0.0482 255.17)",
+          "oklch(49% 0.0482 255.17)",
+          "oklch(61% 0.0482 255.17)",
+          "oklch(72% 0.0482 255.17)",
+          "oklch(84% 0.0482 255.17)",
+          "oklch(95% 0.0482 255.17)"
+        ]
+      },
+      "finance-border": {
+        "role": "neutral",
+        "displayName": "Finance border",
+        "canonical": "#dce3ee",
+        "tonalRamp": [
+          "oklch(15% 0.0168 259.42)",
+          "oklch(26% 0.0168 259.42)",
+          "oklch(38% 0.0168 259.42)",
+          "oklch(49% 0.0168 259.42)",
+          "oklch(61% 0.0168 259.42)",
+          "oklch(72% 0.0168 259.42)",
+          "oklch(84% 0.0168 259.42)",
+          "oklch(95% 0.0168 259.42)"
+        ]
+      },
+      "finance-cobalt": {
+        "role": "primary",
+        "displayName": "Finance cobalt",
+        "canonical": "#2f5fe8",
+        "tonalRamp": [
+          "oklch(15% 0.2139 265.05)",
+          "oklch(26% 0.2139 265.05)",
+          "oklch(38% 0.2139 265.05)",
+          "oklch(49% 0.2139 265.05)",
+          "oklch(61% 0.2139 265.05)",
+          "oklch(72% 0.2139 265.05)",
+          "oklch(84% 0.2139 265.05)",
+          "oklch(95% 0.2139 265.05)"
+        ]
+      },
+      "finance-credit": {
+        "role": "tertiary",
+        "displayName": "Finance credit",
+        "canonical": "#176653",
+        "tonalRamp": [
+          "oklch(15% 0.0802 172.58)",
+          "oklch(26% 0.0802 172.58)",
+          "oklch(38% 0.0802 172.58)",
+          "oklch(49% 0.0802 172.58)",
+          "oklch(61% 0.0802 172.58)",
+          "oklch(72% 0.0802 172.58)",
+          "oklch(84% 0.0802 172.58)",
+          "oklch(95% 0.0802 172.58)"
+        ]
+      },
+      "finance-commission": {
+        "role": "secondary",
+        "displayName": "Finance commission",
+        "canonical": "#7854cb",
+        "tonalRamp": [
+          "oklch(15% 0.1767 293.64)",
+          "oklch(26% 0.1767 293.64)",
+          "oklch(38% 0.1767 293.64)",
+          "oklch(49% 0.1767 293.64)",
+          "oklch(61% 0.1767 293.64)",
+          "oklch(72% 0.1767 293.64)",
+          "oklch(84% 0.1767 293.64)",
+          "oklch(95% 0.1767 293.64)"
+        ]
+      },
+      "finance-navy": {
+        "role": "neutral",
+        "displayName": "Finance navy",
+        "canonical": "#0b172b",
+        "tonalRamp": [
+          "oklch(15% 0.0437 260.10)",
+          "oklch(26% 0.0437 260.10)",
+          "oklch(38% 0.0437 260.10)",
+          "oklch(49% 0.0437 260.10)",
+          "oklch(61% 0.0437 260.10)",
+          "oklch(72% 0.0437 260.10)",
+          "oklch(84% 0.0437 260.10)",
+          "oklch(95% 0.0437 260.10)"
+        ]
       }
     },
     "typographyMeta": {
@@ -2627,6 +2732,18 @@
       "supporting-19": {
         "displayName": "supporting 19",
         "purpose": "Observed supporting 19 typography."
+      },
+      "finance-heading": {
+        "displayName": "Finance heading",
+        "purpose": "Finance page heading; inherits the shared Manrope and Georgian stack."
+      },
+      "finance-heading-mobile": {
+        "displayName": "Finance mobile heading",
+        "purpose": "Finance page heading at 700px and below."
+      },
+      "finance-metric": {
+        "displayName": "Finance amount",
+        "purpose": "Tabular account/report values; 24px on mobile."
       }
     },
     "shadows": [
@@ -2736,6 +2853,14 @@
       {
         "name": "brands-narrow",
         "value": "380px"
+      },
+      {
+        "name": "finance-stacked",
+        "value": "1100px"
+      },
+      {
+        "name": "finance-mobile",
+        "value": "700px"
       }
     ]
   },
@@ -2848,6 +2973,45 @@
       "description": "Labelled commission panel paired with the exact product price. The specimen uses an empty factual value.",
       "html": "<dl class=\"ds-discovery-commission\"><dt>Commission</dt><dd>Not available</dd></dl>",
       "css": ".ds-discovery-commission{margin:0;padding:5px 10px;border-radius:6px;background:var(--discovery-soft,#f0f5ff);font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),sans-serif;}.ds-discovery-commission dt{font-size:10px;line-height:1.5;color:var(--muted,#5c6d8b)}.ds-discovery-commission dd{margin:0;font-size:16px;font-weight:800;line-height:1.35;font-variant-numeric:tabular-nums;color:var(--discovery-accent,#1d5cff)}@media(min-width:640px){.ds-discovery-commission{padding:6px 10px}.ds-discovery-commission dt{font-size:12px}.ds-discovery-commission dd{font-size:18px}}"
+    },
+    {
+      "name": "Finance action",
+      "kind": "button",
+      "refersTo": "finance-action",
+      "description": "Solid scoped action; pending preserves the form. Recording describes an external transfer.",
+      "html": "<button class=\"ds-finance-action\">Record payment received</button>",
+      "css": ".ds-finance-action{font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),system-ui,sans-serif;min-height:44px;border:1px solid var(--finance-border,#dce3ee);border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;background:var(--finance-blue,#2f5fe8);border-color:var(--finance-blue,#2f5fe8);color:var(--color-paper,#fff)}.ds-finance-action:hover{background:var(--color-signal-hover,#194cc0)}.ds-finance-action:focus-visible{outline:3px solid var(--finance-blue,#2f5fe8);outline-offset:3px}.ds-finance-action:disabled{opacity:.6;cursor:wait}"
+    },
+    {
+      "name": "Finance field",
+      "kind": "input",
+      "refersTo": "finance-field",
+      "description": "Labeled editable amount with the finance border, 44px minimum height and visible keyboard focus.",
+      "html": "<label class=\"ds-finance-field\">Amount (GEL)<input inputmode=\"decimal\" aria-label=\"Amount (GEL)\" placeholder=\"0.00\"></label>",
+      "css": ".ds-finance-field{font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),system-ui,sans-serif;display:grid;gap:7px;font-size:13px;font-weight:600;color:var(--finance-ink,#10213d)}.ds-finance-field input{font:inherit;min-height:44px;padding:10px 12px;border:1px solid var(--finance-border,#dce3ee);border-radius:8px;background:var(--color-paper,#fff);color:var(--finance-ink,#10213d);caret-color:var(--finance-blue,#2f5fe8)}.ds-finance-field input:focus-visible{outline:3px solid var(--finance-blue,#2f5fe8);outline-offset:3px}"
+    },
+    {
+      "name": "Finance metric",
+      "kind": "card",
+      "refersTo": "finance-metric",
+      "description": "Account balance with explicit scope; the specimen uses a factual zero rather than invented activity.",
+      "html": "<div class=\"ds-finance-metric\"><span>Amount outstanding</span><strong>0.00 GEL</strong><small>All time</small></div>",
+      "css": ".ds-finance-metric{font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),system-ui,sans-serif;display:flex;flex-direction:column;gap:8px;padding:22px;border:1px solid var(--finance-border,#dce3ee);border-radius:12px;background:var(--color-paper,#fff);color:var(--finance-ink,#10213d)}.ds-finance-metric span{font-size:13px;line-height:1.5;color:var(--finance-muted,#526680)}.ds-finance-metric strong{font-size:clamp(20px,2.2vw,32px);font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ds-finance-metric small{font-size:12px;line-height:1.5;color:var(--finance-muted,#526680)}@media(max-width:700px){.ds-finance-metric{padding:16px}.ds-finance-metric strong{font-size:24px}}"
+    },
+    {
+      "name": "Finance histories panel",
+      "kind": "card",
+      "refersTo": "finance-panel",
+      "description": "Flat, bordered history container with factual empty-state copy.",
+      "html": "<section class=\"ds-finance-panel\"><h2>Transactions</h2><p>No payments recorded yet</p></section>",
+      "css": ".ds-finance-panel{font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),system-ui,sans-serif;padding:24px;border:1px solid var(--finance-border,#dce3ee);border-radius:12px;background:var(--color-paper,#fff);color:var(--finance-ink,#10213d)}.ds-finance-panel h2{font-size:19px;font-weight:700;line-height:1.4;margin:0 0 8px}.ds-finance-panel p{font-size:14px;line-height:1.6;color:var(--finance-muted,#526680)}@media(max-width:700px){.ds-finance-panel{padding:16px}}"
+    },
+    {
+      "name": "Finance navigation tabs",
+      "kind": "nav",
+      "description": "Worded destinations with an underline and current-page state; wrapping remains available to Georgian labels.",
+      "html": "<nav class=\"ds-finance-tabs\" aria-label=\"Finance\"><a href=\"#brands\" aria-current=\"page\">Brands</a><a href=\"#creators\">Creators</a><a href=\"#transactions\">Transactions</a></nav>",
+      "css": ".ds-finance-tabs{font-family:var(--font-manrope,Manrope),var(--font-noto-sans-georgian,\"Noto Sans Georgian\"),system-ui,sans-serif;display:flex;gap:30px;border-bottom:1px solid var(--finance-border,#dce3ee)}.ds-finance-tabs a{padding:12px 2px;border-bottom:2px solid transparent;color:var(--finance-muted,#526680);text-decoration:none;text-underline-offset:3px}.ds-finance-tabs a[aria-current=\"page\"]{color:var(--finance-blue,#2f5fe8);border-color:var(--finance-blue,#2f5fe8);font-weight:700}.ds-finance-tabs a:hover{text-decoration:underline}.ds-finance-tabs a:focus-visible{outline:3px solid var(--finance-blue,#2f5fe8);outline-offset:3px}@media(max-width:700px){.ds-finance-tabs{gap:12px;font-size:13px;justify-content:space-between}.ds-finance-tabs a{overflow-wrap:anywhere}}"
     }
   ],
   "narrative": {

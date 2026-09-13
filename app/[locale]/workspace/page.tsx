@@ -14,7 +14,7 @@ export default async function WorkspaceRouter({
   const viewer = await currentViewer();
   if (viewer.kind === "brand") redirect(`/${locale}/brand`);
   if (viewer.kind === "creator") redirect(`/${locale}/creator`);
-  if (viewer.kind === "admin") redirect(`/${locale}/coming-soon?feature=admin`);
+  if (viewer.kind === "admin") redirect(`/${locale}/admin/finance`);
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect(`/${locale}/sign-in`);
   const account = await prisma.appUser.findUnique({

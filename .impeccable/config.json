@@ -27,6 +27,42 @@
         ],
         "createdAt": "2026-09-05T18:26:07.357Z",
         "reason": "User supplied mobile filter reference specifies a generously rounded top sheet; 24px is intentional for that sheet only."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#2f5fe8",
+        "files": [
+          "app/finance.css"
+        ],
+        "createdAt": "2026-09-13T19:09:39.613Z",
+        "reason": "User-supplied finance handoff report-source/style.css specifies this cobalt action color."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#176653",
+        "files": [
+          "app/finance.css"
+        ],
+        "createdAt": "2026-09-13T19:09:39.712Z",
+        "reason": "User-supplied finance handoff report-source/style.css specifies this credit text color."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#7854cb",
+        "files": [
+          "app/finance.css"
+        ],
+        "createdAt": "2026-09-13T19:09:39.804Z",
+        "reason": "Finance commission series uses the purple chart direction in the user-supplied handoff; limited to this finance stylesheet."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#0b172b",
+        "files": [
+          "app/finance.css"
+        ],
+        "createdAt": "2026-09-13T19:09:39.905Z",
+        "reason": "User-supplied finance handoff specifies this navy admin shell color."
       }
     ]
   }

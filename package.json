@@ -52,7 +52,8 @@
     "verify:attribution-correction": "pnpm verify:phase-4 && pnpm verify:attribution-model && pnpm test:coverage",
     "verify:phase-5": "pnpm verify:attribution-correction",
     "verify:phase-6": "pnpm verify:phase-5 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm seed:phase-6 && pnpm test:e2e --grep @phase-6",
-    "verify:phase-6.5": "pnpm verify:phase-6 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm storage:up && pnpm storage:init && pnpm db:migrate:deploy && pnpm seed:phase-6.5 && pnpm test:e2e --grep @phase-6.5"
+    "verify:phase-6.5": "pnpm verify:phase-6 && pnpm db:migrate:test && pnpm test:integration && pnpm build && pnpm storage:up && pnpm storage:init && pnpm db:migrate:deploy && pnpm seed:phase-6.5 && pnpm test:e2e --grep @phase-6.5",
+    "seed:finance": "tsx scripts/seed-finance.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",

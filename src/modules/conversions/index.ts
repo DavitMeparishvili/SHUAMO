@@ -88,3 +88,7 @@ export { ClickLedger } from "./ui/click-ledger";
 export { PerformanceDashboard } from "./ui/insight-dashboard";
 export { ProductDistribution, type HomeProduct } from "./ui/workspace-overview";
 export { WorkspaceOverview } from "./ui/insight-overview";
+export * from "./ports/admin-performance";
+export * from "./application/admin-performance-query";
+export * from "./application/read-admin-performance";
+export { prismaAdminPerformance } from "./infrastructure/prisma-admin-performance";

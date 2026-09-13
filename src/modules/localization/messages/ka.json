@@ -678,5 +678,6 @@
   "catalog.detail.promotionGroup": "პრომოცია და არხები",
   "catalog.detail.promotionIntro": "არხები, კონტენტის დამტკიცება და კუპონების პოლიტიკა.",
   "catalog.detail.conditionsGroup": "რეგიონები და სხვა პირობები",
-  "catalog.detail.conditionsIntro": "ხელმისაწვდომობა, დაბრუნება და სპეციალური პირობები."
+  "catalog.detail.conditionsIntro": "ხელმისაწვდომობა, დაბრუნება და სპეციალური პირობები.",
+  "nav.finance": "ფინანსები"
 }

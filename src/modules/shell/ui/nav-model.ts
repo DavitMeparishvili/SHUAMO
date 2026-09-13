@@ -16,6 +16,7 @@ const ROUTES = {
     { path: "sign-in", labelKey: "nav.signIn" },
   ],
   brand: [
+    { path: "brand/finance", labelKey: "nav.finance" },
     { path: "brand/orders", labelKey: "nav.orders" },
     { path: "brand/performance", labelKey: "nav.performance" },
     { path: "brand/products", labelKey: "nav.catalog" },
@@ -25,6 +26,7 @@ const ROUTES = {
     { path: "brand/profile", labelKey: "nav.profile" },
   ],
   creator: [
+    { path: "creator/finance", labelKey: "nav.finance" },
     { path: "products", labelKey: "nav.discoverProducts" },
     { path: "creator/links", labelKey: "nav.links" },
     { path: "creator/earnings", labelKey: "nav.performance" },
@@ -33,10 +35,9 @@ const ROUTES = {
   ],
   admin: [
     { path: "products", labelKey: "nav.discoverProducts" },
-    { path: "admin/periods", labelKey: "nav.periods" },
-    { path: "admin/invoices", labelKey: "nav.invoices" },
-    { path: "admin/payouts", labelKey: "nav.payouts" },
-    { path: "admin/adjustments", labelKey: "nav.adjustments" },
+    { path: "admin/finance", labelKey: "nav.finance" },
+    { path: "admin/products", labelKey: "nav.catalog" },
+    { path: "admin/performance", labelKey: "nav.performance" },
   ],
 } as const;
 
@@ -44,8 +45,10 @@ export function navDestinationsFor(
   viewer: Viewer,
   locale: Locale,
 ): NavDestination[] {
-  return ROUTES[viewer.kind].map(({ path, labelKey }) => ({
+  const destinations = ROUTES[viewer.kind].map(({ path, labelKey }) => ({
     href: `/${locale}/${path}`,
     labelKey,
   }));
+  if ((viewer.kind === "brand" || viewer.kind === "creator") && viewer.isAdmin) destinations.push({ href: `/${locale}/admin/finance`,labelKey: "nav.finance" });
+  return destinations;
 }
