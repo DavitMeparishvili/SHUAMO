@@ -812,6 +812,7 @@
   .profile-owner-banner {
     padding: 10px;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .profile-owner-banner strong {
     font-size: 11px;
@@ -822,6 +823,8 @@
   .profile-owner-banner .profile-button {
     padding: 6px 9px;
     font-size: 11px;
+    max-width: 100%;
+    white-space: normal;
   }
   .profile-owner-banner > svg {
     width: 20px;
@@ -870,6 +873,7 @@
   .profile-social-inline {
     justify-content: center;
     gap: 0;
+    flex-wrap: wrap;
   }
   .profile-social-inline a {
     padding: 0 22px;
@@ -1119,15 +1123,6 @@
   }
   .workspace-frame:has([data-profile-mode="view"]) .global-search {
     display: none;
-  }
-  .workspace-frame:has(.profile-route)
-    .mobile-workspace-brand
-    .xurjin-logo
-    > span {
-    display: inline;
-  }
-  .workspace-frame:has(.profile-route) .mobile-workspace-brand {
-    margin-right: auto;
   }
   .profile-workspace[data-profile-mode="edit"] {
     padding-bottom: 80px;

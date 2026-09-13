@@ -689,6 +689,7 @@ body:has(.brands-sheet[open], .brands-detail[open]) {
   .brands-toolbar {
     padding: 0 0 10px;
     gap: 10px;
+    flex-wrap: wrap;
   }
   .brands-filter-trigger {
     display: flex;
@@ -815,25 +816,7 @@ body:has(.brands-sheet[open], .brands-detail[open]) {
     min-height: 44px;
     font-size: 14px;
   }
-  .brands-frame .workspace-topbar > .global-search,
-  .brands-frame .workspace-topbar > .mobile-menu {
-    display: none;
-  }
   .brands-frame .discovery-breadcrumb {
-    display: none;
-  }
-  .brands-frame .workspace-topbar .mobile-workspace-brand .xurjin-logo > span {
-    display: inline;
-    font-size: 25px;
-  }
-  .brands-frame .workspace-topbar .notification-button {
-    display: flex;
-  }
-  .brands-frame .workspace-topbar {
-    height: 76px;
-    padding-inline: 20px;
-  }
-  .brands-frame .workspace-topbar .language-switch {
     display: none;
   }
 }

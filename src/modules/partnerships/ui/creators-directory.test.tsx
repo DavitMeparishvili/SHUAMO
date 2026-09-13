@@ -51,16 +51,13 @@ describe("creator partnership actions", () => {
         decideAction={decide}
       />,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Invite creator", exact: true }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Invite creator" }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent("approves a partnership immediately");
     expect(invite).not.toHaveBeenCalled();
     fireEvent.click(
       within(dialog).getByRole("button", {
         name: "Invite creator",
-        exact: true,
       }),
     );
     await waitFor(() => expect(invite).toHaveBeenCalledWith("creator-1"));
@@ -80,9 +77,7 @@ describe("creator partnership actions", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Review application" }));
     const dialog = screen.getByRole("dialog");
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "Approve", exact: true }),
-    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Approve" }));
     await waitFor(() =>
       expect(decide).toHaveBeenCalledWith("partnership-1", "APPROVE"),
     );
@@ -91,7 +86,7 @@ describe("creator partnership actions", () => {
     );
     expect(dialog).toHaveAttribute("open");
     expect(
-      within(dialog).getByRole("button", { name: "Approve", exact: true }),
+      within(dialog).getByRole("button", { name: "Approve" }),
     ).toBeEnabled();
   });
 });

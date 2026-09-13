@@ -666,29 +666,6 @@ body:has(.discovery-filter-sheet[open]) {
   .discovery-breadcrumb {
     font-size: 14px;
   }
-  .workspace-frame:has(.discovery-workspace) .rail-nav > a {
-    min-width: 0;
-  }
-  .workspace-frame:has(.discovery-workspace)
-    .rail-nav
-    > a
-    > span:not(.nav-soon) {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-nav svg {
-    flex-shrink: 0;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-nav > a:has(.nav-soon) {
-    display: grid;
-    grid-template-columns: 23px minmax(0, 1fr);
-    gap: 4px 15px;
-  }
-  .workspace-frame:has(.discovery-workspace) .rail-nav .nav-soon {
-    grid-column: 2;
-    justify-self: start;
-    margin-left: 0;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .discovery-filter-sheet[open] {
@@ -718,12 +695,6 @@ body:has(.discovery-filter-sheet[open]) {
 @media (max-width: 1050px) {
   .workspace-frame:has(.discovery-workspace) .discovery-breadcrumb {
     display: none;
-  }
-  .workspace-frame:has(.discovery-workspace)
-    .mobile-workspace-brand
-    .xurjin-logo
-    > span {
-    display: inline;
   }
 }
 @media (max-width: 639px) {
@@ -863,32 +834,6 @@ body:has(.discovery-filter-sheet[open]) {
   .discovery-copy {
     font-size: 9px;
     min-height: 28px;
-  }
-  .workspace-frame:has(.discovery-workspace) .workspace-topbar {
-    position: relative;
-    height: 52px;
-  }
-  .workspace-frame:has(.discovery-workspace) .mobile-workspace-brand {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .workspace-frame:has(.discovery-workspace)
-    .mobile-workspace-brand
-    .xurjin-logo {
-    font-size: 23px;
-    gap: 6px;
-  }
-  .workspace-frame:has(.discovery-workspace)
-    .workspace-topbar
-    .language-switch {
-    display: none;
-  }
-  .workspace-frame:has(.discovery-workspace) .notification-button {
-    display: inline-flex;
-  }
-  .workspace-frame:has(.discovery-workspace) .workspace-topbar .header-actions {
-    margin-left: auto;
   }
 }
 @media (max-width: 359px) {

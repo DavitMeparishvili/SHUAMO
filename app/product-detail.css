@@ -514,10 +514,6 @@
     padding: 4px 14px 14px;
     gap: 12px;
   }
-  .product-detail-frame .workspace-topbar {
-    height: 56px;
-    position: relative;
-  }
   .product-detail-frame .workspace-topbar > .mobile-menu,
   .product-detail-frame .global-search,
   .product-detail-frame .discovery-breadcrumb {
@@ -529,29 +525,6 @@
   }
   .product-detail-mobile-back svg {
     transform: rotate(180deg);
-  }
-  .product-detail-frame .mobile-workspace-brand {
-    display: flex;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .product-detail-frame .mobile-workspace-brand .xurjin-logo > span {
-    display: inline;
-    font-size: 20px;
-  }
-  .product-detail-frame .mobile-workspace-brand .xurjin-logo svg {
-    width: 30px;
-    height: 30px;
-  }
-  .product-detail-frame .workspace-topbar .header-actions {
-    margin-left: auto;
-  }
-  .product-detail-frame .workspace-topbar .language-switch {
-    display: none;
-  }
-  .product-detail-frame .notification-button {
-    display: grid;
   }
 }
 @media (prefers-reduced-motion: reduce) {

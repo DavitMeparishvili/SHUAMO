@@ -701,13 +701,18 @@ footer[id] {
   color: #aebed5;
 }
 .workspace-frame {
+  --workspace-rail-width: 244px;
+  --workspace-topbar-height: 78px;
+  --workspace-bottom-nav-height: calc(
+    72px + max(7px, env(safe-area-inset-bottom))
+  );
   background: #f5f7fc;
 }
 .workspace-frame .site-body {
-  margin-left: 244px;
+  margin-left: var(--workspace-rail-width);
 }
 .workspace-rail {
-  width: 244px;
+  width: var(--workspace-rail-width);
   position: fixed;
   inset: 0 auto 0 0;
   background: linear-gradient(160deg, #101d34, #081428);
@@ -716,17 +721,24 @@ footer[id] {
   flex-direction: column;
   z-index: 35;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.workspace-rail > * {
+  flex-shrink: 0;
 }
 .workspace-rail > .brand-link {
-  min-height: 78px;
+  height: var(--workspace-topbar-height);
   padding: 15px 23px;
   color: white;
   border-bottom: 1px solid #26334a;
 }
+.workspace-rail .xurjin-logo {
+  line-height: 1;
+}
 .rail-account {
   padding: 27px 24px;
   display: grid;
-  grid-template-columns: 58px 1fr;
+  grid-template-columns: 58px minmax(0, 1fr);
   gap: 4px 12px;
   align-items: center;
 }
@@ -774,6 +786,21 @@ footer[id] {
   background: transparent;
   border: 0;
   text-align: left;
+  min-width: 0;
+}
+.rail-nav > a > span:not(.nav-soon) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rail-nav > a:has(.nav-soon) {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  gap: 4px 15px;
+}
+.rail-nav .nav-soon {
+  grid-column: 2;
+  justify-self: start;
+  margin-left: 0;
 }
 .rail-nav .active {
   background: linear-gradient(100deg, #183e82, #193462);
@@ -788,6 +815,7 @@ footer[id] {
 }
 .rail-nav svg {
   width: 23px;
+  flex-shrink: 0;
 }
 .nav-soon {
   font-size: 9px;
@@ -840,7 +868,7 @@ footer[id] {
   width: 100%;
 }
 .workspace-topbar {
-  height: 78px;
+  height: var(--workspace-topbar-height);
   border-bottom: 1px solid var(--line);
   background: white;
   display: flex;
@@ -1656,11 +1684,8 @@ footer[id] {
   .marketing-header .xurjin-logo {
     font-size: 28px;
   }
-  .workspace-rail {
-    width: 220px;
-  }
-  .workspace-frame .site-body {
-    margin-left: 220px;
+  .workspace-frame {
+    --workspace-rail-width: 220px;
   }
   .workspace-content {
     padding: 24px;
@@ -1760,15 +1785,23 @@ footer[id] {
     justify-content: center;
     gap: 5px;
     font-size: 10px;
-    min-height: 52px;
+    min-height: 64px;
     text-align: center;
     padding: 3px;
+  }
+  .workspace-bottom-nav > :is(a, button) > span {
+    min-height: 28px;
+    line-height: 14px;
+    overflow-wrap: anywhere;
+  }
+  .workspace-bottom-nav svg {
+    flex-shrink: 0;
   }
   .workspace-bottom-nav [aria-current] {
     color: #73baff;
   }
   .workspace-frame {
-    padding-bottom: 77px;
+    padding-bottom: var(--workspace-bottom-nav-height);
   }
   .landing-hero h1 {
     font-size: 40px;
@@ -1984,10 +2017,37 @@ footer[id] {
   .footer-copyright {
     text-align: left;
   }
+  .workspace-frame {
+    --workspace-topbar-height: 68px;
+  }
   .workspace-topbar {
-    height: 68px;
+    position: relative;
     padding: 0 12px;
     gap: 7px;
+  }
+  .workspace-topbar .global-search,
+  .workspace-topbar .discovery-breadcrumb,
+  .workspace-topbar .language-switch {
+    display: none;
+  }
+  .workspace-topbar .mobile-workspace-brand {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .workspace-topbar .mobile-workspace-brand .xurjin-logo {
+    font-size: 23px;
+    gap: 6px;
+  }
+  .workspace-topbar .mobile-workspace-brand .xurjin-logo > span {
+    display: inline;
+  }
+  .workspace-topbar .mobile-workspace-brand .xurjin-logo svg {
+    width: 30px;
+    height: 30px;
+  }
+  .workspace-topbar .notification-button {
+    display: inline-flex;
   }
   .global-search {
     flex: 1;
@@ -1999,6 +2059,7 @@ footer[id] {
   }
   .workspace-topbar .header-actions {
     gap: 3px;
+    margin-left: auto;
   }
   .workspace-topbar .topbar-account > span:last-child,
   .notification-button {

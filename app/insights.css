@@ -913,6 +913,12 @@ html:has(.insight-sale-panel[open], .insight-filter-sheet[open]) {
     justify-content: space-between;
     gap: 12px;
   }
+  .insight-filter-fields {
+    flex-basis: 100%;
+  }
+  .insight-filter-actions {
+    flex-wrap: wrap;
+  }
   .insight-toolbar {
     margin-bottom: 16px;
   }
@@ -932,14 +938,16 @@ html:has(.insight-sale-panel[open], .insight-filter-sheet[open]) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
-  .insight-metrics.three > .insight-metric:first-child {
+  .insight-metrics.three > .insight-metric:first-child,
+  .insight-metrics.four > .insight-metric:first-child {
     grid-column: 1/-1;
   }
   .insight-metric {
     padding: 16px 12px;
     flex-direction: column;
   }
-  .insight-metrics.three > .insight-metric:first-child {
+  .insight-metrics.three > .insight-metric:first-child,
+  .insight-metrics.four > .insight-metric:first-child {
     flex-direction: row;
   }
   .insight-metric strong {
@@ -1075,6 +1083,12 @@ html:has(.insight-sale-panel[open], .insight-filter-sheet[open]) {
   }
   .insight-date-fields {
     flex-direction: column;
+  }
+}
+@media (max-width: 360px) {
+  .insight-metrics.three,
+  .insight-metrics.four {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: no-preference) {

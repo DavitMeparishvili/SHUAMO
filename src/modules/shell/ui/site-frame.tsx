@@ -478,21 +478,10 @@ export function SiteFrame({
               </span>
             </Link>
           ))}
-          {((discovery || trackingLinks || productDetail) && !brand) ||
-          path === `${root}/profile` ? (
-            <Link
-              href={`${root}/profile`}
-              aria-current={path === `${root}/profile` ? "page" : undefined}
-            >
-              <Icon name="user" />
-              <span>{label("Profile", "პროფილი")}</span>
-            </Link>
-          ) : (
-            <button onClick={() => drawer.current?.showModal()}>
-              <Icon name="menu" />
-              <span>{label("More", "მეტი")}</span>
-            </button>
-          )}
+          <button onClick={() => drawer.current?.showModal()}>
+            <Icon name="menu" />
+            <span>{label("More", "მეტი")}</span>
+          </button>
         </nav>
       )}
       <dialog
