@@ -64,6 +64,18 @@ export function WorkspaceOverview({
                 )}
           </p>
         </div>
+      </header>
+      {finance}
+      <div className="insight-overview-performance">
+        <div>
+          <h2>{text("Performance", "შედეგები")}</h2>
+          <p>
+            {text(
+              "Sales, commission and clicks for the selected period.",
+              "გაყიდვები, საკომისიო და დაწკაპუნებები არჩეულ პერიოდში.",
+            )}
+          </p>
+        </div>
         <InsightFilters
           key={JSON.stringify(selected.filters)}
           overview
@@ -72,8 +84,7 @@ export function WorkspaceOverview({
           basePath={root}
           locale={locale}
         />
-      </header>
-      {finance}
+      </div>
       <InsightMetrics
         overview
         report={report}

@@ -71,6 +71,31 @@
 .insight-toolbar {
   margin-bottom: 20px;
 }
+.insight-overview-performance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+}
+.insight-overview-performance h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.insight-overview-performance p {
+  margin: 8px 0 0;
+  color: var(--insight-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.insight-overview-performance .overview-range {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
 .insight-toolbar form {
   display: flex;
   align-items: center;
@@ -906,8 +931,19 @@ html:has(.insight-sale-panel[open], .insight-filter-sheet[open]) {
     font-size: 12px;
     line-height: 1.7;
   }
-  .overview-range {
-    margin-top: 16px;
+  .insight-overview-performance .overview-range {
+    width: 100%;
+  }
+  .insight-overview-performance .insight-range {
+    flex: 1;
+  }
+  .insight-overview-performance .overview-range form {
+    align-items: flex-start;
+  }
+  .insight-overview-performance .overview-range form > button {
+    min-height: 44px;
+    height: 44px;
+    padding-block: 0;
   }
   .insight-toolbar form {
     justify-content: space-between;
