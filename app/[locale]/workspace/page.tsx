@@ -23,6 +23,7 @@ export default async function WorkspaceRouter({
   });
   if (!account?.brand && !account?.creator) redirect(`/${locale}/sign-up`);
   if (
+    account?.accessDisabled ||
     account?.brand?.status === "SUSPENDED" ||
     account?.creator?.status === "SUSPENDED"
   )

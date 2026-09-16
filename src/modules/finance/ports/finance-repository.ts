@@ -77,6 +77,12 @@ export interface AccountRow {
   name: string;
   balance: FinanceBalance;
 }
+export interface AdminAccountRow extends AccountRow {
+  email: string;
+  phone: string | null;
+  status: "PENDING" | "APPROVED" | "SUSPENDED";
+  profileStatus: "DRAFT" | "PUBLISHED" | null;
+}
 export interface AccountFinance extends AccountRow {
   payments: Page<PaymentView>;
   invoices: Page<InvoiceView>;
@@ -85,7 +91,7 @@ export interface FinanceReads {
   listAccounts(
     kind: FinanceParty["kind"],
     query: { query: string; page: number },
-  ): Promise<Page<AccountRow>>;
+  ): Promise<Page<AdminAccountRow>>;
   listTransactions(query: {
     party?: FinanceParty;
     query: string;

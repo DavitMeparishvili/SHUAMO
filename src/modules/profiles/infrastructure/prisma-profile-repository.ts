@@ -520,3 +520,131 @@ export async function listOwnedActiveProducts(brandId: string) {
     orderBy: [{ title: "asc" }, { id: "asc" }],
   });
 }
+
+export async function getBrandProfileForAdmin(brandId: string) {
+  const [account, savedProfile] = await Promise.all([
+    prisma.brand.findUnique({
+      where: { id: brandId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        user: { select: { email: true, accessDisabled: true } },
+      },
+    }),
+    prisma.brandProfile.findUnique({
+      where: { brandId },
+      select: { ...brandSelect, draftData: true },
+    }),
+  ]);
+  if (!account) return undefined;
+  if (!savedProfile)
+    return {
+      kind: "brand" as const,
+      account: {
+        id: account.id,
+        name: account.name,
+        email: account.user.email,
+        status: account.user.accessDisabled ? "SUSPENDED" : account.status,
+      },
+      profile: undefined,
+      publicationStatus: undefined,
+    };
+  const draft = savedProfile.draftData
+    ? brandProfileInputSchema.parse(savedProfile.draftData)
+    : undefined;
+  const profile = draft
+    ? {
+        ...savedProfile,
+        ...brandData(draft),
+        brand: { name: draft.profileName ?? savedProfile.brand.name },
+      }
+    : savedProfile;
+  const ids = Array.isArray(profile.featuredProductIds)
+    ? profile.featuredProductIds.filter(
+        (value): value is string => typeof value === "string",
+      )
+    : [];
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids }, brandId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrls: true,
+      backlinkUrl: true,
+    },
+  });
+  const byId = new Map(products.map((product) => [product.id, product]));
+  return {
+    kind: "brand" as const,
+    account: {
+      id: account.id,
+      name: account.name,
+      email: account.user.email,
+      status: account.user.accessDisabled ? "SUSPENDED" : account.status,
+    },
+    publicationStatus: savedProfile.status,
+    profile: {
+      ...profile,
+      featuredProducts: ids.flatMap((id) => {
+        const product = byId.get(id);
+        return product ? [product] : [];
+      }),
+    },
+  };
+}
+
+export async function getCreatorProfileForAdmin(creatorId: string) {
+  const [account, savedProfile] = await Promise.all([
+    prisma.creator.findUnique({
+      where: { id: creatorId },
+      select: {
+        id: true,
+        displayName: true,
+        status: true,
+        user: { select: { email: true, accessDisabled: true } },
+      },
+    }),
+    prisma.creatorProfile.findUnique({
+      where: { creatorId },
+      select: { ...creatorSelect, draftData: true },
+    }),
+  ]);
+  if (!account) return undefined;
+  if (!savedProfile)
+    return {
+      kind: "creator" as const,
+      account: {
+        id: account.id,
+        name: account.displayName,
+        email: account.user.email,
+        status: account.user.accessDisabled ? "SUSPENDED" : account.status,
+      },
+      profile: undefined,
+      publicationStatus: undefined,
+    };
+  const draft = savedProfile.draftData
+    ? creatorProfileInputSchema.parse(savedProfile.draftData)
+    : undefined;
+  const profile = draft
+    ? {
+        ...savedProfile,
+        ...creatorData(draft),
+        creator: {
+          displayName: draft.profileName ?? savedProfile.creator.displayName,
+        },
+      }
+    : savedProfile;
+  return {
+    kind: "creator" as const,
+    account: {
+      id: account.id,
+      name: account.displayName,
+      email: account.user.email,
+      status: account.user.accessDisabled ? "SUSPENDED" : account.status,
+    },
+    publicationStatus: savedProfile.status,
+    profile,
+  };
+}

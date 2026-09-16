@@ -1,6 +1,7 @@
 export { authenticateBrandKey } from "./application/authenticate-brand-key";
 export { generateBrandKey } from "./application/generate-brand-key";
 export { resolveViewer } from "./application/resolve-viewer";
+export { setAdminAccountApproval } from "./application/set-account-approval";
 export { mintApiKey } from "./domain/api-key";
 export { safeProfileReturnTo } from "./domain/profile-return-to";
 export { currentViewer } from "./infrastructure/auth";
@@ -11,11 +12,21 @@ export {
   prismaAccountRepository,
   prismaBrandRepository,
 } from "./infrastructure/prisma-account-repository";
-export { requireBrand, requireCreator, requireAdmin } from "./http/require-viewer";
+export { prismaAdminAccountApprovalRepository } from "./infrastructure/prisma-admin-account-repository";
+export { createAdminAccountStatusHandler } from "./http/admin-account-status-handler";
+export {
+  requireBrand,
+  requireCreator,
+  requireAdmin,
+} from "./http/require-viewer";
 export { createBrandKeyPostHandler } from "./http/brand-key-handlers";
 export { webCryptoRandom } from "./ports/random-source";
 export type { RandomSource } from "./ports/random-source";
 export type { Viewer } from "./domain/viewer";
+export type {
+  AdminAccountKind,
+  AdminAccountStatus,
+} from "./ports/account-repository";
 export { AuthCard } from "./ui/auth-card";
 export { BrandKeyGenerator } from "./ui/brand-key-generator";
 export { SignInForm, type AuthFormCopy } from "./ui/sign-in-form";

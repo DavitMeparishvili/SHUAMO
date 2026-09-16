@@ -28,6 +28,37 @@ the `shuamo_postgres_data`, `shuamo_minio_data`, `shuamo_caddy_data`, and
 
 ## Publish and deploy
 
+### Local deployment helper
+
+From this checkout, run:
+
+```powershell
+python scripts/deploy-droplet.py
+```
+
+Requires Python with `paramiko` installed (`python -m pip install paramiko`),
+an authenticated GitHub CLI (`gh auth login`), and a trusted Droplet host key
+in the local SSH `known_hosts` file. The helper reads
+`SHUAMO_DROPLET_PASSWORD` and optional `SHUAMO_DROPLET_HOST` (default
+`64.227.17.241`). On Windows it also reads saved user environment variables,
+so an existing terminal can use them without restarting. Keep the password
+out of source files and Git.
+
+The helper waits for the main commit's image publication, makes and validates
+a PostgreSQL backup under `/opt/shuamo-backups`, deploys the immutable SHA image
+using `up -d --no-deps app`, and checks both public health endpoints. It preserves
+PostgreSQL and MinIO container/mount identities, compares data counts and total
+commission before and after, and saves the successful image tag in the private
+Droplet environment file. Live traffic can legitimately change data counts.
+The backup also contains the previous environment and image tag for recovery.
+
+This helper is for code-only releases. It refuses tracked changes on the Droplet,
+non-fast-forward updates, and changes to migrations, the production Compose file,
+the entrypoint, or Caddy configuration. Deploy those separately after reviewing
+their data and infrastructure implications. It does not seed or reset data.
+
+### Manual deployment
+
 Every push to `main` runs `.github/workflows/publish-container.yml` and publishes
 both `ghcr.io/davitmeparishvili/shuamo:latest` and an immutable commit-SHA tag.
 The package is private, so the Droplet must stay authenticated to GHCR.

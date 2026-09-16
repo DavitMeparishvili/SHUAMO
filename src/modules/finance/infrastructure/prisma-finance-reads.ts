@@ -6,7 +6,7 @@ import type {
   FinanceReads,
   InvoiceView,
   PaymentView,
-  AccountRow,
+  AdminAccountRow,
 } from "../ports/finance-repository";
 import {
   balanceFor,
@@ -153,7 +153,11 @@ export const prismaFinanceReads: FinanceReads = {
   async listAccounts(kind, { query, page }) {
     const table = kind === "brand" ? Prisma.sql`brand` : Prisma.sql`creator`,
       name = kind === "brand" ? Prisma.sql`name` : Prisma.sql`display_name`,
-      col = kind === "brand" ? Prisma.sql`brand_id` : Prisma.sql`creator_id`;
+      col = kind === "brand" ? Prisma.sql`brand_id` : Prisma.sql`creator_id`,
+      profileTable =
+        kind === "brand"
+          ? Prisma.sql`brand_profile`
+          : Prisma.sql`creator_profile`;
     return prisma.$transaction(
       async (tx) => {
         const [rows, count] = await Promise.all([
@@ -161,23 +165,39 @@ export const prismaFinanceReads: FinanceReads = {
             {
               id: string;
               name: string;
+              email: string;
+              phone: string | null;
+              status: "PENDING" | "APPROVED" | "SUSPENDED";
+              profile_status: "DRAFT" | "PUBLISHED" | null;
               earned: Prisma.Decimal;
               paid: Prisma.Decimal;
             }[]
           >(Prisma.sql`
      WITH earnings AS (SELECT ${col} id,SUM(commission_amount) earned FROM (${financeEarningsSource}) e GROUP BY ${col}),
      payments AS (SELECT ${col} id,SUM(CASE WHEN kind='PAYMENT' THEN amount ELSE -amount END) paid FROM finance_payment GROUP BY ${col})
-     SELECT a.id, a.${name} name, COALESCE(e.earned,0) earned, COALESCE(p.paid,0) paid
-     FROM ${table} a LEFT JOIN earnings e ON e.id=a.id LEFT JOIN payments p ON p.id=a.id
-     WHERE a.${name} ILIKE ${`%${query}%`} ORDER BY a.${name},a.id LIMIT 25 OFFSET ${(page - 1) * 25}`),
+     SELECT a.id, a.${name} name, u.email, NULLIF(u.onboarding->>'phone','') phone,
+            CASE WHEN u.access_disabled THEN 'SUSPENDED' ELSE a.status::text END status,
+            profile.status::text profile_status,
+            COALESCE(e.earned,0) earned, COALESCE(p.paid,0) paid
+     FROM ${table} a
+     JOIN app_user u ON u.id=a.user_id
+     LEFT JOIN ${profileTable} profile ON profile.${col}=a.id
+     LEFT JOIN earnings e ON e.id=a.id
+     LEFT JOIN payments p ON p.id=a.id
+     WHERE a.${name} ILIKE ${`%${query}%`} OR u.email ILIKE ${`%${query}%`} OR COALESCE(u.onboarding->>'phone','') ILIKE ${`%${query}%`}
+     ORDER BY a.${name},a.id LIMIT 25 OFFSET ${(page - 1) * 25}`),
           tx.$queryRaw<{ total: bigint }[]>(
-            Prisma.sql`SELECT COUNT(*) total FROM ${table} WHERE ${name} ILIKE ${`%${query}%`}`,
+            Prisma.sql`SELECT COUNT(*) total FROM ${table} a JOIN app_user u ON u.id=a.user_id WHERE a.${name} ILIKE ${`%${query}%`} OR u.email ILIKE ${`%${query}%`} OR COALESCE(u.onboarding->>'phone','') ILIKE ${`%${query}%`}`,
           ),
         ]);
         return {
-          items: rows.map((r): AccountRow => ({
+          items: rows.map((r): AdminAccountRow => ({
             party: { kind, id: r.id },
             name: r.name,
+            email: r.email,
+            phone: r.phone,
+            status: r.status,
+            profileStatus: r.profile_status,
             balance: financeBalance(r.earned.toString(), r.paid.toString()),
           })),
           page,

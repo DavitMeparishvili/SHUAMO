@@ -19,6 +19,7 @@ describe("resolveViewer", () => {
       accounts: accounts({
         userId: "u1",
         isAdmin: false,
+        accessDisabled: false,
         brand: { id: "b1", name: "Aromashop", status: "APPROVED" },
       }),
     })("u1");
@@ -37,6 +38,7 @@ describe("resolveViewer", () => {
         accounts: accounts({
           userId: "u2",
           isAdmin: false,
+          accessDisabled: false,
           creator: { id: "c2", displayName: "Nino", status },
         }),
       })("u2");
@@ -49,6 +51,7 @@ describe("resolveViewer", () => {
         accounts: accounts({
           userId: "u3",
           isAdmin: false,
+          accessDisabled: false,
           creator: { id: "c3", displayName: "Nino", status: "APPROVED" },
         }),
       })("u3"),
@@ -61,8 +64,27 @@ describe("resolveViewer", () => {
     });
     expect(
       await resolveViewer({
-        accounts: accounts({ userId: "u4", isAdmin: true }),
+        accounts: accounts({
+          userId: "u4",
+          isAdmin: true,
+          accessDisabled: false,
+        }),
       })("u4"),
     ).toEqual({ kind: "admin", userId: "u4" });
+  });
+  it("resolves an access-disabled approved account to anonymous", async () => {
+    const viewer = await resolveViewer({
+      accounts: accounts({
+        userId: "u5",
+        isAdmin: false,
+        accessDisabled: true,
+        creator: {
+          id: "c5",
+          displayName: "Paused creator",
+          status: "APPROVED",
+        },
+      }),
+    })("u5");
+    expect(viewer).toEqual({ kind: "anonymous" });
   });
 });

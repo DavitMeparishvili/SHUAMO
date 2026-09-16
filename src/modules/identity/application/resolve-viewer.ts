@@ -8,6 +8,11 @@ export function resolveViewer(dependencies: { accounts: AccountRepository }) {
     const account = await dependencies.accounts.findByUserId(sessionUserId);
     if (account === undefined) return { kind: "anonymous" };
 
+    if (account.accessDisabled)
+      return account.isAdmin
+        ? { kind: "admin", userId: account.userId }
+        : { kind: "anonymous" };
+
     if (account.brand !== undefined && isActive(account.brand.status)) {
       return {
         kind: "brand",

@@ -40,11 +40,13 @@ export function BrandProfile({
   action,
   copy,
   preview = false,
+  showApprovalBadge = true,
 }: {
   profile: BrandProfileView;
   locale: Locale;
   action?: ReactNode;
   preview?: boolean;
+  showApprovalBadge?: boolean;
   copy: {
     preview: string;
     approved: string;
@@ -104,10 +106,12 @@ export function BrandProfile({
         <div className="brand-identity">
           <div className="brand-heading">
             <h1>{profile.brand.name}</h1>
-            <span className="profile-approved">
-              <Icon name="check" />
-              {copy.approved}
-            </span>
+            {showApprovalBadge ? (
+              <span className="profile-approved">
+                <Icon name="check" />
+                {copy.approved}
+              </span>
+            ) : null}
           </div>
           <p className="profile-tagline">
             {tagline.text}

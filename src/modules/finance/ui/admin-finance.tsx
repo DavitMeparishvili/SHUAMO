@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { DataTable } from "@/src/modules/design-system";
 import { WorkspaceShell } from "@/src/modules/identity";
-import type { Locale } from "@/src/modules/localization";
+import {
+  getMessages,
+  t as translate,
+  type Locale,
+} from "@/src/modules/localization";
 import type {
-  AccountRow,
+  AdminAccountRow,
   Page,
   PaymentView,
 } from "../ports/finance-repository";
 import { financeText, financeMoney } from "./finance-copy";
 import { FinancePagination, PaymentHistory } from "./finance-histories";
+import { AccountStatusControl } from "./account-status-control";
+import { accountStatusCopy } from "./account-status-copy";
 export function AdminFinance({
   locale,
   tab,
@@ -19,13 +25,18 @@ export function AdminFinance({
   locale: Locale;
   tab: string;
   q: string;
-  accounts?: Page<AccountRow>;
+  accounts?: Page<AdminAccountRow>;
   transactions?: Page<PaymentView>;
 }) {
   const t = financeText(locale),
     basePath = `/${locale}/admin/finance`,
     brand = tab === "brands";
-  const balance = (r: AccountRow) => (
+  const messages = getMessages(locale);
+  const statusCopy = accountStatusCopy(messages);
+  const message = (key: string) => translate(messages, key);
+  const namedMessage = (key: string, name: string) =>
+    message(key).replace("{name}", name);
+  const balance = (r: AdminAccountRow) => (
     <span
       className={r.balance.outstanding.startsWith("-") ? "finance-credit" : ""}
     >
@@ -48,7 +59,25 @@ export function AdminFinance({
       </small>
     </span>
   );
-  const link = (r: AccountRow) => `${basePath}/${r.party.kind}/${r.party.id}`;
+  const link = (r: AdminAccountRow) =>
+    `${basePath}/${r.party.kind}/${r.party.id}`;
+  const profileLink = (r: AdminAccountRow) =>
+    `/${locale}/admin/profiles/${r.party.kind}/${r.party.id}`;
+  const profileLabel = (r: AdminAccountRow) =>
+    r.profileStatus === "PUBLISHED"
+      ? message("admin.accounts.profile.published")
+      : r.profileStatus === "DRAFT"
+        ? message("admin.accounts.profile.draft")
+        : message("admin.accounts.profile.none");
+  const profile = (r: AdminAccountRow) => (
+    <div className="finance-profile-cell">
+      <span>{profileLabel(r)}</span>
+      <Link href={profileLink(r)}>
+        {message("admin.accounts.list.reviewProfile")}
+        <span aria-hidden="true"> →</span>
+      </Link>
+    </div>
+  );
   const obligation = brand
       ? t("Commission obligation", "საკომისიოს ვალდებულება")
       : t("Earned commission", "გამომუშავებული საკომისიო"),
@@ -110,43 +139,85 @@ export function AdminFinance({
           <button className="finance-button">{t("Search", "ძიება")}</button>
         </form>
         {accounts && (
-          <section className="finance-panel">
+          <section className="finance-panel finance-accounts-panel">
+            <p className="finance-result-count">
+              {message(
+                brand
+                  ? "admin.accounts.list.brandCount"
+                  : "admin.accounts.list.creatorCount",
+              ).replace("{count}", String(accounts.total))}
+            </p>
             <h2>
-              {t(
-                "Current balances · All time",
-                "მიმდინარე ბალანსები · მთელი პერიოდი",
+              {message(
+                brand
+                  ? "admin.accounts.list.brandTitle"
+                  : "admin.accounts.list.creatorTitle",
               )}
             </h2>
-            <p>
-              {t(
-                "Invoices do not change account balances.",
-                "ინვოისები ანგარიშის ბალანსს არ ცვლის.",
-              )}
-            </p>
+            <p>{message("admin.accounts.list.intro")}</p>
             <div className="finance-desktop-table">
               <DataTable
-                caption={t("Account balances", "ანგარიშების ბალანსები")}
+                caption={message("admin.accounts.list.caption")}
                 rowKey="id"
                 columns={[
-                  { key: "name", label: t("Account", "ანგარიში") },
+                  {
+                    key: "name",
+                    label: message("admin.accounts.list.account"),
+                  },
+                  {
+                    key: "profile",
+                    label: message("admin.accounts.list.profile"),
+                  },
+                  {
+                    key: "access",
+                    label: message("admin.accounts.list.workspaceAccess"),
+                  },
                   { key: "earned", label: obligation, align: "right" },
                   { key: "paid", label: paid, align: "right" },
                   {
                     key: "balance",
-                    label: t("Balance", "ბალანსი"),
+                    label: message("admin.accounts.list.balance"),
                     align: "right",
                   },
-                  { key: "action", label: t("Actions", "მოქმედებები") },
+                  {
+                    key: "finance",
+                    label: message("admin.accounts.list.finance"),
+                  },
                 ]}
                 rows={accounts.items.map((r) => ({
                   id: r.party.id,
-                  name: <Link href={link(r)}>{r.name}</Link>,
+                  name: (
+                    <div className="finance-account-identity">
+                      <Link href={profileLink(r)}>{r.name}</Link>
+                      <span>{r.email}</span>
+                      <span>
+                        {r.phone ?? message("admin.accounts.list.noPhone")}
+                      </span>
+                    </div>
+                  ),
+                  profile: profile(r),
+                  access: (
+                    <AccountStatusControl
+                      kind={r.party.kind}
+                      id={r.party.id}
+                      name={r.name}
+                      initialStatus={r.status}
+                      copy={statusCopy}
+                    />
+                  ),
                   earned: financeMoney(r.balance.earned, locale),
                   paid: financeMoney(r.balance.payments, locale),
                   balance: balance(r),
-                  action: (
-                    <Link className="finance-button" href={link(r)}>
-                      {t("Open account", "ანგარიშის გახსნა")}
+                  finance: (
+                    <Link
+                      className="finance-button finance-open-link"
+                      href={link(r)}
+                      aria-label={namedMessage(
+                        "admin.accounts.list.openFinanceAria",
+                        r.name,
+                      )}
+                    >
+                      {message("admin.accounts.list.openFinance")}
                     </Link>
                   ),
                 }))}
@@ -155,12 +226,21 @@ export function AdminFinance({
             <div className="finance-mobile-cards">
               {accounts.items.map((r) => (
                 <article key={r.party.id}>
-                  <h3>
-                    <Link href={link(r)}>{r.name}</Link>
-                  </h3>
+                  <header className="finance-account-card-header">
+                    <div>
+                      <h3>
+                        <Link href={profileLink(r)}>{r.name}</Link>
+                      </h3>
+                      <span>{r.email}</span>
+                      <span>
+                        {r.phone ?? message("admin.accounts.list.noPhone")}
+                      </span>
+                    </div>
+                  </header>
+                  {profile(r)}
                   <dl>
                     <div>
-                      <dt>{t("Balance", "ბალანსი")}</dt>
+                      <dt>{message("admin.accounts.list.balance")}</dt>
                       <dd>{balance(r)}</dd>
                     </div>
                     <div>
@@ -172,9 +252,25 @@ export function AdminFinance({
                       <dd>{financeMoney(r.balance.payments, locale)}</dd>
                     </div>
                   </dl>
-                  <Link className="finance-button" href={link(r)}>
-                    {t("Open account", "ანგარიშის გახსნა")}
-                  </Link>
+                  <div className="finance-mobile-actions">
+                    <Link
+                      className="finance-button finance-open-link"
+                      href={link(r)}
+                      aria-label={namedMessage(
+                        "admin.accounts.list.openFinanceAria",
+                        r.name,
+                      )}
+                    >
+                      {message("admin.accounts.list.openFinance")}
+                    </Link>
+                    <AccountStatusControl
+                      kind={r.party.kind}
+                      id={r.party.id}
+                      name={r.name}
+                      initialStatus={r.status}
+                      copy={statusCopy}
+                    />
+                  </div>
                 </article>
               ))}
             </div>

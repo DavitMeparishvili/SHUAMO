@@ -14,6 +14,7 @@ export const prismaAccountRepository: AccountRepository = {
     return {
       userId: record.id,
       isAdmin: record.isAdmin,
+      accessDisabled: record.accessDisabled,
       ...(record.brand === null
         ? {}
         : {

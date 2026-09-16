@@ -24,6 +24,7 @@ export default async function SignUpPage({
       })
     : null;
   if (
+    application?.accessDisabled ||
     application?.brand?.status === "SUSPENDED" ||
     application?.creator?.status === "SUSPENDED"
   )
