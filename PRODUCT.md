@@ -45,7 +45,7 @@ Brands maintain a brand-wide catalogue, archive rather than delete products, app
 
 ## Brand Commitments
 
-The product is named Xurjin, spelled in Latin letters in both Georgian and English. Its binding identity is the blue-purple geometric X from the user-selected references. Its voice stays factual, clear and welcoming. The replacement visual system, including reference-approved gradients, is documented in `DESIGN.md`.
+The product is named Xurjin, spelled in Latin letters in both Georgian and English. Its binding identity is the user-selected Nexus geometric X with a cyan-blue-violet gradient and outlined Xurjin wordmark. Its voice stays factual, clear and welcoming. The replacement visual system, including reference-approved gradients, is documented in `DESIGN.md`.
 
 ## Evidence on Hand
 

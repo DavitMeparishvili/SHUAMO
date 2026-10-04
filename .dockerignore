@@ -10,4 +10,5 @@ test-results
 !.env.example
 deploy/.env.droplet
 deploy/secrets
+scripts/deploy-droplet.py
 *.dump

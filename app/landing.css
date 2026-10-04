@@ -1,0 +1,247 @@
+.marketing-header .marketing-nav {
+  gap: clamp(12px, 1.2vw, 20px);
+}
+
+.marketing-header .marketing-nav a {
+  font-size: 12px;
+}
+
+@media (min-width: 1051px) and (max-width: 1300px) {
+  .marketing-header .marketing-nav {
+    display: none;
+  }
+
+  .marketing-header .mobile-menu {
+    display: flex;
+    order: -1;
+  }
+
+  .marketing-header > .brand-link {
+    margin-right: auto;
+  }
+}
+
+.landing-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 6vw, 88px);
+  padding: 48px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.landing-detail h2,
+.landing-faq h2,
+.landing-body .how-section > h2 {
+  margin: 0 0 20px;
+  font-size: clamp(25px, 2.4vw, 32px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.landing-detail-intro > p,
+.landing-faq > div > p {
+  margin: 0 0 24px;
+  color: var(--muted);
+  max-width: 65ch;
+  line-height: 1.65;
+}
+
+.landing-detail-intro small {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.landing-benefits {
+  margin: 0;
+}
+
+.landing-benefits > div + div {
+  margin-top: 24px;
+}
+
+.landing-benefits dt {
+  color: var(--color-ink);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.landing-benefits dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.landing-body .how-section {
+  padding: 48px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.landing-section-intro {
+  text-align: left;
+  color: var(--muted);
+  margin: 0 0 32px;
+}
+
+.landing-body .steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.landing-body .step h3 {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.landing-body .step p {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.hero-registration-note {
+  display: block;
+  margin-top: 16px;
+  color: #c9d2e2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.landing-body .step {
+  gap: 14px;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.landing-body .step::after {
+  content: none;
+}
+
+.landing-body .step-number {
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  color: var(--color-signal-700);
+  flex-shrink: 0;
+}
+
+.landing-body .step:nth-child(2) .step-number {
+  color: #7854cb;
+}
+
+.landing-body .step:nth-child(3) .step-number {
+  color: white;
+  background: #2060e8;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.landing-body .step h3 {
+  margin: 3px 0 10px;
+}
+
+.landing-body .step p {
+  margin: 0;
+}
+
+.landing-faq {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 48px;
+  padding: 56px 0 64px;
+}
+
+.landing-questions details {
+  border-bottom: 1px solid var(--line);
+}
+
+.landing-questions summary {
+  padding: 20px 4px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.6;
+}
+
+.landing-questions summary:hover,
+.landing-questions details[open] summary {
+  color: var(--blue);
+}
+
+.landing-questions summary:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.landing-questions details p {
+  margin: 0;
+  padding: 0 4px 24px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 70ch;
+}
+
+.landing-body .join-banner {
+  margin-bottom: 48px;
+}
+
+@media (max-width: 720px) {
+  .landing-hero .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    max-width: 380px;
+  }
+
+  .landing-hero .video-link {
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .landing-hero .video-link > span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .landing-body .steps {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .landing-detail,
+  .landing-faq {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 40px 0;
+  }
+
+  .landing-detail-intro .x-button {
+    width: 100%;
+  }
+
+  .landing-body .how-section {
+    padding: 40px 0;
+  }
+
+  .landing-faq > div > p {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .landing-body .audience-card h2 {
+    font-size: 22px;
+  }
+}

@@ -64,9 +64,9 @@ colors:
   hero-cyan: "#22c7f3"
   hero-blue: "#6b97ff"
   hero-purple: "#b568ff"
-  logo-cyan: "#19c3f6"
-  logo-blue: "#4778ff"
-  logo-purple: "#9751ff"
+  logo-white: "#ffffff"
+  logo-red: "#d42a2a"
+  logo-navy: "#0b1a33"
   registration-stepper-li-color: "#647797"
   registration-stepper-li-not-last-child-after-background: "#dce4f1"
   registration-stepper-li-span-background: "#e9eef7"
@@ -502,7 +502,7 @@ Extracted from app/xurjin.css, app/discovery.css, app/globals.css, app/tokens.cs
 **Key Characteristics:**
 
 - Navy framing and white, softly rounded working cards.
-- A blue-purple geometric X with the Latin Xurjin name in both locales.
+- The user-selected 03 Nexus geometric X from `xurjin-svg-logo-pack.zip`, with its cyan-blue-violet gradient and outlined Latin Xurjin wordmark in both locales. The wordmark inherits the surface foreground; the same symbol is used for the browser tab and touch icon. Source variants live in `public/brand/`.
 - Self-hosted Manrope and Noto Sans Georgian with tabular financial figures.
 - Human audience imagery, a globe backdrop, and measured motion.
 

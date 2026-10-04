@@ -246,9 +246,17 @@ footer[id] {
   font-size: 32px;
   letter-spacing: -1px;
 }
-.xurjin-logo svg {
+.xurjin-logo > svg {
   width: 42px;
   height: 42px;
+}
+.xurjin-logo > span {
+  display: inline-flex;
+}
+.xurjin-logo > span .xurjin-wordmark {
+  display: block;
+  width: 3.3em;
+  height: auto;
 }
 .skip-link {
   position: fixed;
@@ -663,7 +671,7 @@ footer[id] {
 .footer-grid .xurjin-logo {
   font-size: 27px;
 }
-.footer-grid .xurjin-logo svg {
+.footer-grid .xurjin-logo > svg {
   width: 33px;
   height: 33px;
 }
@@ -1751,7 +1759,7 @@ footer[id] {
   .mobile-workspace-brand .xurjin-logo > span {
     display: none;
   }
-  .mobile-workspace-brand .xurjin-logo svg {
+  .mobile-workspace-brand .xurjin-logo > svg {
     width: 30px;
     height: 34px;
   }
@@ -1878,7 +1886,7 @@ footer[id] {
     font-size: 25px;
     gap: 6px;
   }
-  .marketing-header .xurjin-logo svg {
+  .marketing-header .xurjin-logo > svg {
     width: 32px;
     height: 32px;
   }
@@ -2042,7 +2050,7 @@ footer[id] {
   .workspace-topbar .mobile-workspace-brand .xurjin-logo > span {
     display: inline;
   }
-  .workspace-topbar .mobile-workspace-brand .xurjin-logo svg {
+  .workspace-topbar .mobile-workspace-brand .xurjin-logo > svg {
     width: 30px;
     height: 30px;
   }

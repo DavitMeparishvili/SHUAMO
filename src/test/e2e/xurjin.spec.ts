@@ -3,8 +3,24 @@ import { expect, test } from "@playwright/test";
 
 for (const locale of ["en", "ka"] as const) {
   test(`Xurjin ${locale} landing and navigation`, async ({ page }, info) => {
+    const expectAtSection = async (id: string) => {
+      await expect
+        .poll(() =>
+          page
+            .locator(`#${id}`)
+            .evaluate((section) =>
+              Math.abs(
+                section.getBoundingClientRect().top -
+                  parseFloat(getComputedStyle(section).scrollMarginTop),
+              ),
+            ),
+        )
+        .toBeLessThan(2);
+    };
     await page.goto(`/${locale}`);
-    await expect(page.locator(".xurjin-logo").first()).toContainText("Xurjin");
+    await expect(page.locator(".xurjin-logo").first()).toHaveAccessibleName(
+      "Xurjin",
+    );
     await expect(page.locator(".audience-card")).toHaveCount(2);
     expect(
       await page.evaluate(
@@ -18,8 +34,69 @@ for (const locale of ["en", "ka"] as const) {
       await expect(page.locator("dialog[open]")).toHaveCount(0);
     }
     await page.locator(".video-link").click();
-    await expect(page.locator(".soon-label")).toHaveText(
-      locale === "en" ? "Coming soon" : "მალე",
+    await expect(page).toHaveURL(/#how-it-works$/);
+    await expect(page.locator("#how-it-works")).toBeInViewport();
+    // A repeated click must scroll again even when the URL already has this hash.
+    // Visibility alone misses the bug on desktop, where the section peeks above the fold.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.locator(".video-link").click();
+    await expectAtSection("how-it-works");
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    if (info.project.name.includes("mobile")) {
+      await page.locator(".mobile-menu").click();
+      await page.locator('dialog a[href$="#how-it-works"]').click();
+      await expect(page.locator("dialog[open]")).toHaveCount(0);
+    } else {
+      await page.locator('.marketing-nav a[href$="#how-it-works"]').click();
+    }
+    await expectAtSection("how-it-works");
+    await page.locator('footer a[href$="#how-it-works"]').first().click();
+    await expectAtSection("how-it-works");
+    await expect(page.locator('a[href*="coming-soon"]')).toHaveCount(0);
+    const missingTargets = await page
+      .locator('a[href*="#"]')
+      .evaluateAll((links) =>
+        links
+          .map((link) => new URL((link as HTMLAnchorElement).href).hash)
+          .filter(
+            (hash) =>
+              hash &&
+              !document.getElementById(decodeURIComponent(hash.slice(1))),
+          ),
+      );
+    expect(missingTargets).toEqual([]);
+    for (const [index, section, role] of [
+      [0, "for-brands", "brand"],
+      [1, "for-creators", "creator"],
+    ] as const) {
+      await page.locator(".audience-card").nth(index).click();
+      await expect(page).toHaveURL(new RegExp(`#${section}$`));
+      await expect(page.locator(`#${section}`)).toBeInViewport();
+      await expectAtSection(section);
+      await page.evaluate(() =>
+        window.scrollTo({ top: 0, behavior: "instant" }),
+      );
+      await page.locator(".audience-card").nth(index).click();
+      await expectAtSection(section);
+      await page.locator(`#${section} .x-button`).click();
+      await expect(page).toHaveURL(
+        new RegExp(`/${locale}/sign-up\\?role=${role}$`),
+      );
+      await expect(page.locator("#reg-name")).toBeVisible();
+      await page.goto(`/${locale}`);
+    }
+    const firstQuestion = page.locator("#faq summary").first();
+    await firstQuestion.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#faq details").first()).toHaveAttribute(
+      "open",
+      "",
+    );
+    await expect(page.locator("#faq details p").first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#faq details").first()).not.toHaveAttribute(
+      "open",
+      "",
     );
   });
 

@@ -5,13 +5,16 @@ import Link from "next/link";
 import { Icon, XurjinLogo, type IconName } from "@/src/modules/design-system";
 import type { Viewer } from "@/src/modules/identity";
 import type { Locale } from "@/src/modules/localization";
+import type { MarketingCopy } from "./marketing-copy";
 
 export function SiteFrame({
   locale,
+  marketingCopy,
   viewer,
   children,
 }: {
   locale: Locale;
+  marketingCopy: MarketingCopy;
   viewer: Viewer;
   children: ReactNode;
 }) {
@@ -27,14 +30,21 @@ export function SiteFrame({
   const drawer = useRef<HTMLDialogElement>(null);
   const [signingOut, setSigningOut] = useState(false);
   const label = (en: string, ka: string) => (locale === "ka" ? ka : en);
-  const admin = (/^\/(ka|en)\/admin\/(?!login(?:$|\/))/.test(path) || /^\/(ka|en)\/finance\/invoices\//.test(path)) && (viewer.kind === "admin" || (viewer.kind !== "anonymous" && viewer.isAdmin));
-  const workspace = admin || (
-    (viewer.kind === "brand" || viewer.kind === "creator") &&
-    !["", "sign-up", "sign-in"].includes(path.split("/")[2] ?? "") && !path.endsWith("/admin/login"));
+  const admin =
+    (/^\/(ka|en)\/admin\/(?!login(?:$|\/))/.test(path) ||
+      /^\/(ka|en)\/finance\/invoices\//.test(path)) &&
+    (viewer.kind === "admin" ||
+      (viewer.kind !== "anonymous" && viewer.isAdmin));
+  const workspace =
+    admin ||
+    ((viewer.kind === "brand" || viewer.kind === "creator") &&
+      !["", "sign-up", "sign-in"].includes(path.split("/")[2] ?? "") &&
+      !path.endsWith("/admin/login"));
   const brand = viewer.kind === "brand";
   const root = `/${locale}/${brand ? "brand" : viewer.kind === "admin" ? "workspace" : "creator"}`;
-  const name = admin ? label("Finance administrator", "ფინანსების ადმინისტრატორი") :
-    viewer.kind === "brand"
+  const name = admin
+    ? label("Finance administrator", "ფინანსების ადმინისტრატორი")
+    : viewer.kind === "brand"
       ? viewer.brandName
       : viewer.kind === "creator"
         ? viewer.displayName
@@ -90,13 +100,38 @@ export function SiteFrame({
         ]
       : []),
   ];
-  if (admin) nav.splice(0,nav.length,
-    { href: `/${locale}/admin/finance`,text: label("Finance","ფინანსები"),icon: "chart" },
-    { href: `/${locale}/admin/products`,text: label("Products","პროდუქტები"),icon: "box" },
-    { href: `/${locale}/admin/performance`,text: label("Performance","ანალიტიკა"),icon: "chart" });
+  if (admin)
+    nav.splice(
+      0,
+      nav.length,
+      {
+        href: `/${locale}/admin/finance`,
+        text: label("Finance", "ფინანსები"),
+        icon: "chart",
+      },
+      {
+        href: `/${locale}/admin/products`,
+        text: label("Products", "პროდუქტები"),
+        icon: "box",
+      },
+      {
+        href: `/${locale}/admin/performance`,
+        text: label("Performance", "ანალიტიკა"),
+        icon: "chart",
+      },
+    );
   else if (workspace) {
-    nav.push({ href: `${root}/finance`,text: label("Finance","ფინანსები"),icon: "chart" });
-    if (viewer.kind === "admin" || viewer.isAdmin) nav.push({ href: `/${locale}/admin/finance`,text: label("Admin finance","ადმინისტრატორის ფინანსები"),icon: "settings" });
+    nav.push({
+      href: `${root}/finance`,
+      text: label("Finance", "ფინანსები"),
+      icon: "chart",
+    });
+    if (viewer.kind === "admin" || viewer.isAdmin)
+      nav.push({
+        href: `/${locale}/admin/finance`,
+        text: label("Admin finance", "ადმინისტრატორის ფინანსები"),
+        icon: "settings",
+      });
   }
   // Brand link management now starts at Products; legacy URLs remain under Performance.
   if (brand) {
@@ -105,25 +140,40 @@ export function SiteFrame({
   }
   const marketing = [
     {
-      href: `/${locale}/#why-xurjin`,
-      text: label("Why Xurjin", "რატომ Xurjin"),
+      href: `/${locale}#how-it-works`,
+      text: marketingCopy["nav.how"],
     },
     {
-      href: `/${locale}/#how-it-works`,
-      text: label("How it works", "როგორ მუშაობს"),
+      href: `/${locale}#for-brands`,
+      text: marketingCopy["nav.brands"],
     },
     {
-      href: `/${locale}/sign-up?role=brand`,
-      text: label("For sellers", "გამყიდველებისთვის"),
+      href: `/${locale}#for-creators`,
+      text: marketingCopy["nav.creators"],
     },
-    {
-      href: `/${locale}/sign-up?role=creator`,
-      text: label("For creators", "კრეატორებისთვის"),
-    },
-    { href: `/${locale}/#about`, text: label("About us", "ჩვენ შესახებ") },
+    { href: `/${locale}#faq`, text: marketingCopy["nav.faq"] },
   ];
+  const explore = [
+    { href: `/${locale}/products`, text: marketingCopy["footer.products"] },
+    { href: `/${locale}/brands`, text: marketingCopy["footer.brands"] },
+    { href: `/${locale}/creators`, text: marketingCopy["footer.creators"] },
+  ];
+  const publicNavigation = [...marketing, ...explore];
+  const publicNavigationLinks = publicNavigation.map((n) => {
+    // Native anchors scroll again when the same fragment is already in the URL.
+    const NavigationLink = n.href.includes("#") ? "a" : Link;
+    return (
+      <NavigationLink
+        key={n.href}
+        href={n.href}
+        onClick={() => drawer.current?.close()}
+      >
+        {n.text}
+      </NavigationLink>
+    );
+  });
   const localeControl = (
-    <nav className="language-switch" aria-label={label("Language", "ენა")}>
+    <nav className="language-switch" aria-label={marketingCopy["nav.language"]}>
       {(["ka", "en"] as const).map((l) => (
         <a
           href={path.replace(/^\/(ka|en)/, `/${l}`)}
@@ -164,13 +214,21 @@ export function SiteFrame({
       }
       onClick={(event) => {
         drawer.current?.close();
-        if (admin && /\/admin\/(performance|products)/.test(path) && /\/admin\/(performance|products)$/.test(n.href)) {
+        if (
+          admin &&
+          /\/admin\/(performance|products)/.test(path) &&
+          /\/admin\/(performance|products)$/.test(n.href)
+        ) {
           event.preventDefault();
           const query = new URLSearchParams(searchParams.toString());
           const products = n.href.endsWith("/products");
           query.set("tab", products ? "products" : "overview");
-          query.set("page", products ? query.get("listPage") || query.get("page") || "1" : "1");
-          query.delete("returnTo");query.delete("listPage");
+          query.set(
+            "page",
+            products ? query.get("listPage") || query.get("page") || "1" : "1",
+          );
+          query.delete("returnTo");
+          query.delete("listPage");
           window.location.assign(`${n.href}?${query}`);
         }
       }}
@@ -226,19 +284,28 @@ export function SiteFrame({
           <Link className="brand-link" href={`/${locale}`} aria-label="Xurjin">
             <XurjinLogo />
           </Link>
-          {admin ? <p className="admin-workspace-label">{label("Admin workspace","ადმინისტრატორის სივრცე")}</p> : account}
-          <nav
-            className="rail-nav"
-            aria-label={label("Primary navigation", "მთავარი ნავიგაცია")}
-          >
+          {admin ? (
+            <p className="admin-workspace-label">
+              {label("Admin workspace", "ადმინისტრატორის სივრცე")}
+            </p>
+          ) : (
+            account
+          )}
+          <nav className="rail-nav" aria-label={marketingCopy["nav.primary"]}>
             {navLinks}
-            {!admin && <Link href={`/${locale}/coming-soon?feature=notifications`}>
-              <Icon name="bell" />
-              <span>{label("Notifications", "შეტყობინებები")}</span>
-              <span className="nav-soon">{label("Soon", "მალე")}</span>
-            </Link>}
+            {!admin && (
+              <Link href={`/${locale}/coming-soon?feature=notifications`}>
+                <Icon name="bell" />
+                <span>{label("Notifications", "შეტყობინებები")}</span>
+                <span className="nav-soon">{label("Soon", "მალე")}</span>
+              </Link>
+            )}
           </nav>
-          {admin && viewer.kind !== "admin" && <Link className="rail-help" href={`/${locale}/workspace`}>{label("Back to workspace","სამუშაო სივრცეში დაბრუნება")}</Link>}
+          {admin && viewer.kind !== "admin" && (
+            <Link className="rail-help" href={`/${locale}/workspace`}>
+              {label("Back to workspace", "სამუშაო სივრცეში დაბრუნება")}
+            </Link>
+          )}
           <div className="rail-bottom">
             <Link
               className="rail-help"
@@ -296,21 +363,25 @@ export function SiteFrame({
               <Icon name="arrow" />
               <Link href={brand ? `${root}/products` : `/${locale}/products`}>
                 {brand
-                  ? label("Products", "პროდუქტები")
+                  ? marketingCopy["footer.products"]
                   : label("Discover", "აღმოჩენა")}
               </Link>
               <span>/ {label("Product details", "პროდუქტის დეტალები")}</span>
             </div>
           ) : null}
-          {admin ? <div className="admin-workspace-breadcrumb">{label("Admin workspace","ადმინისტრატორის სივრცე")}</div> : workspace &&
-          (discovery || trackingLinks || brandsPage || brandManagement) ? (
+          {admin ? (
+            <div className="admin-workspace-breadcrumb">
+              {label("Admin workspace", "ადმინისტრატორის სივრცე")}
+            </div>
+          ) : workspace &&
+            (discovery || trackingLinks || brandsPage || brandManagement) ? (
             <div className="discovery-breadcrumb">
               <Icon name="arrow" />
               <span>
                 {brandManagement
                   ? nav.find((item) => item.href === path)?.text
                   : brandsPage
-                    ? label("Brands", "ბრენდები")
+                    ? marketingCopy["footer.brands"]
                     : trackingLinks
                       ? label("Tracking links", "ტრეკინგ ბმულები")
                       : label("Discover", "აღმოჩენა")}
@@ -333,18 +404,19 @@ export function SiteFrame({
           ) : (
             <nav
               className="marketing-nav"
-              aria-label={label("Primary navigation", "მთავარი ნავიგაცია")}
+              aria-label={marketingCopy["nav.primary"]}
             >
-              {marketing.map((n) => (
-                <Link key={n.href} href={n.href}>
-                  {n.text}
-                </Link>
-              ))}
+              {publicNavigationLinks}
             </nav>
           )}
           <div className="header-actions">
             {localeControl}
-            {admin ? <div className="topbar-account"><span className="avatar small">FA</span><strong>{name}</strong></div> : workspace ? (
+            {admin ? (
+              <div className="topbar-account">
+                <span className="avatar small">FA</span>
+                <strong>{name}</strong>
+              </div>
+            ) : workspace ? (
               <>
                 <Link
                   className="icon-button notification-button"
@@ -357,7 +429,9 @@ export function SiteFrame({
                   <Icon name="bell" />
                 </Link>
                 <Link href={`${root}/profile`} className="topbar-account">
-                  <span className="avatar small">{admin ? "FA" : name.slice(0, 1)}</span>
+                  <span className="avatar small">
+                    {admin ? "FA" : name.slice(0, 1)}
+                  </span>
                   <span>
                     <strong>{name}</strong>
                     <small>
@@ -378,10 +452,9 @@ export function SiteFrame({
                     : `/${locale}/workspace`
                 }
               >
-                {label(
-                  viewer.kind === "anonymous" ? "Get started" : "Dashboard",
-                  viewer.kind === "anonymous" ? "დაიწყე ახლავე" : "ჩემი სივრცე",
-                )}
+                {viewer.kind === "anonymous"
+                  ? marketingCopy.getStarted
+                  : marketingCopy.dashboard}
               </Link>
             )}
           </div>
@@ -410,67 +483,44 @@ export function SiteFrame({
                 <Link className="brand-link" href={`/${locale}`}>
                   <XurjinLogo />
                 </Link>
-                <p>
-                  {label(
-                    "Where brands and creators in Georgia connect, collaborate, and grow together.",
-                    "პლატფორმა, სადაც ბრენდები და კრეატორები ერთად ქმნიან ახალ შესაძლებლობებს.",
-                  )}
-                </p>
+                <p>{marketingCopy["footer.description"]}</p>
                 <div className="footer-socials">
                   <Icon name="users" />
-                  <span>
-                    {label(
-                      "Made for connection.",
-                      "შექმნილია თანამშრომლობისთვის.",
-                    )}
-                  </span>
+                  <span>{marketingCopy["footer.tagline"]}</span>
                 </div>
               </div>
               <div>
-                <h3>{label("Platform", "პლატფორმა")}</h3>
-                {marketing.slice(0, 4).map((n) => (
+                <h3>{marketingCopy["footer.platform"]}</h3>
+                {marketing.slice(0, 3).map((n) => (
+                  <a href={n.href} key={n.href}>
+                    {n.text}
+                  </a>
+                ))}
+              </div>
+              <div>
+                <h3>{marketingCopy["footer.explore"]}</h3>
+                {explore.map((n) => (
                   <Link href={n.href} key={n.href}>
                     {n.text}
                   </Link>
                 ))}
-              </div>
-              <div>
-                <h3>{label("Explore", "აღმოაჩინე")}</h3>
-                <Link href={`/${locale}/products`}>
-                  {label("Products", "პროდუქტები")}
-                </Link>
-                <Link href={`/${locale}/brands`}>
-                  {label("Brands", "ბრენდები")}
-                </Link>
-                <Link href={`/${locale}/creators`}>
-                  {label("Creators", "კრეატორები")}
-                </Link>
                 <Link href={`/${locale}/sign-in`}>
-                  {label("Sign in", "შესვლა")}
+                  {marketingCopy["signIn"]}
                 </Link>
               </div>
               <div>
-                <h3>{label("Resources", "რესურსები")}</h3>
-                {["Help center", "Terms of service", "Privacy policy"].map(
-                  (f, i) => (
-                    <Link
-                      href={`/${locale}/coming-soon?feature=${["help", "terms", "privacy"][i]}`}
-                      key={f}
-                    >
-                      {locale === "ka"
-                        ? [
-                            "დახმარების ცენტრი",
-                            "მომსახურების პირობები",
-                            "კონფიდენციალურობა",
-                          ][i]
-                        : f}
-                    </Link>
-                  ),
-                )}
+                <h3>{marketingCopy["footer.resources"]}</h3>
+                <a href={`/${locale}#how-it-works`}>
+                  {marketingCopy["nav.how"]}
+                </a>
+                <a href={`/${locale}#faq`}>{marketingCopy["footer.faq"]}</a>
+                <p className="footer-policy-status">
+                  {marketingCopy["footer.policiesPending"]}
+                </p>
               </div>
               <small className="footer-copyright">
                 © {new Date().getFullYear()} Xurjin.{" "}
-                {label("All rights reserved.", "ყველა უფლება დაცულია.")}
+                {marketingCopy["footer.copyright"]}
               </small>
             </div>
           )}
@@ -481,12 +531,15 @@ export function SiteFrame({
           className="workspace-bottom-nav"
           aria-label={label("Mobile navigation", "მობილური ნავიგაცია")}
         >
-          {(admin ? nav : [
-            nav[0]!,
-            nav[1]!,
-            nav.find((n) => n.icon === "users")!,
-            nav.find((n) => n.icon === (brand ? "cart" : "link"))!,
-          ]).map((n) => (
+          {(admin
+            ? nav
+            : [
+                nav[0]!,
+                nav[1]!,
+                nav.find((n) => n.icon === "users")!,
+                nav.find((n) => n.icon === (brand ? "cart" : "link"))!,
+              ]
+          ).map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -517,7 +570,7 @@ export function SiteFrame({
       )}
       <dialog
         className="navigation-drawer"
-        aria-label={label("Navigation", "ნავიგაცია")}
+        aria-label={marketingCopy["nav.title"]}
         ref={drawer}
         onClick={(e) => {
           if (e.target === e.currentTarget) drawer.current?.close();
@@ -527,7 +580,7 @@ export function SiteFrame({
           <XurjinLogo />
           <button
             className="icon-button"
-            aria-label={label("Close navigation", "მენიუს დახურვა")}
+            aria-label={marketingCopy["nav.close"]}
             onClick={() => drawer.current?.close()}
           >
             <Icon name="close" />
@@ -538,17 +591,19 @@ export function SiteFrame({
             {account}
             <nav
               className="rail-nav"
-              aria-label={label("All destinations", "ყველა გვერდი")}
+              aria-label={marketingCopy["nav.destinations"]}
             >
               {navLinks}
-              {!admin && <Link
-                href={`/${locale}/coming-soon?feature=notifications`}
-                onClick={() => drawer.current?.close()}
-              >
-                <Icon name="bell" />
-                {label("Notifications — soon", "შეტყობინებები — მალე")}
-              </Link>
-              }<button onClick={signOut} disabled={signingOut}>
+              {!admin && (
+                <Link
+                  href={`/${locale}/coming-soon?feature=notifications`}
+                  onClick={() => drawer.current?.close()}
+                >
+                  <Icon name="bell" />
+                  {label("Notifications — soon", "შეტყობინებები — მალე")}
+                </Link>
+              )}
+              <button onClick={signOut} disabled={signingOut}>
                 <Icon name="logout" />
                 {label("Sign out", "გასვლა")}
               </button>
@@ -557,20 +612,10 @@ export function SiteFrame({
         ) : (
           <nav
             className="rail-nav"
-            aria-label={label("All destinations", "ყველა გვერდი")}
+            aria-label={marketingCopy["nav.destinations"]}
           >
-            {marketing.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                onClick={() => drawer.current?.close()}
-              >
-                {n.text}
-              </Link>
-            ))}
-            <Link href={`/${locale}/sign-in`}>
-              {label("Sign in", "შესვლა")}
-            </Link>
+            {publicNavigationLinks}
+            <Link href={`/${locale}/sign-in`}>{marketingCopy["signIn"]}</Link>
           </nav>
         )}
         {localeControl}

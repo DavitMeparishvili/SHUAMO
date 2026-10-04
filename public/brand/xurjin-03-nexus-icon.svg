@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" role="img" aria-labelledby="title"><title id="title">Xurjin — Nexus — dark</title><defs>
+ <linearGradient id="l3g" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#20C4EA"/><stop offset="1" stop-color="#2460F5"/></linearGradient>
+ <linearGradient id="l3v" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2460F5"/><stop offset="1" stop-color="#8545F7"/></linearGradient>
+ <linearGradient id="l3all" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#20C4EA"/><stop offset=".55" stop-color="#2460F5"/><stop offset="1" stop-color="#8545F7"/></linearGradient>
+ </defs><g fill="url(#l3all)"><path d="M13 14H39L50 33L61 14H87L63 50L87 86H61L50 67L39 86H13L37 50Z"/>
+ </g></svg>

@@ -1,31 +1,59 @@
-import type { SVGProps } from "react";
+import { useId, type SVGProps } from "react";
 export function XurjinLogo() {
+  const gradientId = useId();
   return (
-    <span className="xurjin-logo">
-      <svg viewBox="0 0 44 44" aria-hidden="true">
+    <span className="xurjin-logo" role="img" aria-label="Xurjin">
+      <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2=".8">
+            <stop stopColor="#20C4EA" />
+            <stop offset=".55" stopColor="#2460F5" />
+            <stop offset="1" stopColor="#8545F7" />
+          </linearGradient>
+        </defs>
         <path
-          d="M7 5h5l25 31-5 3L7 8Z"
-          fill="none"
-          stroke="#19c3f6"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M35 5h4L12 38H5L32 7Z"
-          fill="#4778ff"
-          stroke="#4778ff"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m26 26 11 12h-7l-8-9"
-          fill="none"
-          stroke="#9751ff"
-          strokeWidth="3"
-          strokeLinejoin="round"
+          d="M13 14H39L50 33L61 14H87L63 50L87 86H61L50 67L39 86H13L37 50Z"
+          fill={`url(#${gradientId})`}
         />
       </svg>
-      <span>Xurjin</span>
+      <span>
+        <svg
+          className="xurjin-wordmark"
+          viewBox="122 0 246 100"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <g
+            fill="currentColor"
+            transform="translate(122 76) scale(.086 -.086)"
+          >
+            <path
+              transform="translate(0 0)"
+              d="M419 372 644 729H470L336 489L208 729H30L252 367L22 0H196L335 253L475 0H653Z"
+            />
+            <path
+              transform="translate(655 0)"
+              d="M541 0V540H401V202C401 138 357 96 288 96C228 96 198 128 198 193V540H58V164C58 44 123 -23 239 -23C312 -23 361 3 401 64V0Z"
+            />
+            <path
+              transform="translate(1254 0)"
+              d="M63 540V0H203V287C203 369 244 410 326 410C341 410 351 409 370 406V548C362 549 359 549 353 549C289 549 234 507 203 434V540Z"
+            />
+            <path
+              transform="translate(1631 0)"
+              d="M210 540H70V-63C70 -94 59 -105 29 -105C20 -105 13 -104 4 -101V-213C31 -216 65 -218 87 -218C174 -218 210 -182 210 -94ZM210 729H70V604H210Z"
+            />
+            <path
+              transform="translate(1897 0)"
+              d="M207 540H67V0H207ZM207 729H67V604H207Z"
+            />
+            <path
+              transform="translate(2163 0)"
+              d="M63 540V0H203V324C203 388 247 430 316 430C376 430 406 397 406 333V0H546V362C546 482 481 549 365 549C292 549 243 523 203 462V540Z"
+            />
+          </g>
+        </svg>
+      </span>
     </span>
   );
 }
