@@ -648,7 +648,7 @@
   "profile.editor.uploading": "Uploading…",
   "profile.editor.uploadComplete": "Upload complete.",
   "profile.editor.uploadFailed": "Upload failed. Choose the file and try again.",
-  "profile.editor.incomplete": "Add the required identity, image, category, and proof before publishing.",
+  "profile.editor.incomplete": "Complete the missing items below, then publish your profile.",
   "directory.brands.title": "Discover brands",
   "directory.brands.intro": "Meet approved brands through their products, story, and collaboration interests.",
   "directory.creators.title": "Discover creators",

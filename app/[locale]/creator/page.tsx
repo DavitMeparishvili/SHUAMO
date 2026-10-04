@@ -1,3 +1,4 @@
+import { profileIsPublished } from "@/src/infrastructure/profile-onboarding";
 import { readOwnFinance } from "@/src/infrastructure/finance-services";
 import { FinanceSummary } from "@/src/modules/finance";
 import "@/app/finance.css";
@@ -23,12 +24,15 @@ export default async function CreatorWorkspace({
   searchParams: Promise<PerformanceSearchParams>;
 }) {
   const { locale } = await params;
-  const state = parsePerformanceQuery(await searchParams, "creator");
+  const query = await searchParams;
+  const state = parsePerformanceQuery(query, "creator");
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
   const allowed = requireCreator(viewer);
   if (!allowed.ok)
     redirect("/" + locale + (viewer.kind === "brand" ? "/brand" : "/sign-in"));
+  if (query.setup !== "later" && !(await profileIsPublished(viewer)))
+    redirect(`/${locale}/creator/profile`);
   const [report, links, offers, finance] = await Promise.all([
     creatorPerformanceReport(allowed.value.creatorId, state.filters),
     listCreatorLinkCatalog(allowed.value.creatorId, {
@@ -58,7 +62,11 @@ export default async function CreatorWorkspace({
     }));
   return (
     <WorkspaceOverview
-      finance={finance.ok ? <FinanceSummary account={finance.value} locale={locale} /> : null}
+      finance={
+        finance.ok ? (
+          <FinanceSummary account={finance.value} locale={locale} />
+        ) : null
+      }
       state={state}
       locale={locale}
       name={allowed.value.displayName}

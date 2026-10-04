@@ -25,6 +25,10 @@ import {
 import { CreatorWorkEditor } from "./creator-work-editor";
 import { ProfileMediaField, type MediaUploadCopy } from "./profile-media-field";
 import { SocialLinksEditor } from "./social-links-editor";
+import Link from "next/link";
+import { profileSetupCopy } from "./profile-setup-copy";
+import { ProfileLeaveGuard } from "./profile-leave-guard";
+import { profileCompletionIssues } from "../application/profile-completion";
 
 type ProfileEditorRecord = {
   hasUnpublishedChanges?: boolean;
@@ -134,9 +138,13 @@ export function ProfileEditor({
   creatorCopy?: Parameters<typeof CreatorProfile>[0]["copy"];
 }) {
   const ui = profileDesignCopy(locale);
-  const [mode, setMode] = useState<"view" | "edit">(profile ? "view" : "edit");
+  const setup = profileSetupCopy(locale, role);
+  const [mode, setMode] = useState<"view" | "edit">(
+    profile?.status === "PUBLISHED" ? "view" : "edit",
+  );
   const [tab, setTab] = useState("details");
   const [dirty, setDirty] = useState(false);
+  const [justPublished, setJustPublished] = useState(false);
   const [uploads, setUploads] = useState<Set<string>>(() => new Set());
   const uploadBusy = (id: string, busy: boolean) =>
     setUploads((current) => {
@@ -151,10 +159,16 @@ export function ProfileEditor({
   const isPublic = profile?.status === "PUBLISHED";
   const [saveState, saveFormAction, isSaving] = useActionState(
     async (state: ProfileActionState, data: FormData) => {
+      setJustPublished(false);
       const result = await saveAction(state, data);
       if (result.status === "success") {
         setDirty(false);
         setDraft(null);
+        if (data.get("intent") === "publish") {
+          const published = await publishAction(result, data);
+          setJustPublished(published.status === "success");
+          return published;
+        }
       }
       return result;
     },
@@ -168,14 +182,10 @@ export function ProfileEditor({
     INITIAL_PROFILE_ACTION_STATE,
   );
   useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+    if (saveState.status === "error") {
+      formRef.current?.querySelector<HTMLElement>('[role="alert"]')?.focus();
+    }
+  }, [saveState]);
   const mediaCopy: MediaUploadCopy = {
     tooLarge: copy.uploadTooLarge,
     uploading: copy.uploading,
@@ -187,8 +197,7 @@ export function ProfileEditor({
   const textValue = (key: string) =>
     (profile as Record<string, unknown> | undefined)?.[key] as
       string | undefined;
-  const markDirty = () => setDirty(true);
-  const showPreview = () => {
+  const readDraft = () => {
     if (formRef.current) {
       const data = new FormData(formRef.current);
       setDraft({
@@ -209,6 +218,14 @@ export function ProfileEditor({
         ),
       });
     }
+  };
+  const markDirty = () => {
+    setDirty(true);
+    // Collection and upload controls update their hidden fields after this event.
+    requestAnimationFrame(readDraft);
+  };
+  const showPreview = () => {
+    readDraft();
     setMode("view");
     window.scrollTo({ top: 0 });
   };
@@ -239,6 +256,51 @@ export function ProfileEditor({
   const featuredIds = Array.isArray(shown.featuredProductIds)
     ? (shown.featuredProductIds as string[])
     : [];
+  const missing = profileCompletionIssues(
+    shown,
+    role,
+    products.map((product) => product.id),
+  );
+  const focusRequirement = (issue: string) => {
+    const field = {
+      slug: "slug",
+      tagline: `tagline${lang}`,
+      description: `description${lang}`,
+      categories: "categories",
+      heroImageUrl: "heroImageUrl",
+      brandEvidence: `whatWeMake${lang}`,
+      creatorEvidence: "socialUrl",
+    }[issue];
+    setMode("edit");
+    setTab(
+      issue === "heroImageUrl"
+        ? "media"
+        : issue === "creatorEvidence"
+          ? "links"
+          : "details",
+    );
+    requestAnimationFrame(() => {
+      const input = formRef.current?.querySelector<HTMLElement>(
+        `[name="${field}"]`,
+      );
+      if (!input) return;
+      for (
+        let parent = input.parentElement;
+        parent;
+        parent = parent.parentElement
+      ) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+      }
+      const target =
+        input instanceof HTMLInputElement && input.type === "hidden"
+          ? input.parentElement?.querySelector<HTMLElement>(
+              'input:not([type="hidden"]),button',
+            )
+          : input;
+      target?.focus();
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
   const previewName =
     typeof draft?.profileName === "string" ? draft.profileName : name;
   const preview =
@@ -347,6 +409,13 @@ export function ProfileEditor({
       data-profile-mode={mode}
       data-profile-role={role}
     >
+      <ProfileLeaveGuard
+        locale={locale}
+        role={role}
+        privateProfile={!isPublic}
+        dirty={dirty || uploads.size > 0}
+        busy={isSaving || uploads.size > 0}
+      />
       <div hidden={mode !== "view"}>
         <div className={`profile-owner-banner ${isPublic ? "" : "private"}`}>
           <Icon name={isPublic ? "eye" : "lock"} />
@@ -421,6 +490,57 @@ export function ProfileEditor({
             {ui.preview}
           </button>
         </header>
+        {!isPublic ? (
+          <section
+            className="profile-setup"
+            aria-labelledby="profile-setup-title"
+          >
+            <h2 id="profile-setup-title">{setup.title}</h2>
+            <p>{setup.privacy}</p>
+            <p className="profile-setup-progress" aria-live="polite">
+              {missing.length === 1
+                ? setup.oneRemaining
+                : missing.length
+                  ? setup.remaining.replace("{count}", String(missing.length))
+                  : setup.ready}
+            </p>
+            {missing.length ? (
+              <ul aria-label={setup.checklist}>
+                {missing.map((issue) => (
+                  <li key={issue}>
+                    <button
+                      type="button"
+                      onClick={() => focusRequirement(issue)}
+                    >
+                      <Icon name="arrow" />
+                      {setup.requirements[issue]}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="profile-setup-hint">{setup.saveHint}</p>
+            <Link href={`/${locale}/${role}?setup=later`}>{setup.later}</Link>
+          </section>
+        ) : justPublished ? (
+          <section
+            className="profile-setup published"
+            aria-label={setup.published}
+          >
+            <h2>{setup.published}</h2>
+            <p>{setup.publishedBody}</p>
+            <div className="profile-setup-links">
+              {profile?.slug ? (
+                <Link
+                  href={`/${locale}/${role === "brand" ? "brands" : "creators"}/${profile.slug}`}
+                >
+                  {setup.view}
+                </Link>
+              ) : null}
+              <Link href={`/${locale}/${role}`}>{setup.workspace}</Link>
+            </div>
+          </section>
+        ) : null}
         <nav className="profile-tabs" aria-label={ui.edit}>
           {[
             ["details", role === "brand" ? ui.details : ui.about],
@@ -458,6 +578,7 @@ export function ProfileEditor({
             state={saveState}
             fieldLabels={{
               ...fieldLabels(copy),
+              ...setup.requirements,
               profileName: role === "brand" ? ui.name : ui.displayName,
             }}
           />
@@ -519,10 +640,37 @@ export function ProfileEditor({
                 )}
                 <Area
                   name={`description${lang}`}
-                  label={role === "brand" ? ui.description : ui.optionalAbout}
+                  label={
+                    role === "brand"
+                      ? ui.description
+                      : setup.requirements.description!
+                  }
                   value={textValue(`description${lang}`)}
                   limit={role === "brand" ? 500 : 280}
                 />
+                <div>
+                  <Field
+                    name="slug"
+                    label={copy.slug}
+                    value={profile?.slug ?? ""}
+                    error={saveState.fieldErrors?.slug}
+                  />
+                  <p className="profile-field-hint">{setup.addressHint}</p>
+                </div>
+                {role === "brand" ? (
+                  <div>
+                    <Area
+                      name={`whatWeMake${lang}`}
+                      label={setup.evidence}
+                      value={localizedLines(
+                        profile?.whatWeMake,
+                        locale,
+                        "label",
+                      )}
+                    />
+                    <p className="profile-field-hint">{setup.evidenceHint}</p>
+                  </div>
+                ) : null}
                 <div className={role === "brand" ? "profile-field-pair" : ""}>
                   <ProfileTags
                     name="categories"
@@ -614,12 +762,6 @@ export function ProfileEditor({
                 </summary>
                 <div className="profile-section-content profile-field-pair">
                   <Field
-                    name="slug"
-                    label={copy.slug}
-                    value={profile?.slug ?? ""}
-                    error={saveState.fieldErrors?.slug}
-                  />
-                  <Field
                     name={`tagline${other}`}
                     label={copy[`tagline${other}`]}
                     value={textValue(`tagline${other}`)}
@@ -637,20 +779,11 @@ export function ProfileEditor({
                   {role === "brand" ? (
                     <>
                       <Area
-                        name="whatWeMakeKa"
-                        label={copy.whatWeMakeKa}
+                        name={`whatWeMake${other}`}
+                        label={copy[`whatWeMake${other}`]}
                         value={localizedLines(
                           profile?.whatWeMake,
-                          "ka",
-                          "label",
-                        )}
-                      />
-                      <Area
-                        name="whatWeMakeEn"
-                        label={copy.whatWeMakeEn}
-                        value={localizedLines(
-                          profile?.whatWeMake,
-                          "en",
+                          locale === "ka" ? "en" : "ka",
                           "label",
                         )}
                       />
@@ -682,75 +815,59 @@ export function ProfileEditor({
                 </small>
               </span>
             </div>
-            <button
-              className="profile-button"
-              type="button"
-              onClick={cancel}
-              disabled={isSaving || uploads.size > 0}
-            >
-              {ui.cancel}
-            </button>
+            {isPublic ? (
+              <button
+                className="profile-button profile-cancel"
+                type="button"
+                onClick={cancel}
+                disabled={isSaving || uploads.size > 0}
+              >
+                {ui.cancel}
+              </button>
+            ) : null}
             <SubmitButton
               disabled={uploads.size > 0}
               label={ui.saveDraft}
               pendingLabel={copy.pending}
+              variant="outline"
+            />
+            <SubmitButton
+              disabled={uploads.size > 0}
+              label={isPublic ? setup.saveChanges : setup.savePublish}
+              pendingLabel={copy.pending}
+              name="intent"
+              value="publish"
             />
           </footer>
         </form>
-        <details className="profile-editor-section profile-account-section">
-          <summary>
-            <Icon name="shield" />
-            <span>
-              <strong>{ui.account}</strong>
-              <small>{ui.accountHint}</small>
-            </span>
-            <Icon name="chevron" />
-          </summary>
-          <div className="profile-section-content">
-            <p>{isPublic ? ui.public : ui.draft}</p>
-            {isPublic ? (
-              <form action={publicationFormAction}>
-                <p>
-                  {locale === "ka"
-                    ? "გამოაქვეყნეთ შენახული მონახაზი საჯარო პროფილის გასაახლებლად."
-                    : "Publish your saved draft to update the public profile."}
-                </p>
-                <input type="hidden" name="publication" value="publish" />
-                <SubmitButton
-                  label={
-                    locale === "ka"
-                      ? "ცვლილებების გამოქვეყნება"
-                      : "Publish changes"
-                  }
-                  pendingLabel={copy.pending}
-                  disabled={dirty || uploads.size > 0}
-                />
-              </form>
-            ) : null}
-            <ActionMessage
-              state={publicationState}
-              fieldLabels={fieldLabels(copy)}
-            />
-            {isPublic ? (
+        {isPublic ? (
+          <details className="profile-editor-section profile-account-section">
+            <summary>
+              <Icon name="eye" />
+              <span>
+                <strong>{setup.visibility}</strong>
+                <small>{setup.visibilityHint}</small>
+              </span>
+              <Icon name="chevron" />
+            </summary>
+            <div className="profile-section-content">
+              <p>{setup.publishedBody}</p>
+              <ActionMessage
+                state={publicationState}
+                fieldLabels={fieldLabels(copy)}
+              />
               <form action={publicationFormAction}>
                 <input type="hidden" name="publication" value="unpublish" />
                 <SubmitButton
                   label={copy.unpublish}
                   pendingLabel={copy.pending}
                   variant="outline"
+                  disabled={isSaving || uploads.size > 0 || dirty}
                 />
               </form>
-            ) : (
-              <form action={publicationFormAction}>
-                <input type="hidden" name="publication" value="publish" />
-                <SubmitButton
-                  label={copy.publish}
-                  pendingLabel={copy.pending}
-                />
-              </form>
-            )}
-          </div>
-        </details>
+            </div>
+          </details>
+        ) : null}
       </div>
     </div>
   );
@@ -772,6 +889,7 @@ function ActionMessage({
           : "rounded-sm border border-emerald-300 bg-emerald-50 p-3 text-emerald-900"
       }
       role={state.status === "error" ? "alert" : "status"}
+      tabIndex={state.status === "error" ? -1 : undefined}
     >
       <p>{state.message}</p>
       {state.fieldErrors && Object.keys(state.fieldErrors).length ? (
@@ -790,6 +908,10 @@ function ActionMessage({
 function fieldLabels(copy: ProfileEditorCopy): Record<string, string> {
   return {
     profile: copy.evidence,
+    tagline: copy.taglineEn,
+    description: copy.descriptionEn,
+    brandEvidence: copy.whatWeMakeEn,
+    creatorEvidence: copy.socials,
     slug: copy.slug,
     categories: copy.categories,
     taglineKa: copy.taglineKa,
@@ -814,7 +936,11 @@ function SubmitButton({
   pendingLabel,
   variant,
   disabled,
+  name,
+  value,
 }: {
+  name?: string;
+  value?: string;
   label: string;
   pendingLabel: string;
   variant?: "signal" | "outline";
@@ -824,6 +950,8 @@ function SubmitButton({
   return (
     <Button
       type="submit"
+      name={name}
+      value={value}
       disabled={disabled}
       {...(variant ? { variant } : {})}
       pending={pending}

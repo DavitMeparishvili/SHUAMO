@@ -6,6 +6,7 @@ import { getMessages, isLocale, LOCALES, t } from "@/src/modules/localization";
 import { AppShell } from "@/src/modules/shell";
 import { currentViewer } from "@/src/modules/identity";
 import { serverEnv } from "@/src/config/env";
+import { profileIsPublished } from "@/src/infrastructure/profile-onboarding";
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -47,6 +48,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
+  const profilePublished = await profileIsPublished(viewer);
 
   return (
     <html
@@ -63,7 +65,11 @@ export default async function LocaleLayout({
           data-profile-direction="phase-06-5-passport-proof-ledger"
           hidden
         />
-        <AppShell locale={locale} viewer={viewer}>
+        <AppShell
+          locale={locale}
+          viewer={viewer}
+          profilePublished={profilePublished}
+        >
           {children}
         </AppShell>
       </body>

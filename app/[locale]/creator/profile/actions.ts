@@ -164,6 +164,7 @@ export async function publishCreatorProfileAction(
     revalidatePath(`/${locale}/creators/${result.profile.slug}`);
   revalidatePath(`/${locale}/creators`);
   revalidatePath(`/${locale}/creator/profile`);
+  revalidatePath(`/${locale}`, "layout");
   return {
     status: "success",
     message: t(messages, "profile.editor.published"),
@@ -185,6 +186,7 @@ export async function unpublishCreatorProfileAction(
   );
   revalidatePath(`/${locale}/creators`);
   revalidatePath(`/${locale}/creator/profile`);
+  revalidatePath(`/${locale}`, "layout");
   return {
     status: "success",
     message: t(getMessages(locale), "profile.editor.unpublished"),

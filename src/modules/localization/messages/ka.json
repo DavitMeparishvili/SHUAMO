@@ -648,7 +648,7 @@
   "profile.editor.uploading": "იტვირთება…",
   "profile.editor.uploadComplete": "ატვირთვა დასრულდა.",
   "profile.editor.uploadFailed": "ატვირთვა ვერ მოხერხდა. აირჩიეთ ფაილი და ხელახლა სცადეთ.",
-  "profile.editor.incomplete": "გამოქვეყნებამდე დაამატეთ აუცილებელი იდენტობა, სურათი, კატეგორია და მტკიცებულება.",
+  "profile.editor.incomplete": "შეავსეთ ქვემოთ მითითებული პუნქტები, შემდეგ გამოაქვეყნეთ პროფილი.",
   "directory.brands.title": "აღმოაჩინეთ ბრენდები",
   "directory.brands.intro": "გაიცანით დამტკიცებული ბრენდები მათი პროდუქტებით, ისტორიითა და თანამშრომლობის ინტერესებით.",
   "directory.creators.title": "აღმოაჩინეთ კრეატორები",

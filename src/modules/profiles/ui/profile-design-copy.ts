@@ -70,9 +70,7 @@ export function profileDesignCopy(locale: Locale) {
     accountHint: ka
       ? "ანგარიშის სტატუსი სოციალურ პროფილებს არ ამოწმებს."
       : "Review status is shown separately from your social profiles.",
-    translations: ka
-      ? "თარგმანი და პროფილის მისამართი"
-      : "Translation & profile address",
+    translations: ka ? "თარგმანი (არასავალდებულო)" : "Translations (optional)",
     save: ka ? "ცვლილებების შენახვა" : "Save changes",
     saveDraft: ka ? "მონახაზის შენახვა" : "Save draft",
     cancel: ka ? "გაუქმება" : "Cancel",

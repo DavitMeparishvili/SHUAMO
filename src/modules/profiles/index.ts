@@ -10,5 +10,6 @@ export * from "./ui/creator-profile";
 export * from "./ui/profile-directory";
 export * from "./ui/profile-editor";
 export * from "./ui/profile-action";
+export * from "./ui/profile-privacy-notice";
 export * from "./http/profile-media-handlers";
 export * from "./infrastructure/s3-profile-media-storage";

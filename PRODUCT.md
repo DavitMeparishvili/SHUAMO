@@ -22,6 +22,10 @@ Every aggregate and commission is traceable to its source rows; catalogue values
 
 Brands maintain a brand-wide catalogue, archive rather than delete products, approve creators, and update offered rates. After partnership approval, creators choose individual active products and create links that snapshot the accepted rate. The product is bilingual in Georgian and English. Registration progresses through Account, Channels, Profile and Review for sellers and creators; successful submission creates a pending application and draft profile. Administrator approval gates marketplace access, and a draft profile is not automatically public.
 
+## Profile setup and demo access
+
+During the demo, new brand and creator accounts activate immediately. Account access and public profile visibility remain separate. Until a profile is published, sign-in and workspace entry lead to its editor. Owners may choose to continue privately after a warning; other workspace pages show a reminder. Saving a draft does not publish it. Save and publish validates and saves the current form before publishing, with actionable missing-field guidance.
+
 ## Capabilities and Constraints
 
 - Partnerships are brand-wide; there is no campaign entity.

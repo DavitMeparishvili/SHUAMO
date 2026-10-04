@@ -1,3 +1,4 @@
+import { profileIsPublished } from "@/src/infrastructure/profile-onboarding";
 import { readOwnFinance } from "@/src/infrastructure/finance-services";
 import { FinanceSummary } from "@/src/modules/finance";
 import "@/app/finance.css";
@@ -19,7 +20,8 @@ export default async function BrandWorkspace({
   searchParams: Promise<PerformanceSearchParams>;
 }) {
   const { locale } = await params;
-  const state = parsePerformanceQuery(await searchParams, "brand");
+  const query = await searchParams;
+  const state = parsePerformanceQuery(query, "brand");
   if (!isLocale(locale)) notFound();
   const viewer = await currentViewer();
   const allowed = requireBrand(viewer);
@@ -27,6 +29,8 @@ export default async function BrandWorkspace({
     redirect(
       "/" + locale + (viewer.kind === "creator" ? "/creator" : "/sign-in"),
     );
+  if (query.setup !== "later" && !(await profileIsPublished(viewer)))
+    redirect(`/${locale}/brand/profile`);
   const [report, catalog, finance] = await Promise.all([
     brandPerformanceReport(allowed.value.brandId, state.filters),
     listProductsForBrand(allowed.value.brandId, { pageSize: 100 }),
@@ -34,7 +38,11 @@ export default async function BrandWorkspace({
   ]);
   return (
     <WorkspaceOverview
-      finance={finance.ok ? <FinanceSummary account={finance.value} locale={locale} /> : null}
+      finance={
+        finance.ok ? (
+          <FinanceSummary account={finance.value} locale={locale} />
+        ) : null
+      }
       state={state}
       locale={locale}
       name={allowed.value.brandName}

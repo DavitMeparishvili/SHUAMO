@@ -11,6 +11,7 @@ import {
 import { profileDesignCopy } from "./profile-design-copy";
 
 const messages = getMessages("en");
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 const copy = Object.fromEntries(
   PROFILE_EDITOR_COPY_KEYS.map((key) => [
     key,
@@ -18,7 +19,7 @@ const copy = Object.fromEntries(
   ]),
 ) as ProfileEditorCopy;
 const profile = {
-  status: "DRAFT",
+  status: "PUBLISHED",
   slug: "owner",
   taglineKa: "",
   taglineEn: "Original bio",
@@ -70,8 +71,63 @@ function editor(
 }
 beforeEach(() => {
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  HTMLDialogElement.prototype.close = vi.fn();
+  HTMLDialogElement.prototype.showModal = vi.fn();
 });
 describe("owner profile editor", () => {
+  it("opens private profiles for editing and saves before publishing", async () => {
+    const user = userEvent.setup();
+    const save = vi
+      .fn()
+      .mockResolvedValue({ status: "success", message: "Saved" });
+    const publish = vi
+      .fn()
+      .mockResolvedValue({ status: "error", message: "Add your photo" });
+    render(
+      <ProfileEditor
+        role="creator"
+        locale="en"
+        name="Owner"
+        profile={{ ...profile, status: "DRAFT" }}
+        saveAction={save}
+        publishAction={publish}
+        unpublishAction={vi.fn()}
+        copy={copy}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Finish your profile and publish" }),
+    ).toBeVisible();
+    expect(screen.getByLabelText("Short bio")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Save and publish" }));
+    await screen.findByText("Add your photo");
+    expect(save).toHaveBeenCalledOnce();
+    expect(publish).toHaveBeenCalledOnce();
+    expect(save.mock.invocationCallOrder[0]).toBeLessThan(
+      publish.mock.invocationCallOrder[0]!,
+    );
+    expect(screen.getByLabelText("Short bio")).toHaveValue("Original bio");
+  });
+  it("does not publish when saving fails", async () => {
+    const user = userEvent.setup();
+    const publish = vi.fn();
+    render(
+      <ProfileEditor
+        role="brand"
+        profile={{ ...profile, status: "DRAFT" }}
+        saveAction={vi.fn().mockResolvedValue({
+          status: "error",
+          message: "Address already taken",
+        })}
+        publishAction={publish}
+        unpublishAction={vi.fn()}
+        copy={copy}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Save and publish" }));
+    await screen.findByText("Address already taken");
+    expect(publish).not.toHaveBeenCalled();
+  });
   it("previews working text and preserves collection edits across tabs", async () => {
     const user = userEvent.setup();
     editor();

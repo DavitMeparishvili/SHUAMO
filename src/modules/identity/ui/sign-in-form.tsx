@@ -53,7 +53,10 @@ export function SignInForm({
         setError(true);
         return;
       }
-      window.location.assign(returnTo ?? `/${locale}/workspace`);
+      // Always resolve profile onboarding before honoring a public-profile return link.
+      window.location.assign(
+        `/${locale}/workspace${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`,
+      );
     } catch {
       setError(true);
     } finally {

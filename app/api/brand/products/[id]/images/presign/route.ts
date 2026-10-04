@@ -22,7 +22,8 @@ export async function POST(
   return createPresignHandler({
     products: prismaProductRepository,
     storage: createS3ImageStorage({
-      endpoint: env.STORAGE_ENDPOINT,
+      // Browsers upload directly, so sign the public host rather than the Docker host.
+      endpoint: env.STORAGE_PUBLIC_ENDPOINT,
       region: env.STORAGE_REGION,
       bucket: env.STORAGE_BUCKET,
       accessKeyId: env.STORAGE_ACCESS_KEY_ID,

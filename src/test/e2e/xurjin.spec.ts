@@ -142,9 +142,9 @@ for (const locale of ["en", "ka"] as const) {
           exact: true,
         })
         .click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}$`));
+      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}/profile$`));
       await page.goto(`/${locale}/workspace`);
-      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}$`));
+      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}/profile$`));
     });
   }
 

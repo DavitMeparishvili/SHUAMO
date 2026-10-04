@@ -72,13 +72,13 @@ test("a new demo creator is active immediately and loses workspace access after 
   await registerCreator(applicantContext, baseURL!, email, password, alias);
 
   await applicant.goto("/en/workspace");
-  await expect(applicant).toHaveURL(/\/en\/creator$/);
+  await expect(applicant).toHaveURL(/\/en\/creator\/profile$/);
 
   await applicant.close();
   await applicantContext.clearCookies();
   applicant = await applicantContext.newPage();
   await signIn(applicant, email, password);
-  await expect(applicant).toHaveURL(/\/en\/creator$/);
+  await expect(applicant).toHaveURL(/\/en\/creator\/profile$/);
 
   await page.goto("/en/admin/login");
   await page.locator("#email").fill(admin.email);
@@ -115,7 +115,7 @@ test("a new demo creator is active immediately and loses workspace access after 
   await expect(account).toBeVisible();
 
   await applicant.goto("/en/workspace");
-  await expect(applicant).toHaveURL(/\/en\/creator$/);
+  await expect(applicant).toHaveURL(/\/en\/creator\/profile$/);
   const forbidden = await applicantContext.request.patch(
     "/api/admin/accounts/creator/00000000-0000-4000-8000-000000000001/status",
     { data: { status: "APPROVED" } },

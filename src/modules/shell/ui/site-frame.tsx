@@ -12,11 +12,15 @@ export function SiteFrame({
   marketingCopy,
   viewer,
   children,
+  profilePublished = true,
+  profilePrivacyNotice,
 }: {
   locale: Locale;
   marketingCopy: MarketingCopy;
   viewer: Viewer;
   children: ReactNode;
+  profilePublished?: boolean;
+  profilePrivacyNotice?: ReactNode;
 }) {
   const path = usePathname();
   const searchParams = useSearchParams();
@@ -459,7 +463,16 @@ export function SiteFrame({
             )}
           </div>
         </header>
-        <main id="main">{children}</main>
+        <main id="main">
+          {!profilePublished &&
+          workspace &&
+          !admin &&
+          !path.endsWith("/profile") &&
+          (viewer.kind === "brand" || viewer.kind === "creator")
+            ? profilePrivacyNotice
+            : null}
+          {children}
+        </main>
         <footer
           className={workspace ? "workspace-footer" : "marketing-footer"}
           id="about"

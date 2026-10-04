@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MediaUploadCopy } from "./profile-media-field";
 
 type Work = {
@@ -42,6 +42,12 @@ export function CreatorWorkEditor({
       })
     : [];
   const [rows, setRows] = useState<Work[]>(initial);
+  const previousRows = useRef(rows);
+  useEffect(() => {
+    if (previousRows.current === rows) return;
+    previousRows.current = rows;
+    onDirty?.();
+  }, [rows, onDirty]);
   const [nextId, setNextId] = useState(initial.length);
   const move = (index: number, offset: number) =>
     setRows((current) => {

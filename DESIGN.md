@@ -668,3 +668,9 @@ Product details follow the supplied desktop/mobile reference within the establis
 - Don't invent dashboard growth, sales, followers, commissions, partner logos or social proof to fill a reference composition.
 - Don't present pending approval as marketplace access, a draft profile as published, confirmed commission as paid, or Coming soon features as functional.
 - Don't conceal product facts, accepted terms or repair instructions behind hover-only interactions.
+
+## Profile completion and publication
+
+Private profiles open directly in edit mode after sign-in and workspace entry. A pale neutral setup notice explains the directory consequences, lists missing required fields as focusable actions, and permits continuing privately after a native dialog confirms the consequence. A persistent workspace reminder leads back to setup. Public profile address and the brand offering description sit with primary details; only translations stay in the secondary group. One language is sufficient. The savebar separates Save draft from Save and publish, which saves the current form before publishing. Publishing remains explicit. Public profiles retain a visibility section for unpublishing, and the next sign-in resumes setup again after unpublishing. Mobile save actions wrap above the safe area with matching content clearance.
+
+Creator portraits use a bounded square alongside the introduction: at most 280 px on desktop and 140 px on mobile. This changes display size only, preserving original uploaded media.

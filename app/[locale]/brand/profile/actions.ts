@@ -167,6 +167,7 @@ export async function publishBrandProfileAction(
     revalidatePath(`/${locale}/brands/${result.profile.slug}`);
   revalidatePath(`/${locale}/brands`);
   revalidatePath(`/${locale}/brand/profile`);
+  revalidatePath(`/${locale}`, "layout");
   return {
     status: "success",
     message: t(messages, "profile.editor.published"),
@@ -185,6 +186,7 @@ export async function unpublishBrandProfileAction(
   await prismaProfileRepository.setBrandStatus(allowed.value.brandId, "DRAFT");
   revalidatePath(`/${locale}/brands`);
   revalidatePath(`/${locale}/brand/profile`);
+  revalidatePath(`/${locale}`, "layout");
   return {
     status: "success",
     message: t(getMessages(locale), "profile.editor.unpublished"),

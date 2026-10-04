@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "@/src/modules/design-system";
 import { profileDesignCopy } from "./profile-design-copy";
 import type { Locale } from "@/src/modules/localization";
@@ -40,6 +40,13 @@ export function ProfileMediaField({
   const isCover = kind === "brand-hero";
   const isLogo = kind === "brand-logo";
   const [value, setValue] = useState(initialValue);
+  const previousValue = useRef(initialValue);
+  useEffect(() => {
+    if (previousValue.current === value) return;
+    previousValue.current = value;
+    // Notify after the hidden URL is committed, so completion reads the upload.
+    onDirty?.();
+  }, [value, onDirty]);
   const [status, setStatus] = useState("");
   async function upload(file?: File) {
     if (!file) return;
@@ -67,7 +74,6 @@ export function ProfileMediaField({
       });
       if (!put.ok) throw new Error("upload");
       setValue(target.publicUrl);
-      onDirty?.();
       setCropping(false);
       setStatus(copy.complete);
     } catch {
@@ -184,7 +190,6 @@ export function ProfileMediaField({
                   className="profile-remove"
                   onClick={() => {
                     setValue("");
-                    onDirty?.();
                   }}
                 >
                   {ui.removePhoto}
