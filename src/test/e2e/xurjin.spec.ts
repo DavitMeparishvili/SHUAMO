@@ -101,7 +101,7 @@ for (const locale of ["en", "ka"] as const) {
   });
 
   for (const role of ["creator", "brand"] as const) {
-    test(`Xurjin ${locale} ${role} registration stages and pending access`, async ({
+    test(`Xurjin ${locale} ${role} registration stages and instant demo access`, async ({
       page,
     }) => {
       await page.goto(`/${locale}/sign-up?role=${role}`);
@@ -142,10 +142,9 @@ for (const locale of ["en", "ka"] as const) {
           exact: true,
         })
         .click();
-      await expect(page.locator(".registration-status")).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}$`));
       await page.goto(`/${locale}/workspace`);
-      await expect(page).toHaveURL(/sign-up\?status=pending/);
-      await expect(page.locator(".registration-status")).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/${role}$`));
     });
   }
 

@@ -221,6 +221,11 @@ export function RegistrationForm({
         );
         return;
       }
+      // TODO: Restore the pending confirmation after demo auto-activation ends.
+      if (response.ok && (await response.json()).status === "approved") {
+        window.location.assign(`/${locale}/workspace`);
+        return;
+      }
       setComplete(true);
     } catch {
       setError(
@@ -635,9 +640,10 @@ export function RegistrationForm({
             ))}
           </dl>
           <p className="registration-note">
+            {/* TODO: Restore administrator-review and after-approval photo copy after the demo. */}
             {text(
-              "An administrator reviews every application. Your profile stays private until you choose to publish it. Profile photos can be added after approval.",
-              "ყველა განაცხადს განიხილავს ადმინისტრატორი. პროფილი საჯარო გახდება მხოლოდ შენი არჩევანით. ფოტოების დამატებას შეძლებ დადასტურების შემდეგ.",
+              "Your account is activated immediately. Your profile stays private until you choose to publish it. Profile photos can be added after registration.",
+              "შენი ანგარიში მყისიერად აქტიურდება. პროფილი საჯარო გახდება მხოლოდ შენი არჩევანით. ფოტოების დამატებას შეძლებ რეგისტრაციის შემდეგ.",
             )}
           </p>
         </section>

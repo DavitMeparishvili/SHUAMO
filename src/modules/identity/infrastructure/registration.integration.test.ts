@@ -48,13 +48,15 @@ beforeEach(async () => {
   state.userId = user.id;
 });
 describe("registration persistence", () => {
-  it("saves the alias and draft profile while preserving approval", async () => {
-    expect((await POST(request(input))).status).toBe(201);
+  it("activates demo creators immediately while keeping their profile a draft", async () => {
+    const response = await POST(request(input));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ status: "approved" });
     const creator = await prisma.creator.findUniqueOrThrow({
       where: { userId: state.userId },
       include: { profile: true, user: true },
     });
-    expect(creator.status).toBe("PENDING");
+    expect(creator.status).toBe("APPROVED");
     expect(creator.displayName).toBe("Public Alias");
     expect(creator.profile?.status).toBe("DRAFT");
     expect(creator.profile?.languages).toEqual(["ka", "en"]);
@@ -63,6 +65,17 @@ describe("registration persistence", () => {
       phone: input.phone,
       alias: "Public Alias",
     });
+  });
+  it("activates demo brands immediately while keeping their profile a draft", async () => {
+    const response = await POST(request({ ...input, role: "brand" }));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ status: "approved" });
+    const brand = await prisma.brand.findUniqueOrThrow({
+      where: { userId: state.userId },
+      include: { profile: true },
+    });
+    expect(brand.status).toBe("APPROVED");
+    expect(brand.profile?.status).toBe("DRAFT");
   });
   it("serializes conflicting submissions to prevent two roles", async () => {
     const results = await Promise.all([

@@ -62,6 +62,8 @@ export async function POST(request: Request) {
         categories: [data.category],
         socialLinks,
       };
+      // TODO: Revert demo auto-activation to PENDING for both roles and return
+      // "pending" below when administrator approval is restored after the demo.
       if (data.role === "brand") {
         const key = mintApiKey(webCryptoRandom);
         await tx.brand.create({
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
             name: data.name,
             keyPrefix: key.prefix,
             keyHash: key.hash,
-            status: "PENDING",
+            status: "APPROVED",
             profile: { create: profile },
           },
         });
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
             userId: session.user.id,
             displayName: data.alias || data.name,
             bio: data.description,
-            status: "PENDING",
+            status: "APPROVED",
             profile: {
               create: {
                 ...profile,
@@ -102,5 +104,5 @@ export async function POST(request: Request) {
       return Response.json({ error: "already_registered" }, { status: 409 });
     throw error;
   }
-  return Response.json({ status: "pending" }, { status: 201 });
+  return Response.json({ status: "approved" }, { status: 201 });
 }

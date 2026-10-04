@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getMessages, t, type Locale } from "@/src/modules/localization";
 
 export function LandingProcess({ locale }: { locale: Locale }) {
+  // TODO: Restore the account-approval prerequisite in landing.how.publish.body
+  // in both locales when demo auto-activation is reverted.
   const messages = getMessages(locale);
   const steps = ["publish", "share", "results"] as const;
   return (
@@ -94,6 +96,8 @@ export function LandingDetails({ locale }: { locale: Locale }) {
         >
           {audience.cta}
         </Link>
+        {/* TODO: Restore "Account approval required" in landing.registrationNote
+            in both locales when demo auto-activation is reverted. */}
         <small>{t(messages, "landing.registrationNote")}</small>
       </div>
       <dl className="landing-benefits">

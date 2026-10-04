@@ -51,7 +51,7 @@ async function registerCreator(
   expect(registration.status()).toBe(201);
 }
 
-test("a new creator needs activation and loses workspace access after deactivation", async ({
+test("a new demo creator is active immediately and loses workspace access after deactivation", async ({
   page,
   browser,
   baseURL,
@@ -72,13 +72,13 @@ test("a new creator needs activation and loses workspace access after deactivati
   await registerCreator(applicantContext, baseURL!, email, password, alias);
 
   await applicant.goto("/en/workspace");
-  await expect(applicant).toHaveURL(/\/en\/sign-up\?status=pending/);
+  await expect(applicant).toHaveURL(/\/en\/creator$/);
 
   await applicant.close();
   await applicantContext.clearCookies();
   applicant = await applicantContext.newPage();
   await signIn(applicant, email, password);
-  await expect(applicant).toHaveURL(/\/en\/sign-up\?status=pending/);
+  await expect(applicant).toHaveURL(/\/en\/creator$/);
 
   await page.goto("/en/admin/login");
   await page.locator("#email").fill(admin.email);
@@ -98,7 +98,7 @@ test("a new creator needs activation and loses workspace access after deactivati
     )
     .filter({ hasText: email });
   await expect(account).toBeVisible();
-  await expect(account).toContainText("Pending review");
+  await expect(account).toContainText("Active");
   await expect(account).toContainText("+995 555 12 34 56");
 
   await account.getByRole("link", { name: "Review profile" }).click();
@@ -113,15 +113,6 @@ test("a new creator needs activation and loses workspace access after deactivati
   ).toBeVisible();
   await page.goBack();
   await expect(account).toBeVisible();
-
-  await account
-    .getByRole("button", {
-      name: `Approve and activate ${alias}`,
-      exact: true,
-    })
-    .click();
-  await expect(account).toContainText("Active");
-  await expect(account).toContainText("Account approved and activated");
 
   await applicant.goto("/en/workspace");
   await expect(applicant).toHaveURL(/\/en\/creator$/);
