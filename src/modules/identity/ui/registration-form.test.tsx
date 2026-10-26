@@ -74,3 +74,112 @@ describe("staged registration recovery", () => {
     );
   });
 });
+
+describe("registration team lead", () => {
+  const teamLeads = [
+    { id: "00000000-0000-4000-8000-00000000000a", displayName: "Ana Lead" },
+  ];
+
+  async function reachReview(choose?: string) {
+    const user = userEvent.setup();
+    const next = () =>
+      user.click(screen.getByRole("button", { name: "Continue" }));
+    await user.type(screen.getByLabelText(/Full name/), "Nino Review");
+    await next();
+    await next();
+    await user.type(screen.getByLabelText(/City/), "Tbilisi");
+    await user.selectOptions(
+      screen.getByLabelText(/Primary category/),
+      "beauty",
+    );
+    if (choose)
+      await user.selectOptions(
+        screen.getByLabelText(/Team lead \(optional\)/),
+        choose,
+      );
+    await next();
+  }
+
+  it("offers the leads on the creator Profile stage", () => {
+    const { container } = render(
+      <RegistrationForm
+        locale="en"
+        role="creator"
+        existingEmail="review@example.test"
+        teamLeads={teamLeads}
+      />,
+    );
+    const select = screen.getByLabelText(
+      /Team lead \(optional\)/,
+    ) as HTMLSelectElement;
+    expect(select.closest("[data-stage]")).toBe(
+      container.querySelector('[data-stage="2"]'),
+    );
+    expect(select.options[0]?.textContent).toBe("No team lead");
+    expect(select.options[1]?.textContent).toBe("Ana Lead");
+    expect(
+      screen.getByText("This can't be changed after registration."),
+    ).toBeTruthy();
+  });
+
+  it("hides the field without leads or for a brand", () => {
+    render(
+      <RegistrationForm
+        locale="en"
+        role="creator"
+        existingEmail="review@example.test"
+        teamLeads={[]}
+      />,
+    );
+    expect(screen.queryByLabelText(/Team lead \(optional\)/)).toBeNull();
+    cleanup();
+    render(
+      <RegistrationForm
+        locale="en"
+        role="brand"
+        existingEmail="review@example.test"
+        teamLeads={teamLeads}
+      />,
+    );
+    expect(screen.queryByLabelText(/Team lead \(optional\)/)).toBeNull();
+  });
+
+  it("lists the chosen lead on the Review stage", async () => {
+    render(
+      <RegistrationForm
+        locale="en"
+        role="creator"
+        existingEmail="review@example.test"
+        teamLeads={teamLeads}
+      />,
+    );
+    await reachReview("Ana Lead");
+    const term = screen.getByText("Team lead", { selector: "dt" });
+    expect(term.nextElementSibling?.textContent).toBe("Ana Lead");
+  });
+
+  it("names no lead on the Review stage in Georgian", async () => {
+    render(
+      <RegistrationForm
+        locale="ka"
+        role="creator"
+        existingEmail="review@example.test"
+        teamLeads={teamLeads}
+      />,
+    );
+    const user = userEvent.setup();
+    const next = () =>
+      user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    await user.type(screen.getAllByRole("textbox")[0]!, "Nino Review");
+    await next();
+    await next();
+    await user.type(screen.getByLabelText(/ქალაქი/), "Tbilisi");
+    await user.selectOptions(
+      screen.getByLabelText(/ძირითადი კატეგორია/),
+      "beauty",
+    );
+    await next();
+    const term = screen.getByText("გუნდის ლიდერი", { selector: "dt" });
+    expect(term.nextElementSibling?.textContent).toBe("არ არის");
+  });
+});

@@ -13,5 +13,7 @@ export type Viewer =
       creatorId: string;
       displayName: string;
       isAdmin: boolean;
+      // Present only when true, so a plain creator viewer keeps its shape.
+      isTeamLead?: true;
     }
   | { kind: "admin"; userId: string };

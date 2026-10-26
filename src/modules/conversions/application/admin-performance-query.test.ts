@@ -46,3 +46,9 @@ it("retains normalized filters in navigation", () => {
   expect(params.get("q")).toBe("name");
   expect(params.get("brandId")).toBe(result.value.brandId);
 });
+it("never accepts a team scope from the URL", () => {
+  const result = parseAdminPerformanceQuery({
+    teamLeadId: crypto.randomUUID(),
+  });
+  expect(result.ok && "teamLeadId" in result.value).toBe(false);
+});

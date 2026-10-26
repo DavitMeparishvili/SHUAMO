@@ -72,6 +72,45 @@ describe("resolveViewer", () => {
       })("u4"),
     ).toEqual({ kind: "admin", userId: "u4" });
   });
+  it("marks an approved team lead creator", async () => {
+    const viewer = await resolveViewer({
+      accounts: accounts({
+        userId: "u6",
+        isAdmin: false,
+        accessDisabled: false,
+        creator: {
+          id: "c6",
+          displayName: "Lead",
+          status: "APPROVED",
+          isTeamLead: true,
+        },
+      }),
+    })("u6");
+    expect(viewer).toEqual({
+      kind: "creator",
+      userId: "u6",
+      creatorId: "c6",
+      displayName: "Lead",
+      isAdmin: false,
+      isTeamLead: true,
+    });
+  });
+  it("omits the team lead flag for a creator who is not a lead", async () => {
+    const viewer = await resolveViewer({
+      accounts: accounts({
+        userId: "u7",
+        isAdmin: false,
+        accessDisabled: false,
+        creator: {
+          id: "c7",
+          displayName: "Member",
+          status: "APPROVED",
+          isTeamLead: false,
+        },
+      }),
+    })("u7");
+    expect(viewer).not.toHaveProperty("isTeamLead");
+  });
   it("resolves an access-disabled approved account to anonymous", async () => {
     const viewer = await resolveViewer({
       accounts: accounts({

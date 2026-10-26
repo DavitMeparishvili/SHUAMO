@@ -63,6 +63,29 @@ describe("navDestinationsFor", () => {
     });
   });
 
+  it("offers My team to a team lead right after performance", () => {
+    const creator = {
+      kind: "creator" as const,
+      userId: "u1",
+      creatorId: "c1",
+      displayName: "Nino",
+      isAdmin: false,
+    };
+    const lead = navDestinationsFor({ ...creator, isTeamLead: true }, "en");
+    const performance = lead.findIndex(
+      (destination) => destination.href === "/en/creator/earnings",
+    );
+    expect(lead[performance + 1]).toEqual({
+      href: "/en/creator/team",
+      labelKey: "nav.team",
+    });
+    expect(
+      navDestinationsFor(creator, "en").some(
+        (destination) => destination.labelKey === "nav.team",
+      ),
+    ).toBe(false);
+  });
+
   it("never offers a brand a creator destination", () => {
     const destinations = navDestinationsFor(
       {

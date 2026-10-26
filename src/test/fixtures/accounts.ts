@@ -25,6 +25,8 @@ export async function seedCreator(
   options: {
     email?: string;
     status?: "PENDING" | "APPROVED" | "SUSPENDED";
+    isTeamLead?: boolean;
+    teamLeadId?: string;
   } = {},
 ) {
   const email = options.email ?? `${crypto.randomUUID()}@creator.example.ge`;
@@ -36,6 +38,8 @@ export async function seedCreator(
       userId: user.id,
       displayName: "Test creator",
       status: options.status ?? "APPROVED",
+      isTeamLead: options.isTeamLead ?? false,
+      teamLeadId: options.teamLeadId ?? null,
     },
   });
 }

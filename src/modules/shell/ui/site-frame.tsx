@@ -89,6 +89,15 @@ export function SiteFrame({
       text: label("Performance", "ანალიტიკა"),
       icon: "chart",
     },
+    ...(viewer.kind === "creator" && viewer.isTeamLead === true
+      ? [
+          {
+            href: `/${locale}/creator/team`,
+            text: label("My team", "ჩემი გუნდი"),
+            icon: "users" as const,
+          },
+        ]
+      : []),
     {
       href: `${root}/profile`,
       text: label("Profile", "პროფილი"),

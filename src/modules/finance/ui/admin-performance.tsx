@@ -11,7 +11,10 @@ import {
   type AdminProductPerformanceReport,
   type AdminPerformanceMetrics,
 } from "@/src/modules/conversions";
-import type { AdminPerformanceFinance } from "../ports/admin-performance-finance";
+import type {
+  AdminPerformanceFinance,
+  TeamPerformanceFinance,
+} from "../ports/admin-performance-finance";
 import { financeText, financeMoney } from "./finance-copy";
 import { AdminPerformanceFilters } from "./admin-performance-filters";
 import { AdminPerformanceTrend } from "./admin-performance-trend";
@@ -67,6 +70,21 @@ export function CommercialMetrics({
     </div>
   );
 }
+// Read-only views a team lead gets of the same report. Everything admin-only
+// (admin links, CSV export, account pickers, platform and brand finance) is
+// left out whenever a scope is set.
+export type AdminPerformanceScope =
+  | {
+      kind: "team";
+      members: {
+        id: string;
+        status: "PENDING" | "APPROVED" | "SUSPENDED";
+        accessDisabled: boolean;
+        linkCount: number;
+      }[];
+      memberPath: string;
+    }
+  | { kind: "team_member"; memberName: string; backHref: string };
 export function AdminPerformance({
   report,
   finance,
@@ -75,9 +93,10 @@ export function AdminPerformance({
   basePath,
   listPath,
   listPage,
+  scope,
 }: {
   report: AdminPerformanceReport | AdminProductPerformanceReport;
-  finance: AdminPerformanceFinance;
+  finance: AdminPerformanceFinance | TeamPerformanceFinance;
   options: {
     brands: { id: string; name: string }[];
     creators: { id: string; name: string }[];
@@ -86,6 +105,7 @@ export function AdminPerformance({
   basePath: string;
   listPath: string;
   listPage: string;
+  scope?: AdminPerformanceScope;
 }) {
   const t = financeText(locale),
     q = report.query,
@@ -105,13 +125,32 @@ export function AdminPerformance({
       ...changes,
     }).toString();
   const exportHref = `/api/admin/performance/export?${params({ scope: product ? "product_creators" : q.tab, productId: product?.id, page: undefined })}`;
-  const title = product
-    ? product.title
-    : products
-      ? t("Products", "პროდუქტები")
-      : t("Platform performance", "პლატფორმის შედეგები");
-  const brandFinance = new Map(finance.brands.map((b) => [b.id, b])),
+  const team = scope?.kind === "team" ? scope : undefined,
+    member = scope?.kind === "team_member" ? scope : undefined;
+  const title = member
+    ? member.memberName
+    : team
+      ? t("My team", "ჩემი გუნდი")
+      : product
+        ? product.title
+        : products
+          ? t("Products", "პროდუქტები")
+          : t("Platform performance", "პლატფორმის შედეგები");
+  const platform = !scope && "period" in finance ? finance : undefined;
+  const brandFinance = new Map(
+      ("brands" in finance ? finance.brands : []).map((b) => [b.id, b]),
+    ),
     creatorFinance = new Map(finance.creators.map((c) => [c.id, c]));
+  const teamMembers = new Map(team?.members.map((m) => [m.id, m]));
+  const memberStatus = (id: string) => {
+    const m = teamMembers.get(id);
+    if (!m) return "";
+    if (m.status === "SUSPENDED" || m.accessDisabled)
+      return t("Deactivated", "დეაქტივირებული");
+    return m.status === "PENDING"
+      ? t("Pending", "მოლოდინში")
+      : t("Active", "აქტიური");
+  };
   const payment = (id: string) =>
     q.tab === "brands"
       ? brandFinance.get(id)?.periodReceipts || "0.00"
@@ -120,7 +159,18 @@ export function AdminPerformance({
     q.tab === "brands"
       ? brandFinance.get(id)?.outstanding || "0.00"
       : creatorFinance.get(id)?.unpaid || "0.00";
-  const financial = !product && (q.tab === "brands" || q.tab === "creators");
+  const financial =
+    !product && (q.tab === "creators" || (q.tab === "brands" && !scope));
+  // Team rows open the member page; a member's own brand and product rows are
+  // plain text, since every other drill-down is an admin page.
+  const rowHref = (r: { id: string; kind: string }) =>
+    team
+      ? `${team.memberPath}/${r.id}`
+      : member
+        ? undefined
+        : products
+          ? productHref(r.id)
+          : accountHref(r.id, r.kind);
   const accountHref = (id: string, kind: string) =>
     `${root}/performance?${params({ tab: "overview", [kind === "brand" ? "brandId" : "creatorId"]: id, page: "1" })}`;
   const productHref = (id: string) =>
@@ -139,6 +189,11 @@ export function AdminPerformance({
       {!product && <RestoreProductScroll />}
       <header className="finance-heading">
         <div>
+          {member && (
+            <Link href={member.backHref}>
+              {t("Back to my team", "ჩემს გუნდში დაბრუნება")}
+            </Link>
+          )}
           {product && (
             <ProductBackLink
               href={`${listPath}?${params({ tab: "products", page: listPage, returnTo: undefined, listPage: undefined })}`}
@@ -159,6 +214,16 @@ export function AdminPerformance({
                   ? t("Archived", "დაარქივებული")
                   : t("Active", "აქტიური")}
               </>
+            ) : member ? (
+              t(
+                "This team member's results, read-only.",
+                "გუნდის წევრის შედეგები, მხოლოდ სანახავად.",
+              )
+            ) : team ? (
+              t(
+                "Results and payouts for the creators on your team.",
+                "შენი გუნდის კრეატორების შედეგები და გადახდები.",
+              )
             ) : products ? (
               t(
                 "Performance across your entire catalogue, including archived products.",
@@ -172,13 +237,15 @@ export function AdminPerformance({
             )}
           </p>
         </div>
-        <DownloadCsvButton
-          href={exportHref}
-          locale={locale}
-          allRows={q.tab !== "overview" || !!product}
-        />
+        {!scope && (
+          <DownloadCsvButton
+            href={exportHref}
+            locale={locale}
+            allRows={q.tab !== "overview" || !!product}
+          />
+        )}
       </header>
-      {!product && (
+      {!product && !team && (
         <nav
           className="finance-tabs"
           aria-label={t("Performance views", "ანალიტიკის ხედები")}
@@ -188,15 +255,21 @@ export function AdminPerformance({
             ["brands", t("Brands", "ბრენდები")],
             ["creators", t("Creators", "კრეატორები")],
             ["products", t("Products", "პროდუქტები")],
-          ].map(([key, label]) => (
-            <Link
-              key={key}
-              aria-current={key === q.tab ? "page" : undefined}
-              href={`${root}/${key === "products" ? "products" : "performance"}?${params({ tab: key, page: key === q.tab ? String(q.page) : "1" })}`}
-            >
-              {label}
-            </Link>
-          ))}
+          ]
+            .filter(([key]) => !member || key !== "creators")
+            .map(([key, label]) => (
+              <Link
+                key={key}
+                aria-current={key === q.tab ? "page" : undefined}
+                href={
+                  member
+                    ? `${basePath}?${params({ tab: key, page: key === q.tab ? String(q.page) : "1" })}`
+                    : `${root}/${key === "products" ? "products" : "performance"}?${params({ tab: key, page: key === q.tab ? String(q.page) : "1" })}`
+                }
+              >
+                {label}
+              </Link>
+            ))}
         </nav>
       )}
       <AdminPerformanceFilters
@@ -206,6 +279,7 @@ export function AdminPerformance({
         options={options}
         basePath={basePath}
         product={!!product}
+        datesOnly={!!scope}
         returnState={
           product
             ? {
@@ -220,19 +294,59 @@ export function AdminPerformance({
       <p className="finance-scope">
         <strong>{t("Commercial results", "კომერციული შედეგები")}</strong> ·{" "}
         {q.from} — {q.to} ·{" "}
-        {t("Selected brands and creators", "არჩეული ბრენდები და კრეატორები")}
+        {member
+          ? member.memberName
+          : team
+            ? t("All team members", "გუნდის ყველა წევრი")
+            : t(
+                "Selected brands and creators",
+                "არჩეული ბრენდები და კრეატორები",
+              )}
       </p>
       {(q.tab === "overview" || product) && (
         <>
           <CommercialMetrics
             metrics={report.totals}
             locale={locale}
-            clicks={!!product}
+            clicks={!!product || !!member}
           />
           <AdminPerformanceTrend trend={report.trend} locale={locale} />
         </>
       )}
-      {q.tab === "overview" && !product ? (
+      {team && (
+        <section className="finance-team-total">
+          <h2>{t("Team total", "გუნდის ჯამი")}</h2>
+          <CommercialMetrics metrics={report.totals} locale={locale} clicks />
+        </section>
+      )}
+      {member && q.tab === "overview" ? (
+        <section className="finance-panel">
+          <h2>{t("Payouts", "გადახდები")}</h2>
+          <dl className="finance-platform-values">
+            <div>
+              <dt>{t("Paid in period", "გადახდილი პერიოდში")}</dt>
+              <dd>
+                {financeMoney(
+                  finance.creators[0]?.periodPayouts || "0.00",
+                  locale,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>{t("Unpaid", "გადაუხდელი")}</dt>
+              <dd>
+                {financeMoney(finance.creators[0]?.unpaid || "0.00", locale)}
+              </dd>
+            </div>
+          </dl>
+          <p className="finance-note">
+            {t(
+              "Paid in period uses the selected transfer dates. Unpaid is all time and not date-filtered.",
+              "პერიოდში გადახდილი ითვალისწინებს გადარიცხვის არჩეულ თარიღებს. გადაუხდელი მთელი პერიოდისაა და თარიღით არ იფილტრება.",
+            )}
+          </p>
+        </section>
+      ) : platform && q.tab === "overview" && !product ? (
         <div className="finance-platform-regions">
           <section className="finance-panel">
             <h2>{t("Platform payments", "პლატფორმის გადახდები")}</h2>
@@ -250,11 +364,11 @@ export function AdminPerformance({
                     "ბრენდებისგან მიღებული გადახდები",
                   )}
                 </dt>
-                <dd>{financeMoney(finance.period.brandReceipts, locale)}</dd>
+                <dd>{financeMoney(platform.period.brandReceipts, locale)}</dd>
               </div>
               <div>
                 <dt>{t("Creator payouts", "კრეატორების გადახდები")}</dt>
-                <dd>{financeMoney(finance.period.creatorPayouts, locale)}</dd>
+                <dd>{financeMoney(platform.period.creatorPayouts, locale)}</dd>
               </div>
             </dl>
             <p className="finance-note">
@@ -278,22 +392,22 @@ export function AdminPerformance({
               {[
                 [
                   t("Brand outstanding", "ბრენდების დარჩენილი ვალდებულება"),
-                  finance.current.brandOutstanding,
+                  platform.current.brandOutstanding,
                 ],
                 [
                   t("Creator unpaid", "კრეატორების გადაუხდელი შემოსავალი"),
-                  finance.current.creatorUnpaid,
+                  platform.current.creatorUnpaid,
                 ],
                 [
                   t("Brand credits", "ბრენდების კრედიტები"),
-                  finance.current.brandCredits,
+                  platform.current.brandCredits,
                 ],
                 [
                   t(
                     "Creator overpayments",
                     "კრეატორებისთვის ზედმეტად გადახდილი",
                   ),
-                  finance.current.creatorOverpayments,
+                  platform.current.creatorOverpayments,
                 ],
               ].map(([label, value]) => (
                 <div key={label}>
@@ -321,18 +435,25 @@ export function AdminPerformance({
                     ? t("Entire catalogue", "მთელი კატალოგი")
                     : q.tab === "brands"
                       ? t("Brand breakdown", "ბრენდების შედეგები")
-                      : t("Creator breakdown", "კრეატორების შედეგები")}
+                      : team
+                        ? t("Team members", "გუნდის წევრები")
+                        : t("Creator breakdown", "კრეატორების შედეგები")}
               </h2>
               <p>
-                {financial
+                {team
                   ? t(
-                      "Commercial filters do not allocate account transfers.",
-                      "კომერციული ფილტრები ანგარიშის გადარიცხვებს არ ანაწილებს.",
+                      "Every member is listed, including those with no activity. Payouts are not split by the date filter.",
+                      "ჩამოთვლილია ყველა წევრი, აქტივობის გარეშეც. გადახდები თარიღის ფილტრით არ ნაწილდება.",
                     )
-                  : t(
-                      "Includes linked creators and products with zero activity.",
-                      "მოიცავს დაკავშირებულ კრეატორებსა და პროდუქტებს ნულოვანი აქტივობით.",
-                    )}
+                  : financial
+                    ? t(
+                        "Commercial filters do not allocate account transfers.",
+                        "კომერციული ფილტრები ანგარიშის გადარიცხვებს არ ანაწილებს.",
+                      )
+                    : t(
+                        "Includes linked creators and products with zero activity.",
+                        "მოიცავს დაკავშირებულ კრეატორებსა და პროდუქტებს ნულოვანი აქტივობით.",
+                      )}
               </p>
             </div>
             <span>
@@ -344,13 +465,13 @@ export function AdminPerformance({
               <thead>
                 {financial && (
                   <tr className="finance-column-groups">
-                    <th colSpan={5}>
+                    <th colSpan={team ? 7 : 5}>
                       {t(
                         "Filtered commercial results",
                         "გაფილტრული კომერციული შედეგები",
                       )}
                     </th>
-                    <th colSpan={3}>
+                    <th colSpan={team ? 2 : 3}>
                       {t("Account-wide finance", "ანგარიშის სრული ფინანსები")}
                     </th>
                   </tr>
@@ -370,6 +491,12 @@ export function AdminPerformance({
                     <>
                       <th>{t("Brand", "ბრენდი")}</th>
                       <th>{t("Status", "სტატუსი")}</th>
+                    </>
+                  )}
+                  {team && (
+                    <>
+                      <th>{t("Status", "სტატუსი")}</th>
+                      <th>{t("Links", "ბმულები")}</th>
                     </>
                   )}
                   <th>{sort("clicks", t("Clicks", "დაწკაპუნებები"))}</th>
@@ -394,18 +521,22 @@ export function AdminPerformance({
                   {financial && (
                     <>
                       <th className="finance-account-column">
-                        {t(
-                          "Account payments (period)",
-                          "ანგარიშის გადახდები (პერიოდი)",
-                        )}
+                        {team
+                          ? t("Paid in period", "გადახდილი პერიოდში")
+                          : t(
+                              "Account payments (period)",
+                              "ანგარიშის გადახდები (პერიოდი)",
+                            )}
                       </th>
                       <th>
-                        {t(
-                          "Account balance (all time)",
-                          "ანგარიშის ბალანსი (მთელი პერიოდი)",
-                        )}
+                        {team
+                          ? t("Unpaid (all time)", "გადაუხდელი (მთელი პერიოდი)")
+                          : t(
+                              "Account balance (all time)",
+                              "ანგარიშის ბალანსი (მთელი პერიოდი)",
+                            )}
                       </th>
-                      <th>{t("Manage", "მართვა")}</th>
+                      {!scope && <th>{t("Manage", "მართვა")}</th>}
                     </>
                   )}
                 </tr>
@@ -414,23 +545,25 @@ export function AdminPerformance({
                 {report.rows.items.map((r) => (
                   <tr key={r.id}>
                     <td>
-                      <ProductReportLink
-                        href={
-                          products
-                            ? productHref(r.id)
-                            : accountHref(r.id, r.kind)
-                        }
-                      >
-                        {r.name}
-                      </ProductReportLink>
+                      {rowHref(r) ? (
+                        <ProductReportLink href={rowHref(r)!}>
+                          {r.name}
+                        </ProductReportLink>
+                      ) : (
+                        r.name
+                      )}
                       {products && <small>{r.sku}</small>}
                     </td>
                     {products && (
                       <>
                         <td>
-                          <Link href={accountHref(r.brandId!, "brand")}>
-                            {r.brandName}
-                          </Link>
+                          {scope ? (
+                            r.brandName
+                          ) : (
+                            <Link href={accountHref(r.brandId!, "brand")}>
+                              {r.brandName}
+                            </Link>
+                          )}
                         </td>
                         <td>
                           <span className="finance-badge">
@@ -439,6 +572,16 @@ export function AdminPerformance({
                               : t("Active", "აქტიური")}
                           </span>
                         </td>
+                      </>
+                    )}
+                    {team && (
+                      <>
+                        <td>
+                          <span className="finance-badge">
+                            {memberStatus(r.id)}
+                          </span>
+                        </td>
+                        <td>{teamMembers.get(r.id)?.linkCount ?? 0}</td>
                       </>
                     )}
                     <td>{r.clicks}</td>
@@ -463,11 +606,13 @@ export function AdminPerformance({
                             </small>
                           )}
                         </td>
-                        <td>
-                          <Link href={`${root}/finance/${r.kind}/${r.id}`}>
-                            {t("Finance", "ფინანსები")}
-                          </Link>
-                        </td>
+                        {!scope && (
+                          <td>
+                            <Link href={`${root}/finance/${r.kind}/${r.id}`}>
+                              {t("Finance", "ფინანსები")}
+                            </Link>
+                          </td>
+                        )}
                       </>
                     )}
                   </tr>
@@ -479,14 +624,21 @@ export function AdminPerformance({
             {report.rows.items.map((r) => (
               <article key={r.id}>
                 <h3>
-                  <ProductReportLink
-                    href={
-                      products ? productHref(r.id) : accountHref(r.id, r.kind)
-                    }
-                  >
-                    {r.name}
-                  </ProductReportLink>
+                  {rowHref(r) ? (
+                    <ProductReportLink href={rowHref(r)!}>
+                      {r.name}
+                    </ProductReportLink>
+                  ) : (
+                    r.name
+                  )}
                 </h3>
+                {team && (
+                  <p>
+                    {memberStatus(r.id)} ·{" "}
+                    {teamMembers.get(r.id)?.linkCount ?? 0}{" "}
+                    {t("links", "ბმული")}
+                  </p>
+                )}
                 {products && (
                   <p>
                     {r.sku} · {r.brandName} ·{" "}
@@ -525,19 +677,26 @@ export function AdminPerformance({
                     <dl>
                       <div>
                         <dt>
-                          {t(
-                            "Account payments (period)",
-                            "ანგარიშის გადახდები (პერიოდი)",
-                          )}
+                          {team
+                            ? t("Paid in period", "გადახდილი პერიოდში")
+                            : t(
+                                "Account payments (period)",
+                                "ანგარიშის გადახდები (პერიოდი)",
+                              )}
                         </dt>
                         <dd>{financeMoney(payment(r.id), locale)}</dd>
                       </div>
                       <div>
                         <dt>
-                          {t(
-                            "Account balance (all time)",
-                            "ანგარიშის ბალანსი (მთელი პერიოდი)",
-                          )}
+                          {team
+                            ? t(
+                                "Unpaid (all time)",
+                                "გადაუხდელი (მთელი პერიოდი)",
+                              )
+                            : t(
+                                "Account balance (all time)",
+                                "ანგარიშის ბალანსი (მთელი პერიოდი)",
+                              )}
                         </dt>
                         <dd>
                           {financeMoney(balance(r.id), locale)}
@@ -554,9 +713,11 @@ export function AdminPerformance({
                         </dd>
                       </div>
                     </dl>
-                    <Link href={`${root}/finance/${r.kind}/${r.id}`}>
-                      {t("Finance", "ფინანსები")}
-                    </Link>
+                    {!scope && (
+                      <Link href={`${root}/finance/${r.kind}/${r.id}`}>
+                        {t("Finance", "ფინანსები")}
+                      </Link>
+                    )}
                   </div>
                 )}
               </article>

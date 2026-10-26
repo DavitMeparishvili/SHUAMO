@@ -31,6 +31,7 @@ export const prismaAccountRepository: AccountRepository = {
               id: record.creator.id,
               displayName: record.creator.displayName,
               status: record.creator.status,
+              isTeamLead: record.creator.isTeamLead,
             },
           }),
     };

@@ -10,6 +10,7 @@ export function AdminPerformanceFilters({
   options,
   basePath,
   product = false,
+  datesOnly = false,
   returnState,
 }: {
   query: AdminPerformanceQuery;
@@ -20,6 +21,8 @@ export function AdminPerformanceFilters({
   };
   basePath: string;
   product?: boolean;
+  // Team views: only the period can change; no account pickers or searches.
+  datesOnly?: boolean;
   returnState: Record<string, string>;
 }) {
   const t = financeText(locale),
@@ -48,37 +51,41 @@ export function AdminPerformanceFilters({
             required
           />
         </label>
-        <label htmlFor={`${prefix}-brand`}>
-          {t("Brand", "ბრენდი")}
-          <select
-            id={`${prefix}-brand`}
-            name="brandId"
-            defaultValue={query.brandId || ""}
-          >
-            <option value="">{t("All brands", "ყველა ბრენდი")}</option>
-            {options.brands.map((b) => (
-              <option value={b.id} key={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label htmlFor={`${prefix}-creator`}>
-          {t("Creator", "კრეატორი")}
-          <select
-            id={`${prefix}-creator`}
-            name="creatorId"
-            defaultValue={query.creatorId || ""}
-          >
-            <option value="">{t("All creators", "ყველა კრეატორი")}</option>
-            {options.creators.map((c) => (
-              <option value={c.id} key={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {query.tab === "products" && !product && (
+        {!datesOnly && (
+          <>
+            <label htmlFor={`${prefix}-brand`}>
+              {t("Brand", "ბრენდი")}
+              <select
+                id={`${prefix}-brand`}
+                name="brandId"
+                defaultValue={query.brandId || ""}
+              >
+                <option value="">{t("All brands", "ყველა ბრენდი")}</option>
+                {options.brands.map((b) => (
+                  <option value={b.id} key={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label htmlFor={`${prefix}-creator`}>
+              {t("Creator", "კრეატორი")}
+              <select
+                id={`${prefix}-creator`}
+                name="creatorId"
+                defaultValue={query.creatorId || ""}
+              >
+                <option value="">{t("All creators", "ყველა კრეატორი")}</option>
+                {options.creators.map((c) => (
+                  <option value={c.id} key={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
+        {query.tab === "products" && !product && !datesOnly && (
           <>
             <label htmlFor={`${prefix}-status`}>
               {t("Product status", "პროდუქტის სტატუსი")}

@@ -58,6 +58,8 @@ export const registrationSchema = z
     tiktok: social(["tiktok.com"]),
     youtube: social(["youtube.com", "youtu.be"]),
     facebook: social(["facebook.com"]),
+    // Only shape is checked here; the route confirms it names a current lead.
+    teamLeadId: z.union([z.literal(""), z.uuid()]).default(""),
   })
   .superRefine((v, ctx) => {
     if (v.role === "brand" && !v.contactName)
@@ -65,5 +67,11 @@ export const registrationSchema = z
         code: "custom",
         path: ["contactName"],
         message: "required",
+      });
+    if (v.role === "brand" && v.teamLeadId)
+      ctx.addIssue({
+        code: "custom",
+        path: ["teamLeadId"],
+        message: "creator_only",
       });
   });

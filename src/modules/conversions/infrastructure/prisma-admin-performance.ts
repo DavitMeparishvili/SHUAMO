@@ -37,7 +37,7 @@ function bounds(q: Query) {
 }
 function source(q: Query, productId?: string) {
   const { start, end } = bounds(q);
-  const filter = Prisma.sql`${q.brandId ? Prisma.sql`AND p.brand_id=${q.brandId}::uuid` : Prisma.empty} ${q.creatorId ? Prisma.sql`AND tl.creator_id=${q.creatorId}::uuid` : Prisma.empty} ${productId ? Prisma.sql`AND p.id=${productId}::uuid` : Prisma.empty}
+  const filter = Prisma.sql`${q.brandId ? Prisma.sql`AND p.brand_id=${q.brandId}::uuid` : Prisma.empty} ${q.creatorId ? Prisma.sql`AND tl.creator_id=${q.creatorId}::uuid` : Prisma.empty} ${q.teamLeadId ? Prisma.sql`AND tl.creator_id IN (SELECT id FROM creator WHERE team_lead_id=${q.teamLeadId}::uuid)` : Prisma.empty} ${productId ? Prisma.sql`AND p.id=${productId}::uuid` : Prisma.empty}
  ${q.tab === "products" && !productId ? Prisma.sql`${q.productStatus !== "ALL" ? Prisma.sql`AND p.status::text=${q.productStatus}` : Prisma.empty} ${q.q ? Prisma.sql`AND (p.title ILIKE ${`%${q.q}%`} OR p.sku ILIKE ${`%${q.q}%`})` : Prisma.empty}` : Prisma.empty}`;
   return Prisma.sql`
  WITH clicks AS (
@@ -55,7 +55,7 @@ function source(q: Query, productId?: string) {
 }
 function rowSource(q: Query, productId?: string) {
   if (productId || q.tab === "creators")
-    return Prisma.sql`SELECT cr.id, cr.display_name name FROM creator cr WHERE TRUE ${q.creatorId ? Prisma.sql`AND cr.id=${q.creatorId}::uuid` : Prisma.empty} ${productId ? Prisma.sql`AND EXISTS(SELECT 1 FROM tracking_link l WHERE l.creator_id=cr.id AND l.product_id=${productId}::uuid)` : q.brandId ? Prisma.sql`AND EXISTS(SELECT 1 FROM tracking_link l JOIN product p ON p.id=l.product_id WHERE l.creator_id=cr.id AND p.brand_id=${q.brandId}::uuid)` : Prisma.empty}`;
+    return Prisma.sql`SELECT cr.id, cr.display_name name FROM creator cr WHERE TRUE ${q.creatorId ? Prisma.sql`AND cr.id=${q.creatorId}::uuid` : Prisma.empty} ${q.teamLeadId ? Prisma.sql`AND cr.team_lead_id=${q.teamLeadId}::uuid` : Prisma.empty} ${productId ? Prisma.sql`AND EXISTS(SELECT 1 FROM tracking_link l WHERE l.creator_id=cr.id AND l.product_id=${productId}::uuid)` : q.brandId ? Prisma.sql`AND EXISTS(SELECT 1 FROM tracking_link l JOIN product p ON p.id=l.product_id WHERE l.creator_id=cr.id AND p.brand_id=${q.brandId}::uuid)` : Prisma.empty}`;
   if (q.tab === "brands")
     return Prisma.sql`SELECT b.id,b.name FROM brand b WHERE TRUE ${q.brandId ? Prisma.sql`AND b.id=${q.brandId}::uuid` : Prisma.empty} ${q.creatorId ? Prisma.sql`AND EXISTS(SELECT 1 FROM product p JOIN tracking_link l ON l.product_id=p.id WHERE p.brand_id=b.id AND l.creator_id=${q.creatorId}::uuid)` : Prisma.empty}`;
   return Prisma.sql`SELECT p.id,p.title name,p.sku,p.status,p.brand_id,b.name brand_name FROM product p JOIN brand b ON b.id=p.brand_id WHERE TRUE

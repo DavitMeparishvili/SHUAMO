@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/src/infrastructure/db/client";
+import { seedCreator } from "@/src/test/fixtures/accounts";
 const state = vi.hoisted(() => ({ userId: "", email: "", session: true }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("../infrastructure/auth", () => ({
@@ -108,5 +109,58 @@ describe("registration persistence", () => {
         })
       ).displayName,
     ).toBe("Public Alias");
+  });
+  it("stores a chosen team lead on the new creator", async () => {
+    const lead = await seedCreator({ isTeamLead: true });
+    const response = await POST(request({ ...input, teamLeadId: lead.id }));
+    expect(response.status).toBe(201);
+    const creator = await prisma.creator.findUniqueOrThrow({
+      where: { userId: state.userId },
+    });
+    expect(creator.teamLeadId).toBe(lead.id);
+    expect(creator.status).toBe("APPROVED");
+  });
+  it("leaves the team lead empty when none is chosen", async () => {
+    expect((await POST(request(input))).status).toBe(201);
+    expect(
+      (
+        await prisma.creator.findUniqueOrThrow({
+          where: { userId: state.userId },
+        })
+      ).teamLeadId,
+    ).toBeNull();
+  });
+  it.each(["not_a_lead", "suspended", "access_disabled"] as const)(
+    "rejects a team lead that is %s and creates nothing",
+    async (variant) => {
+      const lead = await seedCreator({
+        isTeamLead: variant !== "not_a_lead",
+        status: variant === "suspended" ? "SUSPENDED" : "APPROVED",
+      });
+      if (variant === "access_disabled")
+        await prisma.appUser.update({
+          where: { id: lead.userId },
+          data: { accessDisabled: true },
+        });
+      const response = await POST(request({ ...input, teamLeadId: lead.id }));
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        error: "invalid_input",
+        fields: { teamLeadId: ["invalid_team_lead"] },
+      });
+      expect(
+        await prisma.creator.count({ where: { userId: state.userId } }),
+      ).toBe(0);
+    },
+  );
+  it("rejects a team lead sent with a brand role", async () => {
+    const lead = await seedCreator({ isTeamLead: true });
+    const response = await POST(
+      request({ ...input, role: "brand", teamLeadId: lead.id }),
+    );
+    expect(response.status).toBe(400);
+    expect(await prisma.brand.count({ where: { userId: state.userId } })).toBe(
+      0,
+    );
   });
 });

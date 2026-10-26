@@ -4,6 +4,9 @@ export interface AdminPerformanceQuery {
   to: string;
   brandId?: string | undefined;
   creatorId?: string | undefined;
+  // Set only by the team-lead use cases, never parsed from a URL: limits the
+  // report to creators whose team_lead_id is this creator.
+  teamLeadId?: string | undefined;
   productStatus: "ALL" | "ACTIVE" | "ARCHIVED";
   q: string;
   sort: "sales_count" | "sales_value" | "clicks" | "commission" | "name";

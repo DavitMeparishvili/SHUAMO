@@ -97,14 +97,19 @@ model Creator {
   payoutBank  String?        @map("payout_bank")
   payoutIban  String?        @map("payout_iban")
   payoutName  String?        @map("payout_name")
+  isTeamLead  Boolean        @default(false) @map("is_team_lead")
+  teamLeadId  String?        @map("team_lead_id") @db.Uuid
   createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
   user         AppUser         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  teamLead     Creator?        @relation("CreatorTeam", fields: [teamLeadId], references: [id], onDelete: Restrict)
+  teamMembers  Creator[]       @relation("CreatorTeam")
   partnerships Partnership[]
   links        TrackingLink[]
   attributions Attribution[]
   profile      CreatorProfile?
 
+  @@index([teamLeadId], map: "creator_team_lead_idx")
   @@map("creator")
 }
 

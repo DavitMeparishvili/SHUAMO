@@ -45,10 +45,25 @@ export function navDestinationsFor(
   viewer: Viewer,
   locale: Locale,
 ): NavDestination[] {
-  const destinations = ROUTES[viewer.kind].map(({ path, labelKey }) => ({
-    href: `/${locale}/${path}`,
-    labelKey,
-  }));
-  if ((viewer.kind === "brand" || viewer.kind === "creator") && viewer.isAdmin) destinations.push({ href: `/${locale}/admin/finance`,labelKey: "nav.finance" });
+  const destinations: NavDestination[] = ROUTES[viewer.kind].map(
+    ({ path, labelKey }) => ({
+      href: `/${locale}/${path}`,
+      labelKey,
+    }),
+  );
+  if (viewer.kind === "creator" && viewer.isTeamLead === true) {
+    const performance = destinations.findIndex(
+      (destination) => destination.href === `/${locale}/creator/earnings`,
+    );
+    destinations.splice(performance + 1, 0, {
+      href: `/${locale}/creator/team`,
+      labelKey: "nav.team",
+    });
+  }
+  if ((viewer.kind === "brand" || viewer.kind === "creator") && viewer.isAdmin)
+    destinations.push({
+      href: `/${locale}/admin/finance`,
+      labelKey: "nav.finance",
+    });
   return destinations;
 }

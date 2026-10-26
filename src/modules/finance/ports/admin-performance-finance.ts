@@ -20,3 +20,8 @@ export interface PerformanceFinanceQuery {
   brandIds: string[];
   creatorIds: string[];
 }
+// What a team lead may see about their members: no platform totals and no
+// brand figures.
+export interface TeamPerformanceFinance {
+  creators: { id: string; periodPayouts: string; unpaid: string }[];
+}

@@ -15,11 +15,13 @@ export function RegistrationForm({
   role,
   existingEmail,
   pendingApplication = false,
+  teamLeads = [],
 }: {
   locale: Locale;
   role: "brand" | "creator";
   existingEmail?: string | undefined;
   pendingApplication?: boolean;
+  teamLeads?: { id: string; displayName: string }[];
 }) {
   const text = (en: string, ka: string) => (locale === "ka" ? ka : en);
   const [accountCreated, setAccountCreated] = useState(Boolean(existingEmail));
@@ -32,6 +34,7 @@ export function RegistrationForm({
   const heading = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const brand = role === "brand";
+  const offerTeamLead = !brand && teamLeads.length > 0;
   const stages = [
     text("Account", "ანგარიში"),
     text("Channels", "არხები"),
@@ -55,6 +58,7 @@ export function RegistrationForm({
     "tiktok",
     "youtube",
     "facebook",
+    "teamLeadId",
   ];
   function changeStep(next: number) {
     setStep(next);
@@ -124,6 +128,10 @@ export function RegistrationForm({
       phone: [
         "Use digits, spaces, +, parentheses or hyphens for your phone number.",
         "ტელეფონის ნომერში გამოიყენე ციფრები, გამოტოვება, +, ფრჩხილები ან დეფისი.",
+      ],
+      teamLeadId: [
+        "This team lead is no longer available. Choose another or continue without one.",
+        "ეს გუნდის ლიდერი აღარ არის ხელმისაწვდომი. აირჩიე სხვა ან გააგრძელე ლიდერის გარეშე.",
       ],
       website: [
         "Enter a complete website address beginning with https://.",
@@ -212,6 +220,15 @@ export function RegistrationForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
       });
+      if (response.status === 400) {
+        const body = (await response.json().catch(() => ({}))) as {
+          fields?: Record<string, unknown>;
+        };
+        if (body.fields && "teamLeadId" in body.fields) {
+          showFieldError(element, "teamLeadId");
+          return;
+        }
+      }
       if (!response.ok && response.status !== 409) {
         setError(
           text(
@@ -564,6 +581,32 @@ export function RegistrationForm({
                 )}
               </>
             )}
+            {offerTeamLead && (
+              <label className="form-field" htmlFor="reg-teamLeadId">
+                <span>
+                  {text(
+                    "Team lead (optional)",
+                    "გუნდის ლიდერი (არასავალდებულო)",
+                  )}
+                </span>
+                <select name="teamLeadId" id="reg-teamLeadId" defaultValue="">
+                  <option value="">
+                    {text("No team lead", "ლიდერის გარეშე")}
+                  </option>
+                  {teamLeads.map((lead) => (
+                    <option key={lead.id} value={lead.id}>
+                      {lead.displayName}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {text(
+                    "This can't be changed after registration.",
+                    "რეგისტრაციის შემდეგ ვეღარ შეცვლი.",
+                  )}
+                </small>
+              </label>
+            )}
             <label className="form-field wide" htmlFor="reg-description">
               <span>
                 {text(
@@ -632,6 +675,15 @@ export function RegistrationForm({
                   .map((k) => review[k])
                   .join("\n") || text("Not added", "არ არის დამატებული"),
               ],
+              ...(offerTeamLead
+                ? [
+                    [
+                      text("Team lead", "გუნდის ლიდერი"),
+                      teamLeads.find((lead) => lead.id === review.teamLeadId)
+                        ?.displayName ?? text("None", "არ არის"),
+                    ],
+                  ]
+                : []),
             ].map(([label, value]) => (
               <div key={label}>
                 <dt>{label}</dt>

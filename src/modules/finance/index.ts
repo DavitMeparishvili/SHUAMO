@@ -11,6 +11,7 @@ export {
 export { persistInvoice } from "./infrastructure/prisma-invoice-repository";
 export * from "./ports/admin-performance-finance";
 export * from "./application/read-admin-performance-finance";
+export * from "./application/read-team-performance-finance";
 export * from "./http/admin-performance-export";
 export { prismaAdminPerformanceFinance } from "./infrastructure/prisma-admin-performance-finance";
 export { AdminFinance } from "./ui/admin-finance";

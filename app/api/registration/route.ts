@@ -76,13 +76,32 @@ export async function POST(request: Request) {
             profile: { create: profile },
           },
         });
-      } else
+      } else {
+        // The lead must still be one a creator could have picked: flagged,
+        // approved and not access-disabled. The share lock waits out an admin
+        // changing that lead's team settings at the same moment.
+        if (data.teamLeadId)
+          await tx.$queryRaw`SELECT id FROM creator WHERE id=${data.teamLeadId}::uuid FOR SHARE`;
+        if (
+          data.teamLeadId &&
+          !(await tx.creator.findFirst({
+            where: {
+              id: data.teamLeadId,
+              isTeamLead: true,
+              status: "APPROVED",
+              user: { accessDisabled: false },
+            },
+            select: { id: true },
+          }))
+        )
+          throw new Error("invalid_team_lead");
         await tx.creator.create({
           data: {
             userId: session.user.id,
             displayName: data.alias || data.name,
             bio: data.description,
             status: "APPROVED",
+            teamLeadId: data.teamLeadId || null,
             profile: {
               create: {
                 ...profile,
@@ -92,8 +111,17 @@ export async function POST(request: Request) {
             },
           },
         });
+      }
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "invalid_team_lead")
+      return Response.json(
+        {
+          error: "invalid_input",
+          fields: { teamLeadId: ["invalid_team_lead"] },
+        },
+        { status: 400 },
+      );
     if (
       (error instanceof Error && error.message === "already_registered") ||
       (error &&

@@ -2,7 +2,12 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { isLocale } from "@/src/modules/localization";
-import { auth, currentViewer, RegistrationForm } from "@/src/modules/identity";
+import {
+  auth,
+  currentViewer,
+  prismaTeamRepository,
+  RegistrationForm,
+} from "@/src/modules/identity";
 import { Icon } from "@/src/modules/design-system";
 import { prisma } from "@/src/infrastructure/db/client";
 export default async function SignUpPage({
@@ -31,6 +36,8 @@ export default async function SignUpPage({
     redirect("/" + locale + "/sign-in?status=suspended");
   const role = query.role === "brand" ? "brand" : "creator";
   const brand = role === "brand";
+  const teamLeads =
+    role === "creator" ? await prismaTeamRepository.listLeads() : [];
   const text = (en: string, ka: string) => (locale === "ka" ? ka : en);
   return (
     <div className={brand ? "auth-world" : "auth-world creator-registration"}>
@@ -150,6 +157,7 @@ export default async function SignUpPage({
             pendingApplication={Boolean(
               application?.brand || application?.creator,
             )}
+            teamLeads={teamLeads}
           />
         </section>
       </div>

@@ -29,6 +29,28 @@ describe("registration input", () => {
         registrationSchema.safeParse({ ...input, instagram }).success,
       ).toBe(false);
   });
+  it("accepts an empty or UUID team lead for a creator", () => {
+    expect(registrationSchema.parse(input).teamLeadId).toBe("");
+    for (const teamLeadId of ["", "00000000-0000-4000-8000-000000000001"])
+      expect(
+        registrationSchema.safeParse({ ...input, teamLeadId }).success,
+      ).toBe(true);
+  });
+  it("rejects a malformed team lead or one sent with a brand role", () => {
+    expect(
+      registrationSchema.safeParse({ ...input, teamLeadId: "lead-1" }).success,
+    ).toBe(false);
+    const brand = registrationSchema.safeParse({
+      ...input,
+      role: "brand",
+      contactName: "Contact",
+      teamLeadId: "00000000-0000-4000-8000-000000000001",
+    });
+    expect(brand.success).toBe(false);
+    expect(brand.error?.issues.map((issue) => issue.path)).toEqual([
+      ["teamLeadId"],
+    ]);
+  });
   it("does not accept a privileged role or copy approval into parsed data", () => {
     expect(
       registrationSchema.safeParse({ ...input, role: "admin" }).success,

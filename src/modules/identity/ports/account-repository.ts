@@ -5,7 +5,12 @@ export interface AccountRecord {
   isAdmin: boolean;
   accessDisabled: boolean;
   brand?: { id: string; name: string; status: ApprovalStatus };
-  creator?: { id: string; displayName: string; status: ApprovalStatus };
+  creator?: {
+    id: string;
+    displayName: string;
+    status: ApprovalStatus;
+    isTeamLead: boolean;
+  };
 }
 
 export interface AccountRepository {

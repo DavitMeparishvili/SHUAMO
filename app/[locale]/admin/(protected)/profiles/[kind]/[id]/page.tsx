@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AccountStatusControl, accountStatusCopy } from "@/src/modules/finance";
+import {
+  prismaTeamRepository,
+  TeamSettingsControl,
+} from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
   BrandProfile,
@@ -29,6 +33,13 @@ export default async function AdminProfileReviewPage({
       ? await getBrandProfileForAdmin(id)
       : await getCreatorProfileForAdmin(id);
   if (!review) notFound();
+  const [team, leads] =
+    kind === "creator"
+      ? await Promise.all([
+          prismaTeamRepository.settings(id),
+          prismaTeamRepository.listLeads(),
+        ])
+      : [undefined, []];
   const messages = getMessages(locale);
   const statusCopy = accountStatusCopy(messages);
   const tab = kind === "brand" ? "brands" : "creators";
@@ -60,6 +71,14 @@ export default async function AdminProfileReviewPage({
           expanded
         />
       </header>
+      {team ? (
+        <TeamSettingsControl
+          creatorId={id}
+          locale={locale}
+          initial={team}
+          leads={leads}
+        />
+      ) : null}
       <p className="finance-note admin-profile-review-note">
         {t(messages, "admin.accounts.previewNote")}
       </p>

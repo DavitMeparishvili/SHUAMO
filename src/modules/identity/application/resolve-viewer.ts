@@ -29,6 +29,7 @@ export function resolveViewer(dependencies: { accounts: AccountRepository }) {
         creatorId: account.creator.id,
         displayName: account.creator.displayName,
         isAdmin: account.isAdmin,
+        ...(account.creator.isTeamLead ? { isTeamLead: true as const } : {}),
       };
     }
     if (account.isAdmin) return { kind: "admin", userId: account.userId };
