@@ -237,3 +237,86 @@ test("links page offers Add to shop only for live offers", async ({ page }) => {
     "true",
   );
 });
+
+test("drag down reorders and the next drag still works", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "mouse drag is a desktop path");
+  seed(true);
+  await signIn(page);
+  await openShopTab(page);
+  const handle = page.getByRole("button", {
+    name: "Reorder Shop demo item 01",
+  });
+  const from = (await handle.boundingBox())!;
+  const third = (await rows(page).nth(2).boundingBox())!;
+  const x = from.x + from.width / 2;
+  await page.mouse.move(x, from.y + from.height / 2);
+  await page.mouse.down();
+  // Between row 3's midpoint and row 4's: item 01 lands third.
+  await page.mouse.move(x, third.y + third.height * 0.75, { steps: 12 });
+  await page.mouse.up();
+  await expectSaved(page);
+  expect((await rowNames(page)).slice(0, 3)).toEqual([
+    "Shop demo item 02",
+    "Shop demo item 03",
+    "Shop demo item 01",
+  ]);
+  await expect(rows(page).locator("[data-dragging]")).toHaveCount(0);
+
+  // A second drag is not swallowed by a stuck first one.
+  const fourth = page.getByRole("button", {
+    name: "Reorder Shop demo item 04",
+  });
+  const box = (await fourth.boundingBox())!;
+  const top = (await rows(page).first().boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, top.y + 4, { steps: 12 });
+  await page.mouse.up();
+  await expectSaved(page);
+  await page.reload();
+  await openShopTab(page);
+  expect((await rowNames(page)).slice(0, 4)).toEqual([
+    "Shop demo item 04",
+    "Shop demo item 02",
+    "Shop demo item 03",
+    "Shop demo item 01",
+  ]);
+});
+
+test("touch drag reorders on phones", async ({ page, isMobile }) => {
+  test.skip(!isMobile, "touch path");
+  seed(true);
+  await signIn(page);
+  await openShopTab(page);
+  const handle = page.getByRole("button", {
+    name: "Reorder Shop demo item 03",
+  });
+  await handle.scrollIntoViewIfNeeded();
+  const from = (await handle.boundingBox())!;
+  const first = (await rows(page).first().boundingBox())!;
+  const x = from.x + from.width / 2;
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type: "touchStart" | "touchMove" | "touchEnd", y: number) =>
+    cdp.send("Input.dispatchTouchEvent", {
+      type,
+      touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }],
+    });
+  await touch("touchStart", from.y + from.height / 2);
+  const steps = 12;
+  for (let step = 1; step <= steps; step += 1) {
+    const y =
+      from.y +
+      from.height / 2 +
+      ((first.y + 4 - (from.y + from.height / 2)) * step) / steps;
+    await touch("touchMove", y);
+  }
+  await touch("touchEnd", first.y + 4);
+  await expectSaved(page);
+  expect((await rowNames(page))[0]).toBe("Shop demo item 03");
+  await page.reload();
+  await openShopTab(page);
+  expect((await rowNames(page))[0]).toBe("Shop demo item 03");
+});

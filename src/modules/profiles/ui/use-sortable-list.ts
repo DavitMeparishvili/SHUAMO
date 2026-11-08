@@ -28,6 +28,9 @@ type RefProps = { ref: (node: HTMLElement | null) => void };
  *
  * - Pointer: press the handle and move; the order follows the pointer's Y
  *   against the other rows' midpoints, and the page scrolls near the edges.
+ *   Move/up/cancel are tracked on window for the whole drag, because React
+ *   moving the dragged row can drop the handle's pointer capture. Escape
+ *   cancels.
  * - Keyboard on the handle: Space/Enter picks up, ArrowUp/ArrowDown move,
  *   Space/Enter drops, Escape restores the original order.
  *
@@ -53,6 +56,7 @@ export function useSortableList<T>(
   const pointerY = useRef<number | null>(null);
   const frame = useRef<number | null>(null);
   const live = useRef<T[] | null>(null);
+  const detachPointer = useRef<(() => void) | null>(null);
   const ordered = draft ?? items;
   live.current = draft;
 
@@ -66,6 +70,9 @@ export function useSortableList<T>(
   const finish = useCallback(
     (commit: boolean, id: string) => {
       const next = live.current;
+      const viaPointer = detachPointer.current !== null;
+      detachPointer.current?.();
+      detachPointer.current = null;
       setDraft(null);
       setDraggingId(null);
       setMode(null);
@@ -78,9 +85,12 @@ export function useSortableList<T>(
         if (item && announce) setAnnouncement(announce.cancelled(item));
         return;
       }
+      const changed = !sameOrder(next, items);
       const position = next.findIndex((entry) => getId(entry) === id) + 1;
-      if (item && announce) setAnnouncement(announce.dropped(item, position));
-      if (!sameOrder(next, items)) onReorder(next);
+      // A plain click on the handle is not a drop worth announcing.
+      if (item && announce && (changed || !viaPointer))
+        setAnnouncement(announce.dropped(item, position));
+      if (changed) onReorder(next);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, onReorder, announce],
@@ -95,12 +105,48 @@ export function useSortableList<T>(
     }
   }, [draft, draggingId, mode]);
 
+  // Window listeners call the latest render's callbacks.
+  const latest = useRef({ finish, followPointer });
+  useLayoutEffect(() => {
+    latest.current = { finish, followPointer };
+  });
+
   useEffect(
     () => () => {
       if (frame.current !== null) cancelAnimationFrame(frame.current);
+      detachPointer.current?.();
     },
     [],
   );
+
+  function attachPointer(id: string, pointerId: number) {
+    const move = (event: globalThis.PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerY.current = event.clientY;
+      latest.current.followPointer(id, event.clientY);
+    };
+    const up = (event: globalThis.PointerEvent) => {
+      if (event.pointerId === pointerId) latest.current.finish(true, id);
+    };
+    const cancel = (event: globalThis.PointerEvent) => {
+      if (event.pointerId === pointerId) latest.current.finish(false, id);
+    };
+    const key = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      latest.current.finish(false, id);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+    window.addEventListener("keydown", key);
+    detachPointer.current = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("keydown", key);
+    };
+  }
 
   function start(id: string, how: "pointer" | "keyboard") {
     setDraft(items);
@@ -108,7 +154,8 @@ export function useSortableList<T>(
     setDraggingId(id);
     setMode(how);
     const item = find(items, id);
-    if (item && announce) setAnnouncement(announce.picked(item));
+    if (item && announce && how === "keyboard")
+      setAnnouncement(announce.picked(item));
   }
 
   function moveTo(id: string, index: number) {
@@ -163,24 +210,17 @@ export function useSortableList<T>(
         if (options.disabled || draggingId) return;
         if (event.pointerType === "mouse" && event.button !== 0) return;
         event.preventDefault();
+        // Capture keeps touch from turning into a scroll; window listeners
+        // carry the drag if React's row move drops the capture.
         event.currentTarget.setPointerCapture?.(event.pointerId);
         start(id, "pointer");
+        attachPointer(id, event.pointerId);
         pointerY.current = event.clientY;
         frame.current = requestAnimationFrame(() => autoScroll(id));
       },
-      onPointerMove: (event: PointerEvent<HTMLElement>) => {
-        if (mode !== "pointer" || draggingId !== id) return;
-        pointerY.current = event.clientY;
-        followPointer(id, event.clientY);
-      },
-      onPointerUp: (event: PointerEvent<HTMLElement>) => {
-        if (mode !== "pointer" || draggingId !== id) return;
-        event.currentTarget.releasePointerCapture?.(event.pointerId);
-        finish(true, id);
-      },
-      onPointerCancel: () => {
-        if (mode === "pointer" && draggingId === id) finish(false, id);
-      },
+      // Losing capture is expected when the row moves; the window listeners
+      // attached on pointerdown still see the rest of the gesture.
+      onLostPointerCapture: () => undefined,
       onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
         if (options.disabled) return;
         const pick = event.key === " " || event.key === "Enter";
