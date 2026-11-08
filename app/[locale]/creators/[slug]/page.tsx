@@ -7,6 +7,7 @@ import {
   CreatorProfile,
   getProfilePartnership,
   getPublicCreatorProfile,
+  listPublicCreatorShop,
 } from "@/src/modules/profiles";
 import { ProfileAction } from "@/src/modules/profiles";
 import { inviteFromProfile } from "./actions";
@@ -46,6 +47,8 @@ export default async function CreatorPublicPage({
     currentViewer(),
   ]);
   if (!profile) notFound();
+  // Started now so it runs alongside the viewer-specific lookups below.
+  const shopItems = listPublicCreatorShop(profile.creatorId);
   const messages = getMessages(locale);
   let action = (
     <ProfileAction
@@ -89,11 +92,13 @@ export default async function CreatorPublicPage({
     action = (
       <ProfileAction kind="status" label={t(messages, "profile.viewOnly")} />
     );
+  const shop = await shopItems;
   return (
     <CreatorProfile
       profile={profile}
       locale={locale}
       action={action}
+      shop={shop}
       copy={profileCopy(messages)}
     />
   );

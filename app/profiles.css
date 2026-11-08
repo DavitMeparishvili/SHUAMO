@@ -1583,3 +1583,114 @@
     transform: none;
   }
 }
+
+/* Shop-first creator profile: a compact identity header leads straight into
+   the shop; the biography, chips and facts follow in .creator-about. */
+.creator-intro.compact {
+  grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  align-items: start;
+}
+.creator-intro.compact .creator-portrait {
+  grid-row: 1/4;
+}
+.creator-intro.compact .creator-identity h1 {
+  font-size: var(--type-h1-size);
+  margin-bottom: var(--space-4);
+}
+.creator-compact-tagline {
+  grid-column: 2;
+  padding-right: 20px;
+}
+.profile-view .creator-compact-tagline .profile-tagline {
+  margin: var(--space-4) 0 0;
+  color: var(--color-ink);
+}
+.creator-social-icons {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+}
+.creator-social-icons a {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 50%;
+  color: var(--color-slate-700);
+}
+.creator-social-icons a > [aria-hidden="true"]:not(svg) {
+  display: none;
+}
+.creator-social-icons a:hover {
+  background: var(--color-slate-50);
+}
+.creator-social-icons svg {
+  width: 20px;
+  height: 20px;
+}
+.creator-social-icons [data-social="instagram"] {
+  color: #df1875;
+}
+.creator-social-icons [data-social="youtube"] {
+  color: #e00000;
+}
+.creator-social-icons [data-social="tiktok"] {
+  color: #051522;
+}
+.creator-about {
+  margin-top: 16px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 9px;
+  padding: 20px;
+  background: var(--color-paper);
+}
+.creator-about .creator-categories {
+  padding: 0;
+}
+.creator-about .creator-facts {
+  margin: 18px 0 0;
+}
+@media (max-width: 760px) {
+  .creator-intro.compact {
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 0 var(--space-16);
+    padding: 0 0 var(--space-4);
+  }
+  .creator-intro.compact .creator-portrait {
+    grid-row: 1/3;
+  }
+  .creator-intro.compact .creator-identity {
+    padding: 0;
+    align-self: end;
+  }
+  .creator-intro.compact .creator-identity h1 {
+    font-size: 26px;
+    margin-bottom: 2px;
+  }
+  .creator-intro.compact .creator-identity .profile-location {
+    display: flex;
+    margin: 0;
+  }
+  .creator-compact-tagline {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 0;
+  }
+  .profile-view .creator-compact-tagline .profile-tagline {
+    font-size: var(--type-small-size);
+    line-height: var(--type-small-leading);
+  }
+  .creator-social-icons {
+    grid-column: 1/-1;
+    grid-row: 3;
+    margin-top: var(--space-12);
+  }
+  .creator-about {
+    padding: 12px;
+    margin-top: 12px;
+  }
+}
