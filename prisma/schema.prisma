@@ -108,6 +108,7 @@ model Creator {
   links        TrackingLink[]
   attributions Attribution[]
   profile      CreatorProfile?
+  shopItems    CreatorShopItem[]
 
   @@index([teamLeadId], map: "creator_team_lead_idx")
   @@map("creator")
@@ -246,9 +247,27 @@ model Product {
   brand        Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
   links        TrackingLink[]
   attributions Attribution[]
+  shopItems    CreatorShopItem[]
 
   @@unique([brandId, sku])
   @@map("product")
+}
+
+model CreatorShopItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  creatorId String   @map("creator_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  position  Int
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, productId])
+  @@index([creatorId, position], map: "creator_shop_item_position_idx")
+  @@map("creator_shop_item")
 }
 
 model Partnership {
