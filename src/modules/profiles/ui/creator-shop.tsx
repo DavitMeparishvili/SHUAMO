@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { Locale } from "@/src/modules/localization";
 import { SHOP_INITIAL_VISIBLE } from "../domain/creator-shop";
 import type { PublicShopItem } from "../domain/creator-shop";
@@ -59,15 +59,23 @@ export function ShopCard({
 export function CreatorShop({
   items,
   locale,
+  action,
 }: {
   items: PublicShopItem[];
   locale: Locale;
+  /** Owner-only control beside the heading (never on the public page). */
+  action?: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
   if (items.length === 0) return null;
   const copy = creatorShopCopy(locale);
   const remaining = items.length - SHOP_INITIAL_VISIBLE;
+  const heading = (
+    <h2 id="creator-shop-heading">
+      {copy.heading} <span className="creator-shop-count">{items.length}</span>
+    </h2>
+  );
   function showMore() {
     setExpanded(true);
     // Move focus to the first newly revealed card so keyboard and screen
@@ -83,10 +91,14 @@ export function CreatorShop({
       className="creator-shop profile-section"
       aria-labelledby="creator-shop-heading"
     >
-      <h2 id="creator-shop-heading">
-        {copy.heading}{" "}
-        <span className="creator-shop-count">{items.length}</span>
-      </h2>
+      {action ? (
+        <div className="creator-shop-heading">
+          {heading}
+          {action}
+        </div>
+      ) : (
+        heading
+      )}
       <ul className="creator-shop-grid" ref={listRef}>
         {items.map((item, index) => (
           <li

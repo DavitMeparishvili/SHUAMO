@@ -608,3 +608,105 @@ describe("profile editor shop tab isolation", () => {
     expect(unload.defaultPrevented).toBe(false);
   });
 });
+
+describe("shop in the owner profile preview", () => {
+  const messages = getMessages("en");
+  const editorCopy = Object.fromEntries(
+    PROFILE_EDITOR_COPY_KEYS.map((key) => [
+      key,
+      t(messages, "profile.editor." + key),
+    ]),
+  ) as ProfileEditorCopy;
+  const creatorCopy = {
+    preview: "Preview",
+    approved: "Approved",
+    ledger: "Ledger",
+    supplied: "Supplied",
+    disclosure: "Disclosure",
+    work: "Work",
+    leave: "Leaves",
+    fallback: "From {locale}",
+    source: "Source",
+    languages: "Languages",
+    contentFormats: "Formats",
+    heroAlt: "Photo {name}",
+    workAlt: "Work {title}",
+    socialLabels: {},
+  };
+  const published = {
+    status: "PUBLISHED",
+    slug: "owner",
+    taglineEn: "Tagline",
+    descriptionEn: "About me",
+  };
+  const shopItem = {
+    productId: "p1",
+    code: "CODE1",
+    title: "Silk scarf",
+    brandName: "Aroma",
+    imageUrl: "/scarf.webp",
+  };
+
+  function owner(props: Partial<Parameters<typeof ProfileEditor>[0]> = {}) {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    render(
+      <ProfileEditor
+        role="creator"
+        locale="en"
+        name="Owner"
+        profile={published}
+        saveAction={vi.fn()}
+        publishAction={vi.fn()}
+        unpublishAction={vi.fn()}
+        copy={editorCopy}
+        creatorCopy={creatorCopy}
+        shop={<p>shop body</p>}
+        {...props}
+      />,
+    );
+  }
+
+  it("shows the shop-first layout and opens the Shop tab from it", async () => {
+    const user = userEvent.setup();
+    owner({ shopPreview: [shopItem] });
+    expect(
+      screen.getByRole("heading", { name: /Shop my picks/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Aroma – Silk scarf, opens shop" }),
+    ).toHaveAttribute("href", "/r/CODE1");
+    await user.click(screen.getByRole("button", { name: "Manage shop" }));
+    expect(screen.getByText("shop body")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Shop", current: "page" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hints at an empty shop with a callout", async () => {
+    const user = userEvent.setup();
+    owner({ shopPreview: [] });
+    expect(screen.queryByRole("heading", { name: /Shop my picks/ })).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Add products to your shop" }),
+    );
+    expect(screen.getByText("shop body")).toBeVisible();
+  });
+
+  it("opens straight on the Shop tab from ?tab=shop", () => {
+    owner({ shopPreview: [shopItem], initialTab: "shop" });
+    expect(screen.getByText("shop body")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Manage shop" })).toBeNull();
+  });
+
+  it("falls back safely for unknown or unavailable tabs", () => {
+    owner({ shopPreview: [], initialTab: "../admin" });
+    expect(screen.getByRole("button", { name: "Edit profile" })).toBeVisible();
+    expect(screen.queryByText("shop body")).not.toBeVisible();
+  });
+
+  it("ignores ?tab=shop when there is no shop tab", () => {
+    owner({ shop: undefined, initialTab: "shop" });
+    expect(screen.getByRole("button", { name: "Edit profile" })).toBeVisible();
+    expect(screen.queryByText("shop body")).toBeNull();
+  });
+});

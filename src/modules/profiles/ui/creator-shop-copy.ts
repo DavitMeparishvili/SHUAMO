@@ -76,6 +76,10 @@ export function creatorShopCopy(locale: Locale) {
       : "Every product you have a link for is already in your shop.",
     close: ka ? "დახურვა" : "Close",
     unavailableCount: ka ? "არ ჩანს {count}" : "{count} not shown",
+    manageShop: ka ? "მაღაზიის მართვა" : "Manage shop",
+    addToYourShop: ka
+      ? "დაამატეთ პროდუქტები მაღაზიაში"
+      : "Add products to your shop",
     addToShop: ka ? "მაღაზიაში დამატება" : "Add to shop",
     inShop: ka ? "მაღაზიაშია" : "In shop",
   };

@@ -322,3 +322,43 @@ test("touch drag reorders on phones", async ({ page, isMobile }) => {
   await openShopTab(page);
   expect((await rowNames(page))[0]).toBe("Shop demo item 03");
 });
+
+test("profile preview surfaces the shop and deep-links to it", async ({
+  page,
+}) => {
+  seed(true);
+  await signIn(page);
+  await page.goto("/en/creator/profile");
+  await expect(
+    page.getByRole("heading", { name: /Shop my picks/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Manage shop" }).click();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "My shop" }),
+  ).toBeVisible();
+
+  await page.goto("/en/creator/profile?tab=shop");
+  await expect(
+    page.getByRole("heading", { level: 2, name: "My shop" }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "My shop" }),
+  ).toBeVisible();
+
+  await page.goto("/en/creator/profile?tab=nope");
+  await expect(
+    page.getByRole("button", { name: "Edit profile" }),
+  ).toBeVisible();
+
+  // An empty shop still hints at the feature in the preview only.
+  seed();
+  await page.goto("/en/creator/profile");
+  await page.getByRole("button", { name: "Add products to your shop" }).click();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "My shop" }),
+  ).toBeVisible();
+  await page.goto(PUBLIC);
+  await expect(page.getByText("Add products to your shop")).toHaveCount(0);
+  await expect(page.getByText("Manage shop")).toHaveCount(0);
+});

@@ -36,6 +36,9 @@ import { profileSetupCopy } from "./profile-setup-copy";
 import { ProfileLeaveGuard } from "./profile-leave-guard";
 import { profileCompletionIssues } from "../application/profile-completion";
 import { creatorShopCopy } from "./creator-shop-copy";
+import type { PublicShopItem } from "../domain/creator-shop";
+
+const EDITOR_TABS = ["details", "media", "work", "links"] as const;
 
 type ProfileEditorRecord = {
   hasUnpublishedChanges?: boolean;
@@ -127,6 +130,8 @@ export function ProfileEditor({
   brandCopy,
   creatorCopy,
   shop,
+  shopPreview,
+  initialTab,
 }: {
   role: "brand" | "creator";
   profile: ProfileEditorRecord | null | undefined;
@@ -149,13 +154,29 @@ export function ProfileEditor({
    * outside the draft form and never marks the profile dirty.
    */
   shop?: ReactNode;
+  /** Publicly shown shop items, so the owner preview matches the public page. */
+  shopPreview?: PublicShopItem[];
+  /** A tab to open on (e.g. `?tab=shop`); unknown values are ignored. */
+  initialTab?: string;
 }) {
+  const hasShopTab = Boolean(shop) && role === "creator";
+  const startTab =
+    initialTab &&
+    ((EDITOR_TABS as readonly string[]).includes(initialTab) ||
+      (hasShopTab && initialTab === "shop"))
+      ? initialTab
+      : undefined;
   const ui = profileDesignCopy(locale);
   const setup = profileSetupCopy(locale, role);
   const [mode, setMode] = useState<"view" | "edit">(
-    profile?.status === "PUBLISHED" ? "view" : "edit",
+    profile?.status === "PUBLISHED" && !startTab ? "view" : "edit",
   );
-  const [tab, setTab] = useState("details");
+  const [tab, setTab] = useState(startTab ?? "details");
+  const openShop = () => {
+    setMode("edit");
+    setTab("shop");
+    window.scrollTo({ top: 0 });
+  };
   const [dirty, setDirty] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
   const [uploads, setUploads] = useState<Set<string>>(() => new Set());
@@ -353,6 +374,33 @@ export function ProfileEditor({
           } as CreatorProfileView
         }
         copy={creatorCopy}
+        {...(hasShopTab && shopPreview
+          ? {
+              shop: shopPreview,
+              shopAction: (
+                <button
+                  type="button"
+                  className="profile-button creator-shop-manage"
+                  onClick={openShop}
+                >
+                  {creatorShopCopy(locale).manageShop}
+                </button>
+              ),
+              shopCallout: (
+                <section className="creator-shop-callout profile-section">
+                  <h2>{creatorShopCopy(locale).title}</h2>
+                  <p>{creatorShopCopy(locale).emptyBody}</p>
+                  <button
+                    type="button"
+                    className="profile-button primary"
+                    onClick={openShop}
+                  >
+                    {creatorShopCopy(locale).addToYourShop}
+                  </button>
+                </section>
+              ),
+            }
+          : {})}
       />
     ) : null;
   const hero = (

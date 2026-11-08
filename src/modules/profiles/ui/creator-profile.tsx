@@ -40,6 +40,8 @@ export function CreatorProfile({
   action,
   preview = false,
   shop = [],
+  shopAction,
+  shopCallout,
   copy,
 }: {
   profile: CreatorProfileView;
@@ -48,6 +50,10 @@ export function CreatorProfile({
   preview?: boolean;
   /** Publicly shown shop items. When present, the shop leads the page. */
   shop?: PublicShopItem[];
+  /** Owner preview only: a control beside the shop heading. */
+  shopAction?: ReactNode;
+  /** Owner preview only: shown in place of an empty shop. */
+  shopCallout?: ReactNode;
   copy: {
     preview: string;
     approved: string;
@@ -220,6 +226,7 @@ export function CreatorProfile({
           {categories}
           {facts}
         </section>
+        {shopCallout}
         {rest}
       </div>
     );
@@ -253,7 +260,7 @@ export function CreatorProfile({
           <div className="creator-social-icons">{socialIcons}</div>
         ) : null}
       </section>
-      <CreatorShop items={shop} locale={locale} />
+      <CreatorShop items={shop} locale={locale} action={shopAction} />
       {hasAbout ? (
         <section className="creator-about profile-section">
           {descriptionText}

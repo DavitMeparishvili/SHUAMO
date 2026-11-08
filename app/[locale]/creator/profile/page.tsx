@@ -4,6 +4,7 @@ import { getMessages, isLocale, t } from "@/src/modules/localization";
 import {
   CreatorShopEditor,
   listCreatorShopForOwner,
+  listPublicCreatorShop,
   listShopCandidates,
   prismaProfileRepository,
 } from "@/src/modules/profiles";
@@ -21,18 +22,21 @@ import {
 } from "./shop-actions";
 export default async function CreatorProfileEditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
 }) {
-  const { locale } = await params;
+  const [{ locale }, { tab }] = await Promise.all([params, searchParams]);
   if (!isLocale(locale)) notFound();
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
   const creatorId = allowed.value.creatorId;
-  const [profile, shopItems, candidates] = await Promise.all([
+  const [profile, shopItems, candidates, shopPreview] = await Promise.all([
     prismaProfileRepository.getCreatorForOwner(creatorId),
     listCreatorShopForOwner(creatorId),
     listShopCandidates(creatorId),
+    listPublicCreatorShop(creatorId),
   ]);
   const messages = getMessages(locale);
   const published = profile?.status === "PUBLISHED";
@@ -48,6 +52,9 @@ export default async function CreatorProfileEditorPage({
         publishAction={publishCreatorProfileAction.bind(null, locale)}
         unpublishAction={unpublishCreatorProfileAction.bind(null, locale)}
         copy={editorCopy(messages)}
+        // The editor ignores tabs it does not know, so this needs no checks.
+        {...(typeof tab === "string" ? { initialTab: tab } : {})}
+        shopPreview={shopPreview}
         shop={
           <CreatorShopEditor
             locale={locale}

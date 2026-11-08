@@ -2229,3 +2229,38 @@
     transition: none;
   }
 }
+
+/* Owner preview only: manage the shop from the profile preview. */
+.creator-shop-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-16);
+}
+.creator-shop-heading h2 {
+  margin-bottom: 0;
+}
+.creator-shop-manage {
+  min-height: 44px;
+}
+.creator-shop-callout {
+  margin-top: 16px;
+  border: 1px dashed var(--color-slate-300);
+  border-radius: 9px;
+  padding: var(--space-24);
+  background: var(--color-slate-50);
+}
+.profile-view .creator-shop-callout p {
+  max-width: 52ch;
+}
+.creator-shop-callout .profile-button {
+  min-height: 44px;
+}
+@media (max-width: 760px) {
+  .creator-shop-callout {
+    margin-top: 12px;
+    padding: var(--space-16);
+  }
+}
