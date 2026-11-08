@@ -2,6 +2,7 @@ export * from "./domain/profile-content";
 export * from "./domain/profile-slug";
 export * from "./domain/profile-media";
 export * from "./domain/localized-profile-text";
+export * from "./domain/creator-shop";
 export * from "./application/profile-schemas";
 export * from "./application/profile-editor-form";
 export * from "./infrastructure/prisma-profile-repository";
