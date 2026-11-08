@@ -1,13 +1,12 @@
 // @vitest-environment jsdom
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CreatorProfile } from "./creator-profile";
 
 const copy = {
   preview: "Preview",
   approved: "Approved",
   ledger: "Ledger",
-  supplied: "Supplied",
   disclosure: "Disclosure",
   work: "Work",
   leave: "Leaves Xurjin",
@@ -159,5 +158,51 @@ describe("creator profile layout", () => {
       within(intro).getByRole("link", { name: /^Website/ }),
     ).toBeInTheDocument();
     expect(within(intro).getByText("Instagram")).toBeVisible();
+  });
+
+  it("uses the Facebook and globe icons for those platforms", () => {
+    const { container } = render(
+      <CreatorProfile
+        profile={{
+          ...profile,
+          socialLinks: [
+            { platform: "facebook", url: "https://facebook.com/demo" },
+            { platform: "website", url: "https://demo.example" },
+            { platform: "constructor", url: "https://demo.example/x" },
+          ],
+        }}
+        locale="en"
+        copy={copy}
+      />,
+    );
+    const paths = [...container.querySelectorAll(".creator-social-tile path")];
+    expect(new Set(paths.map((path) => path.getAttribute("d"))).size).toBe(3);
+  });
+
+  describe("bio toggle", () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it("offers Read more only when the clamp hides text", () => {
+      render(<CreatorProfile profile={profile} locale="en" copy={copy} />);
+      expect(screen.queryByRole("button", { name: "Read more" })).toBeNull();
+    });
+
+    it("expands and collapses a clamped bio", () => {
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(
+        200,
+      );
+      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(
+        72,
+      );
+      render(<CreatorProfile profile={profile} locale="ka" copy={copy} />);
+      const more = screen.getByRole("button", { name: "მეტის ნახვა" });
+      expect(more).toHaveAttribute("aria-expanded", "false");
+      const bio = document.getElementById(more.getAttribute("aria-controls")!);
+      expect(bio).toHaveTextContent("Long description of Nino");
+      fireEvent.click(more);
+      const less = screen.getByRole("button", { name: "ნაკლების ნახვა" });
+      expect(less).toHaveAttribute("aria-expanded", "true");
+      expect(bio).toHaveAttribute("data-expanded");
+    });
   });
 });

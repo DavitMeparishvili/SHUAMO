@@ -139,7 +139,6 @@ function creatorCopy(messages: Record<string, string>) {
     preview: t(messages, "admin.accounts.profile.preview"),
     approved: t(messages, "profile.approved"),
     ledger: t(messages, "profile.ledger"),
-    supplied: t(messages, "profile.supplied"),
     disclosure: t(messages, "profile.disclosure"),
     work: t(messages, "profile.featuredWork"),
     leave: t(messages, "profile.leave"),

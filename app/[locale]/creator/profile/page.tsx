@@ -136,7 +136,6 @@ function creatorCopy(m: Record<string, string>) {
     preview: t(m, "profile.preview"),
     approved: t(m, "profile.approved"),
     ledger: t(m, "profile.ledger"),
-    supplied: t(m, "profile.supplied"),
     disclosure: t(m, "profile.disclosure"),
     work: t(m, "profile.featuredWork"),
     leave: t(m, "profile.leave"),

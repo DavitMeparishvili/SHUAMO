@@ -63,9 +63,8 @@ export function profileDesignCopy(locale: Locale) {
     workHint: ka
       ? "მართეთ თქვენი რჩეული პროექტები და კონტენტი."
       : "Manage your featured projects and content.",
-    supplied: ka
-      ? "ბმულები და ნამუშევრები მოწოდებულია შემქმნელის მიერ."
-      : "Links and featured work are supplied by the creator.",
+    readMore: ka ? "მეტის ნახვა" : "Read more",
+    showLess: ka ? "ნაკლების ნახვა" : "Show less",
     account: ka ? "ანგარიშის მიმოხილვა" : "Account review",
     accountHint: ka
       ? "ანგარიშის სტატუსი სოციალურ პროფილებს არ ამოწმებს."

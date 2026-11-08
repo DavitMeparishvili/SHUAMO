@@ -70,7 +70,6 @@ describe("public profile compositions", () => {
         copy={{
           ...common,
           ledger: "Ledger",
-          supplied: "Account review",
           disclosure: "SHUAMO does not verify audience or performance claims.",
           work: "Work",
           source: "Source",

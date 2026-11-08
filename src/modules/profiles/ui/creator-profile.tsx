@@ -1,9 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { Icon } from "@/src/modules/design-system";
+import { Icon, type IconName } from "@/src/modules/design-system";
 import { profileDesignCopy } from "./profile-design-copy";
 import type { ReactNode } from "react";
 import type { Locale } from "@/src/modules/localization";
 import type { PublicShopItem } from "../domain/creator-shop";
+import { CreatorDescription } from "./creator-description";
 import { CreatorShop } from "./creator-shop";
 import {
   ExternalLink,
@@ -27,11 +28,16 @@ export interface CreatorProfileView {
   featuredWork: unknown;
   creator: { displayName: string };
 }
-function socialIcon(platform: string | undefined) {
-  return platform === "instagram" ||
-    platform === "youtube" ||
-    platform === "tiktok"
-    ? platform
+const SOCIAL_ICONS = {
+  instagram: "instagram",
+  youtube: "youtube",
+  tiktok: "tiktok",
+  facebook: "facebook",
+  website: "globe",
+} as const satisfies Record<string, IconName>;
+function socialIcon(platform: string | undefined): IconName {
+  return platform && Object.hasOwn(SOCIAL_ICONS, platform)
+    ? SOCIAL_ICONS[platform as keyof typeof SOCIAL_ICONS]
     : "link";
 }
 /**
@@ -64,7 +70,6 @@ export function CreatorProfile({
     preview: string;
     approved: string;
     ledger: string;
-    supplied: string;
     disclosure: string;
     work: string;
     leave: string;
@@ -132,13 +137,13 @@ export function CreatorProfile({
             </p>
           ) : null}
           {description.text ? (
-            <p className="creator-description">
+            <CreatorDescription readMore={ui.readMore} showLess={ui.showLess}>
               {description.text}
               <FallbackLabel
                 from={description.fallbackFrom}
                 copy={copy.fallback}
               />
-            </p>
+            </CreatorDescription>
           ) : null}
           {profile.categories.length ? (
             <div className="profile-chips creator-categories">
@@ -168,7 +173,12 @@ export function CreatorProfile({
                         data-social={item.platform}
                       />
                     </span>
-                    {copy.socialLabels[item.platform ?? ""] ?? item.platform}
+                    <span className="creator-social-name">
+                      {item.platform &&
+                      Object.hasOwn(copy.socialLabels, item.platform)
+                        ? copy.socialLabels[item.platform]
+                        : item.platform}
+                    </span>
                   </ExternalLink>
                 </li>
               ))}

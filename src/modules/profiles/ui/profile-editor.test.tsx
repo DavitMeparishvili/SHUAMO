@@ -53,7 +53,6 @@ function editor(
         preview: "Preview",
         approved: "Approved",
         ledger: "Social profiles",
-        supplied: "Supplied",
         disclosure: "Creator supplied",
         work: "Work",
         leave: "External",
