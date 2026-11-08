@@ -5,6 +5,7 @@ export * from "./domain/localized-profile-text";
 export * from "./domain/creator-shop";
 export * from "./application/profile-schemas";
 export * from "./application/profile-editor-form";
+export * from "./application/creator-shop-input";
 export * from "./infrastructure/prisma-profile-repository";
 export * from "./infrastructure/prisma-creator-shop-repository";
 export * from "./ui/brand-profile";
