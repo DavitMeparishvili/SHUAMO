@@ -444,7 +444,7 @@ describe("creator shop editor review fixes", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the live preview out of the tab order and click path", () => {
+  it("has no live preview; the list uses the full width", () => {
     const { container } = render(
       <CreatorShopEditor
         locale="en"
@@ -456,9 +456,10 @@ describe("creator shop editor review fixes", () => {
         actions={actions()}
       />,
     );
-    const phone = container.querySelector(".shop-phone")!;
-    expect(phone).toHaveAttribute("inert");
-    expect(phone).toHaveAttribute("aria-hidden", "true");
+    expect(container.querySelector(".shop-phone")).toBeNull();
+    expect(container.querySelector(".shop-editor-preview")).toBeNull();
+    expect(screen.queryByText("Live preview")).toBeNull();
+    expect(container.querySelectorAll('a[href^="/r/"]')).toHaveLength(0);
   });
 
   it("tags an added ended offer immediately", async () => {

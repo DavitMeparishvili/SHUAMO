@@ -1752,11 +1752,6 @@
   font-weight: 700;
   text-decoration: underline;
 }
-.shop-editor-layout {
-  display: grid;
-  gap: var(--space-24);
-  align-items: start;
-}
 .shop-editor-main {
   min-width: 0;
 }
@@ -1939,39 +1934,6 @@
 .shop-switch[aria-checked="true"] > span::after {
   transform: translateX(16px);
 }
-.shop-editor-preview {
-  display: none;
-}
-.shop-editor-preview-label {
-  margin: 0 0 var(--space-8);
-  color: var(--color-slate-600);
-  font-size: var(--type-overline-size);
-  font-weight: var(--type-overline-weight);
-  letter-spacing: var(--type-overline-tracking);
-  text-transform: uppercase;
-}
-.shop-phone {
-  padding: var(--space-16) var(--space-12);
-  border: 8px solid var(--color-ink);
-  border-radius: 28px;
-  background: var(--color-paper);
-}
-.shop-phone-heading {
-  margin: 0 0 var(--space-12);
-  font-size: 15px;
-  font-weight: 750;
-}
-.shop-phone-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-12);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.shop-phone-grid .creator-shop-name {
-  font-size: 12px;
-}
 .shop-sheet {
   max-width: min(560px, calc(100vw - 32px));
   width: 100%;
@@ -2096,21 +2058,8 @@
   font-weight: 650;
   text-align: center;
 }
-.shop-phone {
-  pointer-events: none;
-}
 .shop-menu.popover::backdrop {
   background: transparent;
-}
-@media (min-width: 1024px) {
-  .shop-editor-layout {
-    grid-template-columns: minmax(0, 1fr) 280px;
-  }
-  .shop-editor-preview {
-    display: block;
-    position: sticky;
-    top: var(--space-24);
-  }
 }
 @media (max-width: 639px) {
   .shop-editor-header {

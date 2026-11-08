@@ -24,10 +24,8 @@ import {
 } from "../domain/creator-shop";
 import type {
   CreatorShopEditorItem,
-  PublicShopItem,
   ShopCandidate,
 } from "../domain/creator-shop";
-import { ShopCard } from "./creator-shop";
 import {
   creatorShopCopy,
   fillShopCopy,
@@ -48,7 +46,6 @@ type Filter = "all" | "shown" | "hidden";
 type Status = "idle" | "saving" | "saved" | "failed";
 
 const PHONE_QUERY = "(max-width: 639px)";
-const PREVIEW_ITEMS = 4;
 
 /** True on phones. Without matchMedia (tests, old browsers) assume a phone. */
 function usePhone() {
@@ -62,20 +59,6 @@ function usePhone() {
     () => (window.matchMedia ? window.matchMedia(PHONE_QUERY).matches : true),
     () => false,
   );
-}
-
-function asPublic(item: CreatorShopEditorItem): PublicShopItem | null {
-  return isPubliclyShown(item.visible, item.availability) &&
-    item.code !== null &&
-    item.imageUrl !== null
-    ? {
-        productId: item.productId,
-        code: item.code,
-        title: item.title,
-        brandName: item.brandName,
-        imageUrl: item.imageUrl,
-      }
-    : null;
 }
 
 function withPositions(items: CreatorShopEditorItem[]) {
@@ -378,10 +361,6 @@ export function CreatorShopEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settle, orderKey]);
 
-  const preview = list
-    .map(asPublic)
-    .filter((item): item is PublicShopItem => item !== null)
-    .slice(0, PREVIEW_ITEMS);
   const menuItem = list.find((item) => item.productId === menu?.id) ?? null;
   const menuIndex = menuItem ? list.indexOf(menuItem) : -1;
 
@@ -486,65 +465,49 @@ export function CreatorShopEditor({
           }
         />
       ) : (
-        <div className="shop-editor-layout">
-          <div className="shop-editor-main">
-            {phone ? (
-              <div
-                className="shop-editor-filters"
-                role="radiogroup"
-                aria-label={copy.filterLabel}
-              >
-                {(
-                  [
-                    ["all", copy.filterAll],
-                    ["shown", copy.filterShown],
-                    ["hidden", copy.filterHidden],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={filter === value}
-                    onClick={() => setFilter(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <ul className="shop-editor-list" ref={listRef}>
-              {rows.map((item) => (
-                <ShopEditorRow
-                  key={item.productId}
-                  item={item}
-                  copy={copy}
-                  dragEnabled={dragEnabled}
-                  rowProps={sortable.itemProps(item.productId)}
-                  handleProps={sortable.handleProps(item.productId)}
-                  onToggle={() => setVisible(item)}
-                  onMore={(anchor) => setMenu({ id: item.productId, anchor })}
-                />
+        <div className="shop-editor-main">
+          {phone ? (
+            <div
+              className="shop-editor-filters"
+              role="radiogroup"
+              aria-label={copy.filterLabel}
+            >
+              {(
+                [
+                  ["all", copy.filterAll],
+                  ["shown", copy.filterShown],
+                  ["hidden", copy.filterHidden],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={filter === value}
+                  onClick={() => setFilter(value)}
+                >
+                  {label}
+                </button>
               ))}
-            </ul>
-            <p className="sr-only" aria-live="polite">
-              {sortable.announcement}
-            </p>
-          </div>
-          <aside className="shop-editor-preview" aria-label={copy.preview}>
-            <p className="shop-editor-preview-label">{copy.preview}</p>
-            {/* A picture of the public grid: not clickable, not focusable. */}
-            <div className="shop-phone" inert aria-hidden="true">
-              <p className="shop-phone-heading">{copy.heading}</p>
-              <ul className="shop-phone-grid">
-                {preview.map((item) => (
-                  <li key={item.productId}>
-                    <ShopCard item={item} copy={copy} />
-                  </li>
-                ))}
-              </ul>
             </div>
-          </aside>
+          ) : null}
+          <ul className="shop-editor-list" ref={listRef}>
+            {rows.map((item) => (
+              <ShopEditorRow
+                key={item.productId}
+                item={item}
+                copy={copy}
+                dragEnabled={dragEnabled}
+                rowProps={sortable.itemProps(item.productId)}
+                handleProps={sortable.handleProps(item.productId)}
+                onToggle={() => setVisible(item)}
+                onMore={(anchor) => setMenu({ id: item.productId, anchor })}
+              />
+            ))}
+          </ul>
+          <p className="sr-only" aria-live="polite">
+            {sortable.announcement}
+          </p>
         </div>
       )}
       <ShopItemMenu

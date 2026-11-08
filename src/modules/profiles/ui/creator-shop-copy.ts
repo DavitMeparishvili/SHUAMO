@@ -59,7 +59,6 @@ export function creatorShopCopy(locale: Locale) {
       ? "მაღაზია გამოჩნდება პროფილის გამოქვეყნების შემდეგ."
       : "Your shop will be visible once your profile is published.",
     search: ka ? "პროდუქტების ძებნა" : "Search products",
-    preview: ka ? "ცოცხალი გადახედვა" : "Live preview",
     more: ka ? "მეტი მოქმედება: {title}" : "More actions for {title}",
     reorder: ka ? "გადაადგილება: {title}" : "Reorder {title}",
     picked: ka ? "აიღეთ {title}" : "Picked up {title}",
