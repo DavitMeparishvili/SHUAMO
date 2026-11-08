@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useOptimistic,
   useRef,
   useState,
@@ -33,6 +34,7 @@ import {
   type CreatorShopCopy,
 } from "./creator-shop-copy";
 import { CreatorShopPicker } from "./creator-shop-picker";
+import { canAnimate, LIST_MOTION, prefersReducedMotion } from "./list-motion";
 import { useSortableList } from "./use-sortable-list";
 
 export interface CreatorShopActions {
@@ -129,6 +131,15 @@ export function CreatorShopEditor({
   const sectionRef = useRef<HTMLElement>(null);
   // Where focus goes once a removed row has left the DOM.
   const focusAfterRemove = useRef<string | null>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  // Layout tops from the last render, keyed by product, for FLIP.
+  const tops = useRef<Map<string, number> | null>(null);
+  // The row that just moved: highlight it, show it, keep focus with it.
+  const [settle, setSettle] = useState<{
+    id: string;
+    index: number;
+    focusMore: boolean;
+  } | null>(null);
 
   const run = useCallback(
     function run(
@@ -168,8 +179,14 @@ export function CreatorShopEditor({
   const effectiveFilter: Filter = phone ? filter : "all";
   const dragEnabled = effectiveFilter === "all";
   const reorder = useCallback(
-    (next: CreatorShopEditorItem[]) => {
+    (next: CreatorShopEditorItem[], movedId?: string, focusMore = false) => {
       const ordered = withPositions(next);
+      if (movedId)
+        setSettle({
+          id: movedId,
+          index: ordered.findIndex((item) => item.productId === movedId),
+          focusMore,
+        });
       run(ordered, () => actions.reorder(ordered.map((i) => i.productId)));
     },
     [actions, run],
@@ -197,7 +214,7 @@ export function CreatorShopEditor({
 
   function move(productId: string, how: ShopMove) {
     const index = list.findIndex((entry) => entry.productId === productId);
-    reorder(moveShopItem(list, index, how));
+    reorder(moveShopItem(list, index, how), productId, true);
   }
 
   function remove(productId: string) {
@@ -205,13 +222,38 @@ export function CreatorShopEditor({
     const index = rows.findIndex((entry) => entry.productId === productId);
     const neighbour = rows[index + 1] ?? rows[index - 1];
     focusAfterRemove.current = neighbour ? neighbour.productId : "";
-    run(
-      withPositions(list.filter((entry) => entry.productId !== productId)),
-      () => actions.remove(productId),
-      // Already gone (e.g. removed in another tab) is the outcome we wanted.
-      (result) =>
-        result.ok || ("error" in result && result.error === "not_found"),
+    const commit = () =>
+      run(
+        withPositions(list.filter((entry) => entry.productId !== productId)),
+        () => actions.remove(productId),
+        // Already gone (e.g. removed in another tab) is the outcome we wanted.
+        (result) =>
+          result.ok || ("error" in result && result.error === "not_found"),
+      );
+    // Collapse the row first; the rows below then slide up (FLIP).
+    const row = listRef.current?.querySelector(
+      `[data-shop-row="${CSS.escape(productId)}"]`,
     );
+    if (!row || !canAnimate(row)) return commit();
+    row.style.overflow = "hidden";
+    row
+      .animate(
+        [
+          { opacity: 1, height: `${row.offsetHeight}px` },
+          {
+            opacity: 0,
+            height: "0px",
+            paddingBlock: "0px",
+            borderWidth: "0px",
+          },
+        ],
+        {
+          duration: LIST_MOTION.duration - 40,
+          easing: LIST_MOTION.easing,
+          fill: "forwards",
+        },
+      )
+      .finished.then(commit, commit);
   }
 
   useEffect(() => {
@@ -266,6 +308,76 @@ export function CreatorShopEditor({
         ? !item.visible
         : true,
   );
+
+  // FLIP: after any order change (drag, keyboard, menu, add, remove, or a
+  // rollback) slide each row from where it was to where it is now. New rows
+  // fade in from slightly above. The row under the pointer is left alone.
+  const orderKey = rows.map((item) => item.productId).join(",");
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const previous = tops.current;
+    const next = new Map<string, number>();
+    for (const row of list?.querySelectorAll<HTMLElement>(
+      ":scope > [data-shop-row]",
+    ) ?? []) {
+      const id = row.dataset.shopRow!;
+      next.set(id, row.offsetTop);
+      if (!previous || row.dataset.dragging || !canAnimate(row)) continue;
+      const before = previous.get(id);
+      const timing = {
+        duration: LIST_MOTION.duration,
+        easing: LIST_MOTION.easing,
+      };
+      if (before === undefined)
+        row.animate(
+          [
+            { opacity: 0, transform: "translateY(-8px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          timing,
+        );
+      else if (before !== row.offsetTop)
+        row.animate(
+          [
+            { transform: `translateY(${before - row.offsetTop}px)` },
+            { transform: "none" },
+          ],
+          timing,
+        );
+    }
+    tops.current = list ? next : null;
+  }, [orderKey]);
+
+  // Once the moved row is in its new place: briefly highlight it, bring it
+  // into view, and keep focus with it.
+  useLayoutEffect(() => {
+    if (!settle) return;
+    if (rows[settle.index]?.productId !== settle.id) return;
+    setSettle(null);
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-shop-row="${CSS.escape(settle.id)}"]`,
+    );
+    if (!row) return;
+    row.removeAttribute("data-settled");
+    void row.offsetWidth; // restart the highlight if it is still running
+    row.setAttribute("data-settled", "");
+    row.addEventListener(
+      "animationend",
+      () => row.removeAttribute("data-settled"),
+      { once: true },
+    );
+    row.scrollIntoView?.({
+      block: "nearest",
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+    if (settle.focusMore)
+      row
+        .querySelector<HTMLElement>("[data-shop-more]")
+        ?.focus({ preventScroll: true });
+    // `orderKey` stands for `rows`, which is a new array every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settle, orderKey]);
+
   const preview = list
     .map(asPublic)
     .filter((item): item is PublicShopItem => item !== null)
@@ -401,7 +513,7 @@ export function CreatorShopEditor({
                 ))}
               </div>
             ) : null}
-            <ul className="shop-editor-list">
+            <ul className="shop-editor-list" ref={listRef}>
               {rows.map((item) => (
                 <ShopEditorRow
                   key={item.productId}
@@ -480,6 +592,7 @@ function ShopEditorRow({
     <li
       {...rowProps}
       className="shop-editor-row"
+      data-shop-row={item.productId}
       data-hidden={item.visible ? undefined : "true"}
     >
       {dragEnabled ? (

@@ -1787,6 +1787,8 @@
   color: var(--color-signal-700);
 }
 .shop-editor-list {
+  /* Rows measure their offsetTop against the list for FLIP and dragging. */
+  position: relative;
   display: grid;
   gap: var(--space-8);
   margin: 0;
@@ -1819,7 +1821,8 @@
 }
 .shop-editor-row[data-dragging="true"] {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  will-change: transform;
   border-color: var(--profile-accent);
   box-shadow: var(--shadow-md);
 }
@@ -2262,5 +2265,17 @@
   .creator-shop-callout {
     margin-top: 12px;
     padding: var(--space-16);
+  }
+}
+
+/* After a drop or menu move, the moved row flashes a soft signal tint. */
+.shop-editor-row[data-settled] {
+  animation: shop-row-settle 900ms ease-out;
+}
+@keyframes shop-row-settle {
+  from {
+    border-color: var(--profile-accent);
+    background: var(--color-signal-50);
+    box-shadow: 0 0 0 3px var(--color-signal-100);
   }
 }

@@ -710,3 +710,20 @@ describe("shop in the owner profile preview", () => {
     expect(screen.queryByText("shop body")).toBeNull();
   });
 });
+
+describe("reorder feedback", () => {
+  it("highlights the moved row and keeps focus on its ⋯ button", async () => {
+    const user = userEvent.setup();
+    editor();
+    await user.click(
+      screen.getByRole("button", { name: "More actions for C" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Move to top" }));
+    await waitFor(() => expect(rowTitles()).toEqual(["C", "A", "B"]));
+    const row = document.querySelector('[data-shop-row="c"]')!;
+    expect(row).toHaveAttribute("data-settled");
+    expect(
+      screen.getByRole("button", { name: "More actions for C" }),
+    ).toHaveFocus();
+  });
+});

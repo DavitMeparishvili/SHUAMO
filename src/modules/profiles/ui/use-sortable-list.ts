@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
+import { canAnimate, LIST_MOTION } from "./list-motion";
 
 /** Distance from the viewport edge, in px, that scrolls the page mid-drag. */
 const EDGE = 48;
@@ -41,7 +42,7 @@ type RefProps = { ref: (node: HTMLElement | null) => void };
 export function useSortableList<T>(
   items: T[],
   getId: (item: T) => string,
-  onReorder: (next: T[]) => void,
+  onReorder: (next: T[], movedId: string) => void,
   options: {
     disabled?: boolean;
     announcements?: SortableAnnouncements<T>;
@@ -57,6 +58,8 @@ export function useSortableList<T>(
   const frame = useRef<number | null>(null);
   const live = useRef<T[] | null>(null);
   const detachPointer = useRef<(() => void) | null>(null);
+  // Where the pointer and the dragged row were when the drag began.
+  const origin = useRef<{ pageY: number; offsetTop: number } | null>(null);
   const ordered = draft ?? items;
   live.current = draft;
 
@@ -73,6 +76,7 @@ export function useSortableList<T>(
       const viaPointer = detachPointer.current !== null;
       detachPointer.current?.();
       detachPointer.current = null;
+      if (viaPointer) settleDragged(id);
       setDraft(null);
       setDraggingId(null);
       setMode(null);
@@ -90,7 +94,7 @@ export function useSortableList<T>(
       // A plain click on the handle is not a drop worth announcing.
       if (item && announce && (changed || !viaPointer))
         setAnnouncement(announce.dropped(item, position));
-      if (changed) onReorder(next);
+      if (changed) onReorder(next, id);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, onReorder, announce],
@@ -105,10 +109,15 @@ export function useSortableList<T>(
     }
   }, [draft, draggingId, mode]);
 
-  // Window listeners call the latest render's callbacks.
-  const latest = useRef({ finish, followPointer });
+  // The dragged row keeps following the pointer after each reorder render.
   useLayoutEffect(() => {
-    latest.current = { finish, followPointer };
+    if (mode === "pointer" && draggingId) applyFollow(draggingId);
+  });
+
+  // Window listeners call the latest render's callbacks.
+  const latest = useRef({ finish, followPointer, applyFollow });
+  useLayoutEffect(() => {
+    latest.current = { finish, followPointer, applyFollow };
   });
 
   useEffect(
@@ -124,6 +133,7 @@ export function useSortableList<T>(
       if (event.pointerId !== pointerId) return;
       pointerY.current = event.clientY;
       latest.current.followPointer(id, event.clientY);
+      latest.current.applyFollow(id);
     };
     const up = (event: globalThis.PointerEvent) => {
       if (event.pointerId === pointerId) latest.current.finish(true, id);
@@ -175,14 +185,50 @@ export function useSortableList<T>(
   function followPointer(id: string, y: number) {
     const current = live.current;
     if (!current) return;
+    // Compare against layout positions, not on-screen rects, so rows that are
+    // mid-animation do not make the drop target jitter.
+    const parent = rows.current.get(id)?.offsetParent;
+    const top = parent ? parent.getBoundingClientRect().top : 0;
     let index = 0;
     for (const item of current) {
       const otherId = getId(item);
       if (otherId === id) continue;
-      const rect = rows.current.get(otherId)?.getBoundingClientRect();
-      if (rect && rect.top + rect.height / 2 < y) index += 1;
+      const row = rows.current.get(otherId);
+      if (!row) continue;
+      const middle = parent
+        ? top + row.offsetTop + row.offsetHeight / 2
+        : row.getBoundingClientRect().top +
+          row.getBoundingClientRect().height / 2;
+      if (middle < y) index += 1;
     }
     moveTo(id, index);
+  }
+
+  /** Keep the dragged row under the pointer, lifted above the others. */
+  function applyFollow(id: string) {
+    const row = rows.current.get(id);
+    const y = pointerY.current;
+    if (!row || y === null || !origin.current || !canAnimate(row)) return;
+    const shift =
+      y +
+      window.scrollY -
+      origin.current.pageY -
+      (row.offsetTop - origin.current.offsetTop);
+    row.style.transform = `translateY(${shift}px) scale(1.02)`;
+  }
+
+  /** On release, glide the dragged row from under the pointer into its slot. */
+  function settleDragged(id: string) {
+    origin.current = null;
+    const row = rows.current.get(id);
+    if (!row || !row.style.transform) return;
+    const from = row.style.transform;
+    row.style.transform = "";
+    if (canAnimate(row))
+      row.animate([{ transform: from }, { transform: "none" }], {
+        duration: LIST_MOTION.duration,
+        easing: LIST_MOTION.easing,
+      });
   }
 
   function autoScroll(id: string) {
@@ -196,6 +242,7 @@ export function useSortableList<T>(
     if (delta !== 0) {
       window.scrollBy(0, delta);
       followPointer(id, y);
+      applyFollow(id);
     }
     frame.current = requestAnimationFrame(() => autoScroll(id));
   }
@@ -216,6 +263,10 @@ export function useSortableList<T>(
         start(id, "pointer");
         attachPointer(id, event.pointerId);
         pointerY.current = event.clientY;
+        origin.current = {
+          pageY: event.clientY + window.scrollY,
+          offsetTop: rows.current.get(id)?.offsetTop ?? 0,
+        };
         frame.current = requestAnimationFrame(() => autoScroll(id));
       },
       // Losing capture is expected when the row moves; the window listeners
