@@ -20,7 +20,7 @@ describe("public creator shop", () => {
   });
 
   it("links each card to the tracked redirect", () => {
-    render(<CreatorShop items={items(2)} locale="en" />);
+    const { container } = render(<CreatorShop items={items(2)} locale="en" />);
     const first = screen.getAllByRole("link")[0]!;
     expect(first).toHaveAttribute("href", "/r/CODE1");
     expect(first).toHaveAttribute("rel", "sponsored noopener");
@@ -29,9 +29,8 @@ describe("public creator shop", () => {
     expect(
       screen.getByRole("heading", { name: /Shop my picks/ }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Contains affiliate links. I may earn a commission."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/affiliate links/i)).toBeNull();
+    expect(container.querySelector(".creator-shop-disclosure")).toBeNull();
   });
 
   it("shows no price", () => {

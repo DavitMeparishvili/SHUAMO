@@ -18,9 +18,6 @@ export function creatorShopCopy(locale: Locale) {
     opensShop: ka
       ? "{brand} – {title}, გაიხსნება მაღაზია"
       : "{brand} – {title}, opens shop",
-    disclosure: ka
-      ? "შეიცავს პარტნიორულ ბმულებს. შესაძლოა მივიღო საკომისიო."
-      : "Contains affiliate links. I may earn a commission.",
     tab: ka ? "მაღაზია" : "Shop",
     title: ka ? "ჩემი მაღაზია" : "My shop",
     summary: ka

@@ -118,7 +118,6 @@ export function CreatorShop({
           {fillShopCopy(copy.showMore, { count: remaining })}
         </button>
       ) : null}
-      <p className="creator-shop-disclosure">{copy.disclosure}</p>
     </section>
   );
 }
