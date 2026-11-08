@@ -28,6 +28,7 @@
 /.next-discovery/
 /.next-brands/
 /.next-preview/
+/.next-e2e/
 /out/
 
 # demo photos copied by `seed:creator-shop --full` when storage is down

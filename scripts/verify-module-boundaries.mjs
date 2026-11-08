@@ -39,6 +39,8 @@ const SKIPPED_DIRECTORY_NAMES = new Set([
   ".next-discovery",
   ".next-brands",
   ".next-layout",
+  ".next-preview",
+  ".next-e2e",
 ]);
 
 // Skipped only at these exact repository-relative paths. Matching on the bare

@@ -8,6 +8,8 @@ const config = [
       ".next-redesign/**",
       ".next-discovery/**",
       ".next-brands/**",
+      ".next-preview/**",
+      ".next-e2e/**",
       ".playwright-mcp/**",
       "out/**",
       "build/**",
