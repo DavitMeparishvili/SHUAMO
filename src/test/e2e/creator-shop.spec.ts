@@ -89,7 +89,9 @@ test("creator builds a shop and followers see it", async ({ page }) => {
     .getByRole("switch", { name: "Show on profile" })
     .click();
   await expectSaved(page);
-  await expect(page.getByText("14 shown on profile · 1 hidden")).toBeVisible();
+  await expect(
+    page.getByText("14 shown on profile · 1 hidden · 1 not shown"),
+  ).toBeVisible();
 
   // 3. Move the last shown item (02) to the top through its ⋯ menu.
   await page

@@ -215,6 +215,22 @@ describe("creator shop editor", () => {
     expect(screen.getByText("Offer ended · not shown")).toBeInTheDocument();
   });
 
+  it("Shown filter and summary count only what is on the profile", async () => {
+    const user = userEvent.setup();
+    editor({
+      items: [
+        item("a"),
+        item("b", { visible: false }),
+        item("c", { availability: "ended" }),
+      ],
+    });
+    expect(
+      screen.getByText("1 shown on profile · 1 hidden · 1 not shown"),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "Shown" }));
+    expect(rowTitles()).toEqual(["A"]);
+  });
+
   it("Hidden filter shows only hidden items", async () => {
     const user = userEvent.setup();
     editor({

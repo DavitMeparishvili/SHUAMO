@@ -251,13 +251,17 @@ export function CreatorShopEditor({
 
   const inShop = new Set(list.map((item) => item.productId));
   const pickable = candidates.filter((entry) => !inShop.has(entry.productId));
-  const shownCount = list.filter((item) =>
-    isPubliclyShown(item.visible, item.availability),
-  ).length;
+  // Three disjoint groups, so the summary and the filters always agree:
+  // shown on the profile, hidden by the creator, and switched on but not
+  // currently shown (ended, not started, no photo, link unavailable).
+  const isShown = (item: CreatorShopEditorItem) =>
+    isPubliclyShown(item.visible, item.availability);
+  const shownCount = list.filter(isShown).length;
   const hiddenCount = list.filter((item) => !item.visible).length;
+  const unavailableCount = list.length - shownCount - hiddenCount;
   const rows = sortable.items.filter((item) =>
     effectiveFilter === "shown"
-      ? item.visible
+      ? isShown(item)
       : effectiveFilter === "hidden"
         ? !item.visible
         : true,
@@ -296,8 +300,39 @@ export function CreatorShopEditor({
                 shown: shownCount,
                 hidden: hiddenCount,
               })}
+              {unavailableCount
+                ? ` · ${fillShopCopy(copy.unavailableCount, {
+                    count: unavailableCount,
+                  })}`
+                : null}
             </p>
           ) : null}
+          <div
+            className="shop-editor-status"
+            data-state={status === "idle" ? undefined : status}
+          >
+            <p role="status" aria-live="polite">
+              {status === "saving" ? (
+                copy.saving
+              ) : status === "saved" ? (
+                <>
+                  <span aria-hidden="true">{"✓ "}</span>
+                  <span>{copy.saved}</span>
+                </>
+              ) : status === "failed" ? (
+                <span>{copy.failed}</span>
+              ) : null}
+            </p>
+            {status === "failed" && retry ? (
+              <button
+                type="button"
+                className="shop-text-button"
+                onClick={retry}
+              >
+                {copy.retry}
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="shop-editor-actions">
           {profileUrl ? (
@@ -321,25 +356,6 @@ export function CreatorShopEditor({
           </div>
         </div>
       ) : null}
-      <div className="shop-editor-status">
-        <p role="status" aria-live="polite">
-          {status === "saving" ? (
-            copy.saving
-          ) : status === "saved" ? (
-            <>
-              <span aria-hidden="true">{"✓ "}</span>
-              <span>{copy.saved}</span>
-            </>
-          ) : status === "failed" ? (
-            <span>{copy.failed}</span>
-          ) : null}
-        </p>
-        {status === "failed" && retry ? (
-          <button type="button" className="shop-text-button" onClick={retry}>
-            {copy.retry}
-          </button>
-        ) : null}
-      </div>
       {list.length === 0 ? (
         <EmptyState
           title={copy.emptyTitle}
@@ -473,7 +489,19 @@ function ShopEditorRow({
           aria-label={fillShopCopy(copy.reorder, { title: item.title })}
           {...handleProps}
         >
-          <span aria-hidden="true">{"⋮⋮"}</span>
+          <svg
+            aria-hidden="true"
+            width="12"
+            height="18"
+            viewBox="0 0 12 18"
+            fill="currentColor"
+          >
+            {[3, 9, 15].flatMap((cy) =>
+              [3, 9].map((cx) => (
+                <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.6" />
+              )),
+            )}
+          </svg>
         </button>
       ) : null}
       <span className="shop-thumb">

@@ -1729,13 +1729,17 @@
 .shop-editor-banner {
   margin: 0;
 }
+/* Takes no space until there is something to say. */
 .shop-editor-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-8);
-  min-height: 20px;
+  gap: 0 var(--space-8);
   font-size: 12px;
   color: var(--color-slate-600);
+}
+.shop-editor-status[data-state] {
+  margin-top: var(--space-4);
 }
 .shop-editor-status p {
   margin: 0;
@@ -1838,7 +1842,9 @@
 .shop-editor-handle {
   cursor: grab;
   touch-action: none;
-  letter-spacing: -0.3em;
+}
+.shop-editor-handle svg {
+  display: block;
 }
 .shop-editor-row[data-dragging="true"] .shop-editor-handle {
   cursor: grabbing;
@@ -2116,9 +2122,30 @@
   .shop-editor-actions > * {
     flex: 1 1 auto;
   }
+  /* 360px: give the name the room; controls keep 44px tap targets. */
   .shop-editor-row {
-    gap: var(--space-4);
-    padding: var(--space-4) var(--space-4) var(--space-4) 0;
+    gap: 2px;
+    padding: var(--space-4) 0;
+  }
+  .shop-thumb {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    margin-right: var(--space-4);
+  }
+  .shop-editor-name {
+    font-size: 13px;
+  }
+  .shop-switch > span {
+    width: 32px;
+    height: 18px;
+  }
+  .shop-switch > span::after {
+    width: 14px;
+    height: 14px;
+  }
+  .shop-switch[aria-checked="true"] > span::after {
+    transform: translateX(14px);
   }
   .shop-sheet {
     inset: auto 0 0;
@@ -2162,12 +2189,23 @@
   background: var(--color-paper);
   color: var(--color-signal);
   font: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  /* Same type as the card's "View performance" action beside it. */
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition:
     background 150ms ease,
     border-color 150ms ease;
+}
+@media (min-width: 640px) {
+  .shop-toggle-button {
+    font-size: 14px;
+  }
+}
+@media (max-width: 639px) {
+  .shop-toggle-button {
+    font-size: 11px;
+  }
 }
 .shop-toggle-button:hover {
   background: var(--color-signal-50);
