@@ -1802,9 +1802,16 @@
     box-shadow 150ms ease,
     border-color 150ms ease;
 }
-.shop-editor-row[data-hidden="true"] .shop-thumb,
-.shop-editor-row[data-hidden="true"] .shop-editor-text {
-  opacity: 0.55;
+/* Hidden rows are dimmed without dropping text below AA contrast. */
+.shop-editor-row[data-hidden="true"] {
+  background: var(--color-slate-50);
+}
+.shop-editor-row[data-hidden="true"] .shop-thumb {
+  opacity: 0.5;
+}
+.shop-editor-row[data-hidden="true"] .shop-editor-name {
+  color: var(--color-slate-600);
+  font-weight: 500;
 }
 .shop-editor-row[data-dragging="true"] {
   position: relative;
