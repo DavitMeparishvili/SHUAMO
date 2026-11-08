@@ -2124,3 +2124,54 @@
     transition: none;
   }
 }
+
+/* "Add to shop" on creator link cards. */
+.tracking-shop-action {
+  margin-top: var(--space-8);
+}
+.shop-toggle {
+  display: grid;
+  gap: var(--space-4);
+}
+.shop-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-signal-200);
+  border-radius: 6px;
+  background: var(--color-paper);
+  color: var(--color-signal);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+.shop-toggle-button:hover {
+  background: var(--color-signal-50);
+}
+.shop-toggle-button.is-in-shop {
+  border-color: var(--color-settled);
+  background: var(--color-settled-soft);
+  color: var(--color-settled);
+}
+.shop-toggle-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-reversed);
+  font-size: 12px;
+  font-weight: 650;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shop-toggle-button {
+    transition: none;
+  }
+}

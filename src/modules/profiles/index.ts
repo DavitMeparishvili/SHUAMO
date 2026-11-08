@@ -13,6 +13,7 @@ export * from "./ui/creator-profile";
 export * from "./ui/creator-shop";
 export * from "./ui/creator-shop-copy";
 export * from "./ui/creator-shop-editor";
+export * from "./ui/shop-toggle-button";
 export * from "./ui/profile-directory";
 export * from "./ui/profile-editor";
 export * from "./ui/profile-action";

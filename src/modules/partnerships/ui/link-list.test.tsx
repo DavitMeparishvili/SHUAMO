@@ -187,3 +187,76 @@ describe("BrandLinkList", () => {
     expect(html).toContain(copy.emptyBody);
   });
 });
+
+describe("LinkList trailing slot", () => {
+  const listCopy = {
+    emptyTitle: "No links",
+    emptyBody: "Choose a product",
+    active: "Active",
+    link: "Tracking link",
+    rate: "Commission",
+    status: "Link status",
+    viewProduct: "View product",
+    imageFallback: "No product image",
+    acceptedTerms: "Accepted terms version {version}",
+    copy: "Copy",
+    copied: "Copied",
+    copyError: "Copy failed",
+    productTypes,
+    reasons: copy.reasons,
+    last30Days: copy.last30Days,
+    clicks: copy.clicks,
+    converted: copy.converted,
+    orders: copy.orders,
+    confirmed: copy.confirmed,
+    noActivity: copy.noActivity,
+    viewPerformance: copy.viewPerformance,
+  };
+  const link = (id: string, status: "ACTIVE" | "DISABLED") => ({
+    id,
+    code: `CODE${id}`,
+    commissionType: "FIXED" as const,
+    commissionValue: { toString: () => "5" },
+    status,
+    product: {
+      id: `product-${id}`,
+      title: `Product ${id}`,
+      sku: `SKU-${id}`,
+      productType: "OTHER" as const,
+      imageUrls: [],
+      status: "ACTIVE" as const,
+      brand: { id: "b1", name: "Aroma", status: "APPROVED" as const },
+    },
+    creator: {
+      partnerships: [{ brandId: "b1", status: "APPROVED" as const }],
+    },
+  });
+
+  it.each(["default", "discovery"] as const)(
+    "passes each link's product and resolution to the slot (%s)",
+    (variant) => {
+      const seen: { productId: string; active: boolean }[] = [];
+      const html = renderToStaticMarkup(
+        <LinkList
+          variant={variant}
+          baseUrl="https://shuamo.test"
+          locale="en"
+          copy={listCopy}
+          links={[link("1", "ACTIVE"), link("2", "DISABLED")]}
+          trailing={(entry) => {
+            seen.push(entry);
+            return entry.active ? (
+              <button>Shop {entry.productId}</button>
+            ) : null;
+          }}
+        />,
+      );
+      expect(seen).toEqual([
+        { productId: "product-1", active: true },
+        { productId: "product-2", active: false },
+      ]);
+      expect(html).toContain("Shop product-1");
+      expect(html).not.toContain("Shop product-2");
+    },
+  );
+});

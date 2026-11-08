@@ -18,6 +18,11 @@ import {
   getCreatorLinkFacets,
   listCreatorLinkCatalog,
 } from "@/src/modules/partnerships";
+import { listShopProductIds, ShopToggleButton } from "@/src/modules/profiles";
+import {
+  addShopItemsAction,
+  removeShopItemAction,
+} from "../profile/shop-actions";
 
 type Query = {
   q?: string;
@@ -75,7 +80,7 @@ export default async function CreatorLinksPage({
     ? (query.sort as "newest" | "title" | "brand" | "commission_high")
     : "newest";
   const search = query.q?.trim();
-  const [catalog, brands, counts] = await Promise.all([
+  const [catalog, brands, counts, shopProductIds] = await Promise.all([
     listCreatorLinkCatalog(allowed.value.creatorId, {
       ...(search ? { q: search } : {}),
       ...(productType ? { productType } : {}),
@@ -89,7 +94,11 @@ export default async function CreatorLinksPage({
     }),
     listCreatorLinkBrands(allowed.value.creatorId),
     getCreatorLinkFacets(allowed.value.creatorId, search),
+    listShopProductIds(allowed.value.creatorId),
   ]);
+  const inShop = new Set(shopProductIds);
+  const addToShop = addShopItemsAction.bind(null, locale);
+  const removeFromShop = removeShopItemAction.bind(null, locale);
   const performance = await creatorLinkPerformanceSnapshots(
     allowed.value.creatorId,
     catalog.items.map((link) => link.id),
@@ -179,6 +188,17 @@ export default async function CreatorLinksPage({
         links={catalog.items}
         performance={performance}
         baseUrl={serverEnv().APP_URL}
+        trailing={({ productId, active }) =>
+          active ? (
+            <ShopToggleButton
+              productId={productId}
+              inShop={inShop.has(productId)}
+              locale={locale}
+              add={addToShop}
+              remove={removeFromShop}
+            />
+          ) : null
+        }
         copy={{
           emptyTitle: t(
             messages,

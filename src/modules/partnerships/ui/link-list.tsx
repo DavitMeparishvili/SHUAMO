@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { ProductTypeValue } from "@/src/modules/catalog";
 import type { LinkPerformanceRow } from "@/src/modules/conversions";
 import {
@@ -23,8 +24,11 @@ export function LinkList({
   copy,
   brandControls,
   variant = "default",
+  trailing,
 }: {
   variant?: "default" | "discovery";
+  /** Extra per-link control (e.g. "Add to shop") in the card actions area. */
+  trailing?: (link: { productId: string; active: boolean }) => ReactNode;
   locale: string;
   brandControls?: {
     creator: string;
@@ -110,6 +114,10 @@ export function LinkList({
           partnershipStatus: partnership?.status,
           productStatus: link.product.status,
           linkStatus: link.status,
+        });
+        const extra = trailing?.({
+          productId: link.product.id,
+          active: resolution.active,
         });
         const rate =
           link.commissionType === "PERCENT"
@@ -231,6 +239,9 @@ export function LinkList({
                 >
                   {copy.viewPerformance}
                 </Link>
+                {extra ? (
+                  <div className="tracking-shop-action">{extra}</div>
+                ) : null}
               </div>
               {brandControls ? (
                 <form
@@ -409,6 +420,9 @@ export function LinkList({
               >
                 {copy.viewPerformance}
               </Link>
+              {extra ? (
+                <div className="tracking-shop-action">{extra}</div>
+              ) : null}
             </div>
             {brandControls ? (
               <form
