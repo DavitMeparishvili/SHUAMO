@@ -209,11 +209,20 @@ export function useSortableList<T>(
     const row = rows.current.get(id);
     const y = pointerY.current;
     if (!row || y === null || !origin.current || !canAnimate(row)) return;
-    const shift =
+    const wanted =
       y +
       window.scrollY -
       origin.current.pageY -
       (row.offsetTop - origin.current.offsetTop);
+    // Keep the row inside the list so it never floats over the controls
+    // above it (e.g. the phone filter chips) or past the end.
+    const list = row.offsetParent as HTMLElement | null;
+    const shift = list
+      ? Math.min(
+          Math.max(wanted, -row.offsetTop),
+          list.clientHeight - row.offsetHeight - row.offsetTop,
+        )
+      : wanted;
     row.style.transform = `translateY(${shift}px) scale(1.02)`;
   }
 

@@ -172,11 +172,29 @@ export function ProfileEditor({
     profile?.status === "PUBLISHED" && !startTab ? "view" : "edit",
   );
   const [tab, setTab] = useState(startTab ?? "details");
+  const shopPanel = useRef<HTMLDivElement>(null);
   const openShop = () => {
     setMode("edit");
     setTab("shop");
     window.scrollTo({ top: 0 });
+    // Land keyboard and screen reader users on the Shop panel, not <body>.
+    requestAnimationFrame(() => {
+      const panel = shopPanel.current;
+      (panel?.querySelector<HTMLElement>("h2[tabindex]") ?? panel)?.focus();
+    });
   };
+  // Keep ?tab=shop in the URL exactly while the Shop tab is open, so a reload
+  // returns there. replaceState is not a navigation, so the leave guard and
+  // the draft form are unaffected.
+  useEffect(() => {
+    if (!hasShopTab) return;
+    const url = new URL(window.location.href);
+    const onShop = mode === "edit" && tab === "shop";
+    if (onShop === (url.searchParams.get("tab") === "shop")) return;
+    if (onShop) url.searchParams.set("tab", "shop");
+    else url.searchParams.delete("tab");
+    window.history.replaceState(window.history.state, "", url);
+  }, [hasShopTab, mode, tab]);
   const [dirty, setDirty] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
   const [uploads, setUploads] = useState<Set<string>>(() => new Set());
@@ -623,7 +641,12 @@ export function ProfileEditor({
           ))}
         </nav>
         {shop && role === "creator" ? (
-          <div className="profile-shop-panel" hidden={tab !== "shop"}>
+          <div
+            className="profile-shop-panel"
+            hidden={tab !== "shop"}
+            ref={shopPanel}
+            tabIndex={-1}
+          >
             {shop}
           </div>
         ) : null}

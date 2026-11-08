@@ -341,6 +341,8 @@ export function CreatorShopEditor({
       `[data-shop-row="${CSS.escape(settle.id)}"]`,
     );
     if (!row) return;
+    // Read the FLIP slides before the highlight adds a CSS animation.
+    const sliding = row.getAnimations?.() ?? [];
     row.removeAttribute("data-settled");
     void row.offsetWidth; // restart the highlight if it is still running
     row.setAttribute("data-settled", "");
@@ -349,10 +351,18 @@ export function CreatorShopEditor({
       () => row.removeAttribute("data-settled"),
       { once: true },
     );
-    row.scrollIntoView?.({
-      block: "nearest",
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-    });
+    // The FLIP transform still paints the row at its old place, so scroll
+    // only once its slide has finished; that is where it really is.
+    void Promise.allSettled(
+      sliding.map((animation) => animation.finished),
+    ).then(
+      () =>
+        row.isConnected &&
+        row.scrollIntoView?.({
+          block: "nearest",
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+        }),
+    );
     if (settle.focusMore)
       row
         .querySelector<HTMLElement>("[data-shop-more]")
@@ -384,7 +394,9 @@ export function CreatorShopEditor({
     >
       <header className="shop-editor-header">
         <div>
-          <h2 id="shop-editor-title">{copy.title}</h2>
+          <h2 id="shop-editor-title" tabIndex={-1}>
+            {copy.title}
+          </h2>
           {list.length ? (
             <p className="shop-editor-summary">
               {fillShopCopy(copy.summary, {

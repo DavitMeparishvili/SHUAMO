@@ -728,3 +728,87 @@ describe("reorder feedback", () => {
     ).toHaveFocus();
   });
 });
+
+describe("shop tab focus and URL", () => {
+  const messages = getMessages("en");
+  const editorCopy = Object.fromEntries(
+    PROFILE_EDITOR_COPY_KEYS.map((key) => [
+      key,
+      t(messages, "profile.editor." + key),
+    ]),
+  ) as ProfileEditorCopy;
+
+  function owner(initialTab?: string) {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    render(
+      <ProfileEditor
+        role="creator"
+        locale="en"
+        name="Owner"
+        profile={{ status: "PUBLISHED", slug: "owner" }}
+        saveAction={vi.fn()}
+        publishAction={vi.fn()}
+        unpublishAction={vi.fn()}
+        copy={editorCopy}
+        creatorCopy={{
+          preview: "Preview",
+          approved: "Approved",
+          ledger: "Ledger",
+          supplied: "Supplied",
+          disclosure: "Disclosure",
+          work: "Work",
+          leave: "Leaves",
+          fallback: "From {locale}",
+          source: "Source",
+          languages: "Languages",
+          contentFormats: "Formats",
+          heroAlt: "Photo {name}",
+          workAlt: "Work {title}",
+          socialLabels: {},
+        }}
+        shopPreview={[]}
+        {...(initialTab ? { initialTab } : {})}
+        shop={
+          <CreatorShopEditor
+            locale="en"
+            items={[item("a")]}
+            candidates={[]}
+            profileUrl={null}
+            published
+            hasAnyLinks
+            actions={actions()}
+          />
+        }
+      />,
+    );
+  }
+
+  beforeEach(() =>
+    window.history.replaceState(null, "", "/en/creator/profile"),
+  );
+
+  it("moves focus into the Shop tab and puts it in the URL", async () => {
+    const user = userEvent.setup();
+    owner();
+    expect(window.location.search).toBe("");
+    await user.click(
+      screen.getByRole("button", { name: "Add products to your shop" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 2, name: "My shop" }),
+      ).toHaveFocus(),
+    );
+    expect(window.location.search).toBe("?tab=shop");
+  });
+
+  it("drops ?tab=shop when another tab is chosen", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/creator/profile?tab=shop&x=1");
+    owner("shop");
+    await user.click(screen.getByRole("button", { name: "About" }));
+    expect(window.location.search).toBe("?x=1");
+    await user.click(screen.getByRole("button", { name: "Shop" }));
+    expect(window.location.search).toBe("?x=1&tab=shop");
+  });
+});

@@ -333,9 +333,14 @@ test("profile preview surfaces the shop and deep-links to it", async ({
     page.getByRole("heading", { name: /Shop my picks/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Manage shop" }).click();
-  await expect(
-    page.getByRole("heading", { level: 2, name: "My shop" }),
-  ).toBeVisible();
+  const shopHeading = page.getByRole("heading", { level: 2, name: "My shop" });
+  await expect(shopHeading).toBeVisible();
+  await expect(shopHeading).toBeFocused();
+  await expect(page).toHaveURL(/\/en\/creator\/profile\?tab=shop$/);
+  await page.reload();
+  await expect(shopHeading).toBeVisible();
+  await page.getByRole("button", { name: "About", exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/creator\/profile$/);
 
   await page.goto("/en/creator/profile?tab=shop");
   await expect(
@@ -361,4 +366,28 @@ test("profile preview surfaces the shop and deep-links to it", async ({
   await page.goto(PUBLIC);
   await expect(page.getByText("Add products to your shop")).toHaveCount(0);
   await expect(page.getByText("Manage shop")).toHaveCount(0);
+});
+
+test("menu moves keep the moved row in view", async ({ page }) => {
+  seed(true);
+  await signIn(page);
+  await openShopTab(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page
+    .getByRole("button", { name: "More actions for Shop demo item 01" })
+    .click();
+  await page.getByRole("button", { name: "Move to bottom" }).click();
+  const moved = rows(page).filter({ hasText: "Shop demo item 01" });
+  await expect(moved).toBeInViewport();
+  await expect(
+    page.getByRole("button", { name: "More actions for Shop demo item 01" }),
+  ).toBeFocused();
+  await expectSaved(page);
+
+  await page
+    .getByRole("button", { name: "More actions for Shop demo item 01" })
+    .click();
+  await page.getByRole("button", { name: "Move to top" }).click();
+  await expect(rows(page).first()).toBeInViewport();
+  expect((await rowNames(page))[0]).toBe("Shop demo item 01");
 });
