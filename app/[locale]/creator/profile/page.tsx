@@ -1,13 +1,24 @@
 import { notFound, redirect } from "next/navigation";
 import { currentViewer, requireCreator } from "@/src/modules/identity";
 import { getMessages, isLocale, t } from "@/src/modules/localization";
-import { prismaProfileRepository } from "@/src/modules/profiles";
+import {
+  CreatorShopEditor,
+  listCreatorShopForOwner,
+  listShopCandidates,
+  prismaProfileRepository,
+} from "@/src/modules/profiles";
 import { ProfileEditor } from "@/src/modules/profiles";
 import {
   publishCreatorProfileAction,
   saveCreatorProfileAction,
   unpublishCreatorProfileAction,
 } from "./actions";
+import {
+  addShopItemsAction,
+  removeShopItemAction,
+  reorderShopItemsAction,
+  setShopItemVisibleAction,
+} from "./shop-actions";
 export default async function CreatorProfileEditorPage({
   params,
 }: {
@@ -17,10 +28,14 @@ export default async function CreatorProfileEditorPage({
   if (!isLocale(locale)) notFound();
   const allowed = requireCreator(await currentViewer());
   if (!allowed.ok) redirect(`/${locale}/sign-in`);
-  const profile = await prismaProfileRepository.getCreatorForOwner(
-    allowed.value.creatorId,
-  );
+  const creatorId = allowed.value.creatorId;
+  const [profile, shopItems, candidates] = await Promise.all([
+    prismaProfileRepository.getCreatorForOwner(creatorId),
+    listCreatorShopForOwner(creatorId),
+    listShopCandidates(creatorId),
+  ]);
   const messages = getMessages(locale);
+  const published = profile?.status === "PUBLISHED";
   return (
     <div className="profile-route">
       <ProfileEditor
@@ -33,6 +48,26 @@ export default async function CreatorProfileEditorPage({
         publishAction={publishCreatorProfileAction.bind(null, locale)}
         unpublishAction={unpublishCreatorProfileAction.bind(null, locale)}
         copy={editorCopy(messages)}
+        shop={
+          <CreatorShopEditor
+            locale={locale}
+            items={shopItems}
+            candidates={candidates}
+            profileUrl={
+              published && profile?.slug
+                ? `/${locale}/creators/${profile.slug}`
+                : null
+            }
+            published={published}
+            hasAnyLinks={candidates.length > 0 || shopItems.length > 0}
+            actions={{
+              add: addShopItemsAction.bind(null, locale),
+              remove: removeShopItemAction.bind(null, locale),
+              setVisible: setShopItemVisibleAction.bind(null, locale),
+              reorder: reorderShopItemsAction.bind(null, locale),
+            }}
+          />
+        }
       />
     </div>
   );

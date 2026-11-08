@@ -1,5 +1,11 @@
 "use client";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Icon } from "@/src/modules/design-system";
 import type { Locale } from "@/src/modules/localization";
 import { BrandProfile, type BrandProfileView } from "./brand-profile";
@@ -29,6 +35,7 @@ import Link from "next/link";
 import { profileSetupCopy } from "./profile-setup-copy";
 import { ProfileLeaveGuard } from "./profile-leave-guard";
 import { profileCompletionIssues } from "../application/profile-completion";
+import { creatorShopCopy } from "./creator-shop-copy";
 
 type ProfileEditorRecord = {
   hasUnpublishedChanges?: boolean;
@@ -119,6 +126,7 @@ export function ProfileEditor({
   name = "",
   brandCopy,
   creatorCopy,
+  shop,
 }: {
   role: "brand" | "creator";
   profile: ProfileEditorRecord | null | undefined;
@@ -136,6 +144,11 @@ export function ProfileEditor({
   name?: string;
   brandCopy?: Parameters<typeof BrandProfile>[0]["copy"];
   creatorCopy?: Parameters<typeof CreatorProfile>[0]["copy"];
+  /**
+   * The creator Shop tab. It saves through its own actions, so it renders
+   * outside the draft form and never marks the profile dirty.
+   */
+  shop?: ReactNode;
 }) {
   const ui = profileDesignCopy(locale);
   const setup = profileSetupCopy(locale, role);
@@ -547,6 +560,9 @@ export function ProfileEditor({
             ["media", ui.media],
             ["work", role === "brand" ? ui.products : ui.work],
             ["links", ui.links],
+            ...(shop && role === "creator"
+              ? [["shop", creatorShopCopy(locale).tab]]
+              : []),
           ].map(([id, label]) => (
             <button
               key={id}
@@ -558,9 +574,15 @@ export function ProfileEditor({
             </button>
           ))}
         </nav>
+        {shop && role === "creator" ? (
+          <div className="profile-shop-panel" hidden={tab !== "shop"}>
+            {shop}
+          </div>
+        ) : null}
         <form
           key={revision}
           ref={formRef}
+          hidden={tab === "shop"}
           action={saveFormAction}
           className="profile-edit-form"
           noValidate
@@ -841,7 +863,10 @@ export function ProfileEditor({
           </footer>
         </form>
         {isPublic ? (
-          <details className="profile-editor-section profile-account-section">
+          <details
+            className="profile-editor-section profile-account-section"
+            hidden={tab === "shop"}
+          >
             <summary>
               <Icon name="eye" />
               <span>
