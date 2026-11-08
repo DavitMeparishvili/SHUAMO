@@ -16,12 +16,10 @@ import { hashPassword } from "better-auth/crypto";
 // seed never reaches the internet. Running without --full restores the plain
 // fixture the e2e spec expects.
 //   pnpm seed:creator-shop -- --full
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]", "postgres-dev"];
 const host = new URL(process.env.DATABASE_URL || "postgresql://invalid")
   .hostname;
-if (
-  process.env.NODE_ENV === "production" ||
-  !["localhost", "127.0.0.1", "[::1]", "postgres-dev"].includes(host)
-)
+if (process.env.NODE_ENV === "production" || !LOCAL_HOSTS.includes(host))
   throw new Error("Creator shop seed requires a local development database.");
 Object.assign(process.env, { NODE_ENV: "development" });
 const { prisma } = await import("@/src/infrastructure/db/client");
@@ -46,7 +44,7 @@ const LONG_GEORGIAN =
 const FULL_PRODUCTS = [
   ["Everyday commuter backpack", "89", "product-01-backpack.jpg"],
   ["Wireless over-ear headphones", "249", "product-02-headphones.jpg"],
-  ["Hydrating body lotion", "38", "product-03-serum.jpg"],
+  ["Hydrating body lotion", "38", "product-03-lotion.jpg"],
   ["Lightweight running sneakers", "189", "product-04-sneaker.jpg"],
   ["ყავის მარცვლები, ეთიოპია 250 გ", "32", "product-05-coffee-beans.jpg"],
   ["Smart watch, midnight strap", "399", "product-06-smartwatch.jpg"],
@@ -61,44 +59,67 @@ const FULL_PRODUCTS = [
   ["Stoneware coffee mug", "19", "product-15-mug.jpg"],
 ] as const;
 const FULL_ENDED = ["Summer mesh cap", "35", "product-16-cap.jpg"] as const;
+// Obviously fake handles: demo links must never point at real accounts.
+const DEMO_HANDLE = "xurjin.demo.nini";
 const FULL_WORK = [
   [
     "work-01-street-style.jpg",
     "Bright street style for spring",
     "ფერადი ქუჩის სტილი გაზაფხულისთვის",
-    "https://www.instagram.com/p/C1shopdemo1/",
+    `https://www.instagram.com/${DEMO_HANDLE}/p/demo1/`,
   ],
   [
     "work-02-capsule-wardrobe.jpg",
     "A ten-piece capsule wardrobe",
     "ათნივთიანი კაფსულური გარდერობი",
-    "https://www.youtube.com/watch?v=shopdemo002",
+    `https://www.youtube.com/@${DEMO_HANDLE}/demo2`,
   ],
   [
     "work-03-living-room.jpg",
     "Small living room makeover",
     "პატარა მისაღების განახლება",
-    "https://www.tiktok.com/@nini.finds/video/7300000000000000003",
+    `https://www.tiktok.com/@${DEMO_HANDLE}/video/demo3`,
   ],
   [
     "work-04-supper.jpg",
     "Sunday supper with friends",
     "კვირის ვახშამი მეგობრებთან",
-    "https://www.instagram.com/p/C1shopdemo4/",
+    `https://www.instagram.com/${DEMO_HANDLE}/p/demo4/`,
   ],
   [
     "work-05-concept-store.jpg",
     "Inside a Tbilisi concept store",
     "თბილისის კონცეპტ-მაღაზიაში",
-    "https://www.youtube.com/watch?v=shopdemo005",
+    `https://www.youtube.com/@${DEMO_HANDLE}/demo5`,
   ],
   [
     "work-06-travel-kit.jpg",
     "What I pack for a road trip",
     "რას ვიღებ საგზაოდ",
-    "https://www.tiktok.com/@nini.finds/video/7300000000000000006",
+    `https://www.tiktok.com/@${DEMO_HANDLE}/video/demo6`,
   ],
 ] as const;
+
+/** Errors meaning local storage is down or not ours; anything else is a bug. */
+const STORAGE_UNAVAILABLE = [
+  "ECONNREFUSED",
+  "InvalidAccessKeyId",
+  "NoSuchBucket",
+  "AccessDenied",
+];
+function storageUnavailable(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { name, code, errors } = error as {
+    name?: unknown;
+    code?: unknown;
+    errors?: unknown;
+  };
+  return (
+    STORAGE_UNAVAILABLE.includes(String(name)) ||
+    STORAGE_UNAVAILABLE.includes(String(code)) ||
+    (Array.isArray(errors) && errors.some(storageUnavailable))
+  );
+}
 
 /**
  * Upload the checked-in --full photos and return their public URLs by file.
@@ -108,15 +129,21 @@ const FULL_WORK = [
  * still renders; the profile editor will then refuse to re-save those URLs.
  */
 async function fullMedia() {
+  const storageHost = new URL(process.env.STORAGE_ENDPOINT || "http://invalid")
+    .hostname;
+  if (!LOCAL_HOSTS.includes(storageHost))
+    throw new Error("Creator shop seed requires local development storage.");
   try {
     return await uploadFullMedia();
   } catch (error) {
-    const { cp } = await import("node:fs/promises");
-    await cp(
-      "scripts/fixtures/creator-shop",
-      "public/images/demo/creator-shop",
-      { recursive: true },
-    );
+    if (!storageUnavailable(error)) throw error;
+    const { copyFile, mkdir, readdir } = await import("node:fs/promises");
+    const from = "scripts/fixtures/creator-shop";
+    const to = "public/images/demo/creator-shop";
+    await mkdir(to, { recursive: true });
+    for (const file of await readdir(from))
+      if (file.endsWith(".jpg"))
+        await copyFile(`${from}/${file}`, `${to}/${file}`);
     process.stderr.write(
       `Storage upload failed (${error instanceof Error ? error.name : "error"}); serving --full photos from public/images/demo/creator-shop.
 `,
@@ -269,12 +296,18 @@ try {
         socialLinks: [
           {
             platform: "instagram",
-            url: "https://www.instagram.com/nini.finds/",
+            url: `https://www.instagram.com/${DEMO_HANDLE}/`,
           },
-          { platform: "tiktok", url: "https://www.tiktok.com/@nini.finds" },
-          { platform: "youtube", url: "https://www.youtube.com/@ninifinds" },
-          { platform: "facebook", url: "https://www.facebook.com/ninifinds" },
-          { platform: "website", url: "https://ninifinds.ge/" },
+          { platform: "tiktok", url: `https://www.tiktok.com/@${DEMO_HANDLE}` },
+          {
+            platform: "youtube",
+            url: `https://www.youtube.com/@${DEMO_HANDLE}`,
+          },
+          {
+            platform: "facebook",
+            url: `https://www.facebook.com/${DEMO_HANDLE}`,
+          },
+          { platform: "website", url: "https://xurjin-demo-nini.example/" },
         ],
         featuredWork: FULL_WORK.map(([file, en, ka, url]) => ({
           title: { en, ka },
@@ -295,7 +328,10 @@ try {
         languages: ["Georgian", "English"],
         contentFormats: ["Reels"],
         socialLinks: [
-          { platform: "instagram", url: "https://instagram.com/shopdemo" },
+          {
+            platform: "instagram",
+            url: "https://instagram.com/xurjin.demo.shop",
+          },
         ],
         featuredWork: [],
       };
