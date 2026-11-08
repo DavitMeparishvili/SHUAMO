@@ -115,17 +115,21 @@ test("creator builds a shop and followers see it", async ({ page }) => {
     rows(page).filter({ hasText: "Shop demo item 01" }).getByRole("switch"),
   ).toHaveAttribute("aria-checked", "false");
 
-  // 5. Followers see the shop first, in order, without hidden or ended items.
+  // 5. Followers see the shop right after the header, in order, without
+  //    hidden or ended items; the disclosure still closes the page.
   await page.goto(PUBLIC);
   const shopHeading = page.getByRole("heading", { name: /Shop my picks/ });
   await expect(shopHeading).toBeVisible();
   const order = await page.evaluate(() => {
+    const intro = document.querySelector(".creator-intro");
     const heading = document.getElementById("creator-shop-heading");
-    const about = document.querySelector(".creator-about");
+    const disclosure = document.querySelector(".profile-disclosure");
     return Boolean(
+      intro?.nextElementSibling?.classList.contains("creator-shop") &&
       heading &&
-      about &&
-      heading.compareDocumentPosition(about) & Node.DOCUMENT_POSITION_FOLLOWING,
+      disclosure &&
+      heading.compareDocumentPosition(disclosure) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
   expect(order).toBe(true);

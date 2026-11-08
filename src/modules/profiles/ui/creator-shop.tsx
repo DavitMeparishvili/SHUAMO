@@ -46,9 +46,6 @@ export function ShopCard({
           {...(eager ? {} : { loading: "lazy" as const })}
           decoding="async"
         />
-        <span className="creator-shop-badge" aria-hidden="true">
-          {"↗"}
-        </span>
       </span>
       <span className="creator-shop-brand">{item.brandName}</span>
       <span className="creator-shop-name">{item.title}</span>

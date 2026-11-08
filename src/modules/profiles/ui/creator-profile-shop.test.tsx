@@ -54,39 +54,100 @@ function precedes(a: Element, b: Element) {
   );
 }
 
-describe("shop-first creator profile", () => {
-  it("keeps today's layout without a shop", () => {
+describe("creator profile layout", () => {
+  it("orders header, socials, shop, featured work, action and disclosure", () => {
     const { container } = render(
-      <CreatorProfile profile={profile} locale="en" copy={copy} />,
+      <CreatorProfile
+        profile={{
+          ...profile,
+          featuredWork: [
+            {
+              title: { en: "Night walks", ka: "" },
+              url: "https://example.test/work",
+              imageUrl: "/work",
+            },
+          ],
+        }}
+        locale="en"
+        copy={copy}
+        shop={shop}
+        action={<button type="button">Sign in to connect</button>}
+      />,
+    );
+    const sequence = [
+      screen.getByRole("heading", { level: 1, name: "Nino" }),
+      screen.getByText("Everyday style"),
+      screen.getByText("Long description of Nino"),
+      screen.getByRole("list", { name: "Social profiles" }),
+      screen.getByRole("heading", { level: 2, name: /Shop my picks/ }),
+      screen.getByRole("heading", { level: 2, name: "Work" }),
+      screen.getByRole("button", { name: "Sign in to connect" }),
+      screen.getByText("Disclosure"),
+    ];
+    sequence
+      .slice(1)
+      .forEach((element, index) =>
+        expect(precedes(sequence[index]!, element)).toBe(true),
+      );
+    const intro = container.querySelector(".creator-intro")!;
+    expect(intro.nextElementSibling).toHaveClass("creator-shop");
+    expect(container.querySelector(".creator-about")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Social profiles" }),
+    ).toBeNull();
+  });
+
+  it("drops empty sections and keeps the same header without a shop", () => {
+    const { container } = render(
+      <CreatorProfile
+        profile={{
+          ...profile,
+          descriptionEn: "",
+          categories: [],
+          languages: [],
+          contentFormats: [],
+          socialLinks: [],
+        }}
+        locale="en"
+        copy={copy}
+      />,
     );
     expect(container.querySelector(".creator-shop")).toBeNull();
-    expect(
-      container.querySelector(".creator-intro .creator-bio"),
-    ).not.toBeNull();
-    expect(container.querySelector(".creator-intro.compact")).toBeNull();
-  });
-
-  it("puts the shop directly after a compact header", () => {
-    const { container } = render(
-      <CreatorProfile profile={profile} locale="en" copy={copy} shop={shop} />,
-    );
-    const h1 = screen.getByRole("heading", { level: 1, name: "Nino" });
-    const shopHeading = screen.getByRole("heading", { name: /Shop my picks/ });
-    const description = screen.getByText("Long description of Nino");
-    const socials = container.querySelector(".creator-socials")!;
-    expect(precedes(h1, shopHeading)).toBe(true);
-    expect(precedes(shopHeading, description)).toBe(true);
-    expect(precedes(description, socials)).toBe(true);
-    const intro = container.querySelector(".creator-intro.compact")!;
+    expect(container.querySelector(".creator-socials")).toBeNull();
+    expect(container.querySelector(".creator-facts")).toBeNull();
+    expect(container.querySelector(".creator-categories")).toBeNull();
+    expect(container.querySelector("#featured-work")).toBeNull();
+    const intro = container.querySelector(".creator-intro")!;
     expect(within(intro as HTMLElement).getByText("Everyday style"));
-    expect(intro.querySelector(".creator-bio")).toBeNull();
-    expect(
-      container.querySelector(".creator-about .creator-facts"),
-    ).not.toBeNull();
-    expect(intro.nextElementSibling).toHaveClass("creator-shop");
+    expect(intro.nextElementSibling).toHaveClass("profile-disclosure");
   });
 
-  it("header social icons have accessible names", () => {
+  it("shows only the languages or formats that are set", () => {
+    render(
+      <CreatorProfile
+        profile={{ ...profile, contentFormats: [] }}
+        locale="en"
+        copy={copy}
+      />,
+    );
+    expect(screen.getByText("Languages")).toBeInTheDocument();
+    expect(screen.queryByText("Content formats")).toBeNull();
+  });
+
+  it("puts the owner's empty-shop callout where the shop would be", () => {
+    const { container } = render(
+      <CreatorProfile
+        profile={profile}
+        locale="en"
+        copy={copy}
+        shopCallout={<section className="creator-shop-callout">Add</section>}
+      />,
+    );
+    const intro = container.querySelector(".creator-intro")!;
+    expect(intro.nextElementSibling).toHaveClass("creator-shop-callout");
+  });
+
+  it("social links are labelled buttons with accessible names", () => {
     const { container } = render(
       <CreatorProfile profile={profile} locale="en" copy={copy} shop={shop} />,
     );
@@ -97,5 +158,6 @@ describe("shop-first creator profile", () => {
     expect(
       within(intro).getByRole("link", { name: /^Website/ }),
     ).toBeInTheDocument();
+    expect(within(intro).getByText("Instagram")).toBeVisible();
   });
 });

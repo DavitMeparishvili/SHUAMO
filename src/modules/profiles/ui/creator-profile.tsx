@@ -34,6 +34,12 @@ function socialIcon(platform: string | undefined) {
     ? platform
     : "link";
 }
+/**
+ * The public creator page, top to bottom: identity header ending in the
+ * creator's social links, the shop, featured work, the viewer's action and
+ * the disclosure. Sections without content are left out entirely; spacing,
+ * not borders, separates what remains.
+ */
 export function CreatorProfile({
   profile,
   locale,
@@ -48,7 +54,7 @@ export function CreatorProfile({
   locale: Locale;
   action?: ReactNode;
   preview?: boolean;
-  /** Publicly shown shop items. When present, the shop leads the page. */
+  /** Publicly shown shop items, listed right after the header. */
   shop?: PublicShopItem[];
   /** Owner preview only: a control beside the shop heading. */
   shopAction?: ReactNode;
@@ -78,96 +84,106 @@ export function CreatorProfile({
     locale,
   );
   const location = localized(profile.locationKa, profile.locationEn, locale);
-  const socials = Array.isArray(profile.socialLinks) ? profile.socialLinks : [];
+  const socials = (
+    Array.isArray(profile.socialLinks) ? profile.socialLinks : []
+  ).filter((raw): raw is { platform?: string; url: string } =>
+    Boolean((raw as { url?: unknown } | null)?.url),
+  );
   const work = Array.isArray(profile.featuredWork) ? profile.featuredWork : [];
   const ui = profileDesignCopy(locale);
-  const previewNote = preview ? (
-    <div className="profile-preview-note">{copy.preview}</div>
-  ) : null;
-  const portrait = (
-    <div className="creator-portrait">
-      {profile.heroImageUrl ? (
-        <img
-          src={profile.heroImageUrl}
-          alt={copy.heroAlt.replace("{name}", profile.creator.displayName)}
-        />
-      ) : (
-        <Icon name="user" />
-      )}
-    </div>
-  );
-  const identity = (
-    <div className="creator-identity">
-      <h1>{profile.creator.displayName}</h1>
-      {location.text ? (
-        <p className="profile-location">
-          <Icon name="pin" />
-          {location.text}
-          <FallbackLabel from={location.fallbackFrom} copy={copy.fallback} />
-        </p>
+  const facts = [
+    { label: copy.languages, values: profile.languages },
+    { label: copy.contentFormats, values: profile.contentFormats },
+  ].filter((fact) => fact.values.length > 0);
+  return (
+    <div className="profile-creator profile-view">
+      {preview ? (
+        <div className="profile-preview-note">{copy.preview}</div>
       ) : null}
-    </div>
-  );
-  const taglineText = (
-    <p className="profile-tagline">
-      {tagline.text}
-      <FallbackLabel from={tagline.fallbackFrom} copy={copy.fallback} />
-    </p>
-  );
-  const descriptionText = description.text ? (
-    <p>
-      {description.text}
-      <FallbackLabel from={description.fallbackFrom} copy={copy.fallback} />
-    </p>
-  ) : null;
-  const categories = (
-    <div className="profile-chips creator-categories">
-      {profile.categories.map((item) => (
-        <span key={item}>{item}</span>
-      ))}
-    </div>
-  );
-  const facts =
-    profile.languages.length || profile.contentFormats.length ? (
-      <dl className="creator-facts">
-        <div>
-          <dt>{copy.languages}</dt>
-          <dd>{profile.languages.join(" · ")}</dd>
+      <section className="creator-intro">
+        <div className="creator-portrait">
+          {profile.heroImageUrl ? (
+            <img
+              src={profile.heroImageUrl}
+              alt={copy.heroAlt.replace("{name}", profile.creator.displayName)}
+            />
+          ) : (
+            <Icon name="user" />
+          )}
         </div>
-        <div>
-          <dt>{copy.contentFormats}</dt>
-          <dd>{profile.contentFormats.join(" · ")}</dd>
+        <div className="creator-identity">
+          <h1>{profile.creator.displayName}</h1>
+          {location.text ? (
+            <p className="profile-location">
+              <Icon name="pin" />
+              {location.text}
+              <FallbackLabel
+                from={location.fallbackFrom}
+                copy={copy.fallback}
+              />
+            </p>
+          ) : null}
         </div>
-      </dl>
-    ) : null;
-  const rest = (
-    <>
-      <section className="creator-socials profile-section">
-        <h2>{ui.socialProfiles}</h2>
-        <div className="creator-social-grid">
-          {socials.map((raw, index) => {
-            const item = raw as { platform?: string; url?: string };
-            return item.url ? (
-              <ExternalLink key={index} href={item.url} leaveLabel={copy.leave}>
-                <Icon
-                  name={socialIcon(item.platform)}
-                  data-social={item.platform}
-                />
-                {copy.socialLabels[item.platform ?? ""] ?? item.platform}
-              </ExternalLink>
-            ) : null;
-          })}
+        <div className="creator-bio">
+          {tagline.text ? (
+            <p className="profile-tagline">
+              {tagline.text}
+              <FallbackLabel from={tagline.fallbackFrom} copy={copy.fallback} />
+            </p>
+          ) : null}
+          {description.text ? (
+            <p className="creator-description">
+              {description.text}
+              <FallbackLabel
+                from={description.fallbackFrom}
+                copy={copy.fallback}
+              />
+            </p>
+          ) : null}
+          {profile.categories.length ? (
+            <div className="profile-chips creator-categories">
+              {profile.categories.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+          ) : null}
+          {facts.length ? (
+            <dl className="creator-facts">
+              {facts.map((fact) => (
+                <div key={fact.label}>
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.values.join(" · ")}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          {socials.length ? (
+            <ul className="creator-socials" aria-label={ui.socialProfiles}>
+              {socials.map((item, index) => (
+                <li key={index}>
+                  <ExternalLink href={item.url} leaveLabel={copy.leave}>
+                    <span className="creator-social-tile">
+                      <Icon
+                        name={socialIcon(item.platform)}
+                        data-social={item.platform}
+                      />
+                    </span>
+                    {copy.socialLabels[item.platform ?? ""] ?? item.platform}
+                  </ExternalLink>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        <p className="profile-caption">{ui.supplied}</p>
       </section>
+      {shop.length ? (
+        <CreatorShop items={shop} locale={locale} action={shopAction} />
+      ) : (
+        shopCallout
+      )}
       {work.length ? (
         <section className="creator-work profile-section" id="featured-work">
-          <div className="profile-section-heading">
-            <h2>{copy.work}</h2>
-            <a href="#featured-work">
-              {ui.viewAll} {"↗"}
-            </a>
-          </div>
+          <h2>{copy.work}</h2>
           <div className="profile-work-grid">
             {work.map((raw, index) => {
               const item = raw as {
@@ -209,66 +225,6 @@ export function CreatorProfile({
       ) : null}
       {action ? <div className="profile-connect">{action}</div> : null}
       <p className="profile-disclosure">{copy.disclosure}</p>
-    </>
-  );
-
-  if (shop.length === 0) {
-    return (
-      <div className="profile-creator profile-view">
-        {previewNote}
-        <section className="creator-intro">
-          {portrait}
-          {identity}
-          <div className="creator-bio">
-            {taglineText}
-            {descriptionText}
-          </div>
-          {categories}
-          {facts}
-        </section>
-        {shopCallout}
-        {rest}
-      </div>
-    );
-  }
-
-  // Shop-first layout: a compact identity header, the shop, then the rest of
-  // the profile in its usual order.
-  const socialIcons = socials.flatMap((raw, index) => {
-    const item = raw as { platform?: string; url?: string };
-    if (!item.url) return [];
-    const label = copy.socialLabels[item.platform ?? ""] ?? item.platform;
-    return [
-      <ExternalLink key={index} href={item.url} leaveLabel={copy.leave}>
-        <Icon name={socialIcon(item.platform)} data-social={item.platform} />
-        <span className="sr-only">{label}</span>
-      </ExternalLink>,
-    ];
-  });
-  const hasAbout =
-    Boolean(descriptionText) || profile.categories.length > 0 || facts;
-  return (
-    <div className="profile-creator profile-view">
-      {previewNote}
-      <section className="creator-intro compact">
-        {portrait}
-        {identity}
-        {tagline.text ? (
-          <div className="creator-compact-tagline">{taglineText}</div>
-        ) : null}
-        {socialIcons.length ? (
-          <div className="creator-social-icons">{socialIcons}</div>
-        ) : null}
-      </section>
-      <CreatorShop items={shop} locale={locale} action={shopAction} />
-      {hasAbout ? (
-        <section className="creator-about profile-section">
-          {descriptionText}
-          {profile.categories.length ? categories : null}
-          {facts}
-        </section>
-      ) : null}
-      {rest}
     </div>
   );
 }
