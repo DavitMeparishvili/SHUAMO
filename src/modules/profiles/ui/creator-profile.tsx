@@ -3,7 +3,7 @@ import { Icon } from "@/src/modules/design-system";
 import { profileDesignCopy } from "./profile-design-copy";
 import type { ReactNode } from "react";
 import type { Locale } from "@/src/modules/localization";
-import type { PublicShopItem } from "../infrastructure/prisma-creator-shop-repository";
+import type { PublicShopItem } from "../domain/creator-shop";
 import { CreatorShop } from "./creator-shop";
 import {
   ExternalLink,

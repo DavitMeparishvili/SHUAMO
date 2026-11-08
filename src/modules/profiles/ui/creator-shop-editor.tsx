@@ -11,6 +11,7 @@ import {
   useState,
   useSyncExternalStore,
   useTransition,
+  type MouseEvent,
 } from "react";
 import { EmptyState, Icon } from "@/src/modules/design-system";
 import type { Locale } from "@/src/modules/localization";
@@ -24,7 +25,7 @@ import type {
   CreatorShopEditorItem,
   PublicShopItem,
   ShopCandidate,
-} from "../infrastructure/prisma-creator-shop-repository";
+} from "../domain/creator-shop";
 import { ShopCard } from "./creator-shop";
 import {
   creatorShopCopy,
@@ -121,12 +122,21 @@ export function CreatorShopEditor({
   const [retry, setRetry] = useState<(() => void) | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{
+    id: string;
+    anchor: DOMRect | null;
+  } | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  // Where focus goes once a removed row has left the DOM.
+  const focusAfterRemove = useRef<string | null>(null);
 
   const run = useCallback(
     function run(
       next: CreatorShopEditorItem[],
       call: () => Promise<ShopActionResult>,
+      isDone: (result: ShopActionResult | { ok: false }) => boolean = (
+        result,
+      ) => result.ok,
     ) {
       setStatus("saving");
       setRetry(null);
@@ -138,15 +148,17 @@ export function CreatorShopEditor({
         } catch {
           result = { ok: false };
         }
-        if (result.ok) {
+        if (isDone(result)) {
           startTransition(() => setSaved(next));
           setStatus("saved");
           return;
         }
         // Dropping the optimistic state rolls the list back; the refresh
-        // brings in the server's truth (always needed after invalid_order).
+        // brings in the server's truth. A stale order would only fail again,
+        // so invalid_order is fixed by the refresh alone, without Retry.
         setStatus("failed");
-        setRetry(() => () => run(next, call));
+        const stale = "error" in result && result.error === "invalid_order";
+        setRetry(stale ? null : () => () => run(next, call, isDone));
         router.refresh();
       });
     },
@@ -189,11 +201,32 @@ export function CreatorShopEditor({
   }
 
   function remove(productId: string) {
+    // Focus the next row's ⋯ button, else the previous one, else "Add".
+    const index = rows.findIndex((entry) => entry.productId === productId);
+    const neighbour = rows[index + 1] ?? rows[index - 1];
+    focusAfterRemove.current = neighbour ? neighbour.productId : "";
     run(
       withPositions(list.filter((entry) => entry.productId !== productId)),
       () => actions.remove(productId),
+      // Already gone (e.g. removed in another tab) is the outcome we wanted.
+      (result) =>
+        result.ok || ("error" in result && result.error === "not_found"),
     );
   }
+
+  useEffect(() => {
+    const target = focusAfterRemove.current;
+    if (target === null) return;
+    focusAfterRemove.current = null;
+    const section = sectionRef.current;
+    const next =
+      (target &&
+        section?.querySelector<HTMLElement>(
+          `[data-shop-more="${CSS.escape(target)}"]`,
+        )) ||
+      section?.querySelector<HTMLElement>("[data-shop-add]");
+    next?.focus();
+  }, [list]);
 
   function add(ids: string[]) {
     const added: CreatorShopEditorItem[] = ids.flatMap((id) => {
@@ -204,7 +237,7 @@ export function CreatorShopEditor({
               productId: candidate.productId,
               position: 0,
               visible: true,
-              availability: candidate.imageUrl ? "available" : "no-photo",
+              availability: candidate.availability,
               title: candidate.title,
               brandName: candidate.brandName,
               imageUrl: candidate.imageUrl,
@@ -233,13 +266,14 @@ export function CreatorShopEditor({
     .map(asPublic)
     .filter((item): item is PublicShopItem => item !== null)
     .slice(0, PREVIEW_ITEMS);
-  const menuItem = list.find((item) => item.productId === menuFor) ?? null;
+  const menuItem = list.find((item) => item.productId === menu?.id) ?? null;
   const menuIndex = menuItem ? list.indexOf(menuItem) : -1;
 
   const addButton = (
     <button
       type="button"
       className="profile-button primary"
+      data-shop-add=""
       onClick={() => setPickerOpen(true)}
     >
       <span aria-hidden="true">+</span>
@@ -248,7 +282,11 @@ export function CreatorShopEditor({
   );
 
   return (
-    <section className="shop-editor" aria-labelledby="shop-editor-title">
+    <section
+      className="shop-editor"
+      aria-labelledby="shop-editor-title"
+      ref={sectionRef}
+    >
       <header className="shop-editor-header">
         <div>
           <h2 id="shop-editor-title">{copy.title}</h2>
@@ -357,7 +395,7 @@ export function CreatorShopEditor({
                   rowProps={sortable.itemProps(item.productId)}
                   handleProps={sortable.handleProps(item.productId)}
                   onToggle={() => setVisible(item)}
-                  onMore={() => setMenuFor(item.productId)}
+                  onMore={(anchor) => setMenu({ id: item.productId, anchor })}
                 />
               ))}
             </ul>
@@ -367,7 +405,8 @@ export function CreatorShopEditor({
           </div>
           <aside className="shop-editor-preview" aria-label={copy.preview}>
             <p className="shop-editor-preview-label">{copy.preview}</p>
-            <div className="shop-phone">
+            {/* A picture of the public grid: not clickable, not focusable. */}
+            <div className="shop-phone" inert aria-hidden="true">
               <p className="shop-phone-heading">{copy.heading}</p>
               <ul className="shop-phone-grid">
                 {preview.map((item) => (
@@ -386,7 +425,9 @@ export function CreatorShopEditor({
         count={list.length}
         copy={copy}
         phone={phone}
-        onClose={() => setMenuFor(null)}
+        anchor={menu?.anchor ?? null}
+        canMove={dragEnabled}
+        onClose={() => setMenu(null)}
         onMove={(how) => menuItem && move(menuItem.productId, how)}
         onRemove={() => menuItem && remove(menuItem.productId)}
       />
@@ -416,7 +457,7 @@ function ShopEditorRow({
   rowProps: ReturnType<ReturnType<typeof useSortableList>["itemProps"]>;
   handleProps: ReturnType<ReturnType<typeof useSortableList>["handleProps"]>;
   onToggle(): void;
-  onMore(): void;
+  onMore(anchor: DOMRect): void;
 }) {
   const nameId = useId();
   return (
@@ -473,7 +514,8 @@ function ShopEditorRow({
         className="shop-icon-button shop-editor-more"
         aria-label={fillShopCopy(copy.more, { title: item.title })}
         aria-haspopup="dialog"
-        onClick={onMore}
+        data-shop-more={item.productId}
+        onClick={(event) => onMore(event.currentTarget.getBoundingClientRect())}
       >
         <span aria-hidden="true">{"⋯"}</span>
       </button>
@@ -491,6 +533,8 @@ function ShopItemMenu({
   count,
   copy,
   phone,
+  anchor,
+  canMove,
   onClose,
   onMove,
   onRemove,
@@ -500,6 +544,10 @@ function ShopItemMenu({
   count: number;
   copy: CreatorShopCopy;
   phone: boolean;
+  /** The ⋯ button's rect, taken from the click (not from focus). */
+  anchor: DOMRect | null;
+  /** Moves act on the whole list, so they only make sense unfiltered. */
+  canMove: boolean;
   onClose(): void;
   onMove(how: ShopMove): void;
   onRemove(): void;
@@ -509,20 +557,33 @@ function ShopItemMenu({
     const node = dialog.current;
     if (!node) return;
     if (item && !node.open) {
-      // On wide screens the menu opens as a popover under its ⋯ button.
-      const trigger = document.activeElement;
-      if (!phone && trigger instanceof HTMLElement) {
-        const rect = trigger.getBoundingClientRect();
-        node.style.setProperty("--menu-top", `${rect.bottom + 4}px`);
-        node.style.setProperty("--menu-left", `${rect.right}px`);
-      }
       node.showModal();
+      // On wide screens: a popover under the ⋯ button, flipped above it near
+      // the bottom edge and always kept inside the viewport.
+      if (!phone && anchor) {
+        const margin = 8;
+        const { offsetHeight: height, offsetWidth: width } = node;
+        let top = anchor.bottom + 4;
+        if (top + height > window.innerHeight - margin)
+          top = anchor.top - 4 - height;
+        top = Math.max(
+          margin,
+          Math.min(top, window.innerHeight - height - margin),
+        );
+        const left = Math.max(
+          margin,
+          Math.min(anchor.right - width, window.innerWidth - width - margin),
+        );
+        node.style.setProperty("--menu-top", `${top}px`);
+        node.style.setProperty("--menu-left", `${left}px`);
+      }
     }
     if (!item && node.open) node.close();
-  }, [item, phone]);
+  }, [item, phone, anchor]);
 
-  function choose(action: () => void) {
-    dialog.current?.close();
+  // Close through the clicked button, not the ref, so handlers stay pure.
+  function choose(event: MouseEvent<HTMLElement>, action: () => void) {
+    event.currentTarget.closest("dialog")?.close();
     action();
   }
 
@@ -541,30 +602,43 @@ function ShopItemMenu({
         <>
           <p className="shop-menu-title">{item.title}</p>
           <div className="shop-menu-actions">
-            {(
-              [
-                ["top", copy.moveTop, index === 0],
-                ["up", copy.moveUp, index === 0],
-                ["down", copy.moveDown, index === count - 1],
-                ["bottom", copy.moveBottom, index === count - 1],
-              ] as const
-            ).map(([how, text, disabled]) => (
-              <button
-                key={how}
-                type="button"
-                disabled={disabled}
-                onClick={() => choose(() => onMove(how))}
-              >
-                {text}
-              </button>
-            ))}
+            {canMove
+              ? (
+                  [
+                    ["top", copy.moveTop, index === 0],
+                    ["up", copy.moveUp, index === 0],
+                    ["down", copy.moveDown, index === count - 1],
+                    ["bottom", copy.moveBottom, index === count - 1],
+                  ] as const
+                ).map(([how, text, disabled]) => (
+                  <button
+                    key={how}
+                    type="button"
+                    disabled={disabled}
+                    onClick={(event) => choose(event, () => onMove(how))}
+                  >
+                    {text}
+                  </button>
+                ))
+              : null}
             <button
               type="button"
               className="danger"
-              onClick={() => choose(onRemove)}
+              onClick={(event) => choose(event, onRemove)}
             >
               {copy.remove}
             </button>
+            {phone ? (
+              <button
+                type="button"
+                className="shop-menu-close"
+                onClick={(event) =>
+                  event.currentTarget.closest("dialog")?.close()
+                }
+              >
+                {copy.close}
+              </button>
+            ) : null}
           </div>
         </>
       ) : null}

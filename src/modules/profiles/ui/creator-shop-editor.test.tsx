@@ -10,7 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getMessages, t } from "@/src/modules/localization";
-import type { CreatorShopEditorItem } from "../infrastructure/prisma-creator-shop-repository";
+import type { CreatorShopEditorItem } from "../domain/creator-shop";
 import { CreatorShopEditor } from "./creator-shop-editor";
 import {
   ProfileEditor,
@@ -190,7 +190,8 @@ describe("creator shop editor", () => {
     expect(await screen.findByText("Couldn't save.")).toBeInTheDocument();
     expect(rowTitles()).toEqual(["A", "B", "C"]);
     expect(refresh).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    // The stale order would fail again; the refresh is the fix.
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
   it("treats a thrown action like a failed save", async () => {
@@ -232,9 +233,27 @@ describe("creator shop editor", () => {
     const user = userEvent.setup();
     const acts = editor({
       candidates: [
-        { productId: "x", title: "Scarf", brandName: "Silk", imageUrl: null },
-        { productId: "y", title: "Candle", brandName: "Aroma", imageUrl: "/y" },
-        { productId: "z", title: "Soap", brandName: "Aroma", imageUrl: "/z" },
+        {
+          productId: "x",
+          title: "Scarf",
+          brandName: "Silk",
+          imageUrl: null,
+          availability: "no-photo",
+        },
+        {
+          productId: "y",
+          title: "Candle",
+          brandName: "Aroma",
+          imageUrl: "/y",
+          availability: "available",
+        },
+        {
+          productId: "z",
+          title: "Soap",
+          brandName: "Aroma",
+          imageUrl: "/z",
+          availability: "available",
+        },
       ],
     });
     await user.click(screen.getByRole("button", { name: "Add products" }));
@@ -282,6 +301,205 @@ describe("creator shop editor", () => {
   });
 });
 
+describe("creator shop editor review fixes", () => {
+  function pointer(type: string, target: EventTarget, clientY: number) {
+    act(() => {
+      target.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 7,
+          pointerType: "mouse",
+          button: 0,
+          clientY,
+        }),
+      );
+    });
+  }
+
+  it("finishes a pointer drag released away from the handle", async () => {
+    const acts = editor();
+    const handle = screen.getByRole("button", { name: "Reorder A" });
+    pointer("pointerdown", handle, 10);
+    // jsdom rows have zero-size rects, so any lower Y moves to the bottom.
+    pointer("pointermove", window, 500);
+    expect(rowTitles()).toEqual(["B", "C", "A"]);
+    pointer("pointerup", window, 500);
+    expect(acts.reorder).toHaveBeenCalledWith(["b", "c", "a"]);
+    await waitFor(() => expect(rowTitles()).toEqual(["B", "C", "A"]));
+    // A later drag still works.
+    pointer(
+      "pointerdown",
+      screen.getByRole("button", { name: "Reorder B" }),
+      0,
+    );
+    pointer("pointermove", window, 500);
+    pointer("pointerup", window, 500);
+    expect(acts.reorder).toHaveBeenLastCalledWith(["c", "a", "b"]);
+  });
+
+  it("Escape cancels a pointer drag", () => {
+    const acts = editor();
+    pointer(
+      "pointerdown",
+      screen.getByRole("button", { name: "Reorder A" }),
+      0,
+    );
+    pointer("pointermove", window, 500);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(rowTitles()).toEqual(["A", "B", "C"]);
+    pointer("pointerup", window, 500);
+    expect(acts.reorder).not.toHaveBeenCalled();
+  });
+
+  it("does not announce a drop for a plain click on the handle", () => {
+    editor();
+    const handle = screen.getByRole("button", { name: "Reorder A" });
+    pointer("pointerdown", handle, 0);
+    pointer("pointerup", window, 0);
+    expect(screen.queryByText(/Dropped/)).toBeNull();
+  });
+
+  it("treats removing an already-removed item as done", async () => {
+    const user = userEvent.setup();
+    editor({
+      acts: actions({
+        remove: vi.fn().mockResolvedValue({ ok: false, error: "not_found" }),
+      }),
+    });
+    await user.click(
+      screen.getByRole("button", { name: "More actions for A" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Remove from shop" }));
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(rowTitles()).toEqual(["B", "C"]);
+  });
+
+  it("moves focus to the next row's ⋯ button after removing", async () => {
+    const user = userEvent.setup();
+    editor();
+    await user.click(
+      screen.getByRole("button", { name: "More actions for B" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Remove from shop" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "More actions for C" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("falls back to Add products after removing the last item", async () => {
+    const user = userEvent.setup();
+    editor({ items: [item("a")] });
+    await user.click(
+      screen.getByRole("button", { name: "More actions for A" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Remove from shop" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Add products" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("offers Close in the phone sheet", async () => {
+    const user = userEvent.setup();
+    editor();
+    await user.click(
+      screen.getByRole("button", { name: "More actions for A" }),
+    );
+    const menu = screen.getByRole("dialog", { name: "More actions for A" });
+    await user.click(within(menu).getByRole("button", { name: "Close" }));
+    expect(menu).not.toHaveAttribute("open");
+  });
+
+  it("hides move actions while a filter is active", async () => {
+    const user = userEvent.setup();
+    editor({ items: [item("a"), item("b", { visible: false })] });
+    await user.click(screen.getByRole("radio", { name: "Hidden" }));
+    await user.click(
+      screen.getByRole("button", { name: "More actions for B" }),
+    );
+    const menu = screen.getByRole("dialog", { name: "More actions for B" });
+    expect(within(menu).queryByRole("button", { name: /^Move/ })).toBeNull();
+    expect(
+      within(menu).getByRole("button", { name: "Remove from shop" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the live preview out of the tab order and click path", () => {
+    const { container } = render(
+      <CreatorShopEditor
+        locale="en"
+        items={[item("a")]}
+        candidates={[]}
+        profileUrl={null}
+        published
+        hasAnyLinks
+        actions={actions()}
+      />,
+    );
+    const phone = container.querySelector(".shop-phone")!;
+    expect(phone).toHaveAttribute("inert");
+    expect(phone).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("tags an added ended offer immediately", async () => {
+    const user = userEvent.setup();
+    editor({
+      candidates: [
+        {
+          productId: "e",
+          title: "Ended",
+          brandName: "Aroma",
+          imageUrl: "/e",
+          availability: "ended",
+        },
+      ],
+    });
+    await user.click(screen.getByRole("button", { name: "Add products" }));
+    await user.click(screen.getByRole("checkbox", { name: /Ended/ }));
+    await user.click(screen.getByRole("button", { name: "Add (1)" }));
+    expect(
+      await screen.findByText("Offer ended · not shown"),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the ⋯ popover inside the viewport from the clicked button", async () => {
+    const user = userEvent.setup();
+    // jsdom has no matchMedia; a wide screen makes the menu a popover.
+    window.matchMedia = ((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia;
+    editor();
+    const trigger = screen.getByRole("button", { name: "More actions for C" });
+    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue({
+      top: window.innerHeight - 30,
+      bottom: window.innerHeight - 6,
+      left: 300,
+      right: 344,
+      width: 44,
+      height: 24,
+      x: 300,
+      y: window.innerHeight - 30,
+      toJSON: () => ({}),
+    });
+    // Firefox and Safari do not focus a button on click.
+    trigger.addEventListener("mousedown", (event) => event.preventDefault());
+    await user.click(trigger);
+    const menu = screen.getByRole("dialog", { name: "More actions for C" });
+    const top = parseFloat(menu.style.getPropertyValue("--menu-top"));
+    expect(top).toBeGreaterThanOrEqual(8);
+    expect(top).toBeLessThan(window.innerHeight - 30);
+    expect(menu.style.getPropertyValue("--menu-left")).not.toBe("");
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+});
+
 describe("profile editor shop tab", () => {
   it("ProfileEditor shop tab hides the draft form", async () => {
     const user = userEvent.setup();
@@ -314,5 +532,63 @@ describe("profile editor shop tab", () => {
     expect(
       screen.queryByRole("button", { name: "Save draft" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("profile editor shop tab isolation", () => {
+  it("using the Shop tab never marks the profile dirty", async () => {
+    const user = userEvent.setup();
+    const messages = getMessages("en");
+    const copy = Object.fromEntries(
+      PROFILE_EDITOR_COPY_KEYS.map((key) => [
+        key,
+        t(messages, "profile.editor." + key),
+      ]),
+    ) as ProfileEditorCopy;
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    const acts = actions();
+    render(
+      <ProfileEditor
+        role="creator"
+        locale="en"
+        name="Owner"
+        profile={{ status: "PUBLISHED", slug: "owner" }}
+        saveAction={vi.fn()}
+        publishAction={vi.fn()}
+        unpublishAction={vi.fn()}
+        copy={copy}
+        shop={
+          <CreatorShopEditor
+            locale="en"
+            items={[item("a"), item("b")]}
+            candidates={[]}
+            profileUrl="/en/creators/owner"
+            published
+            hasAnyLinks
+            actions={acts}
+          />
+        }
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
+    await user.click(screen.getByRole("button", { name: "Shop" }));
+    await user.click(screen.getAllByRole("switch")[0]!);
+    fireEvent.keyDown(screen.getByRole("button", { name: "Reorder B" }), {
+      key: " ",
+    });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Reorder B" }), {
+      key: "ArrowUp",
+    });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Reorder B" }), {
+      key: " ",
+    });
+    expect(acts.setVisible).toHaveBeenCalled();
+    expect(acts.reorder).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "About" }));
+    expect(screen.getByText("All changes saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    const unload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(false);
   });
 });

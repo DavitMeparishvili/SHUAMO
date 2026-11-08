@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  shopOrderSchema,
   shopProductIdSchema,
   shopProductIdsSchema,
 } from "./creator-shop-input";
@@ -29,5 +30,14 @@ describe("creator shop input", () => {
   it("accepts a single uuid and rejects path-like ids", () => {
     expect(shopProductIdSchema.safeParse(uuid1).success).toBe(true);
     expect(shopProductIdSchema.safeParse("../x").success).toBe(false);
+  });
+  it("lets a reorder name every item of a large shop", () => {
+    const ids = (count: number) =>
+      Array.from({ length: count }, () => crypto.randomUUID());
+    expect(shopOrderSchema.safeParse(ids(1500)).success).toBe(true);
+    expect(shopOrderSchema.safeParse(ids(2001)).success).toBe(false);
+    expect(shopOrderSchema.safeParse([]).success).toBe(false);
+    const [one] = ids(1);
+    expect(shopOrderSchema.safeParse([one, one]).success).toBe(false);
   });
 });

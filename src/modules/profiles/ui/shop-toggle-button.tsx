@@ -24,7 +24,7 @@ export function ShopToggleButton({
 }) {
   const copy = creatorShopCopy(locale);
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
   // `saved` follows the server value whenever the page re-renders.
   const [saved, setSaved] = useState(inShop);
   const [previous, setPrevious] = useState(inShop);
@@ -60,6 +60,7 @@ export function ShopToggleButton({
         type="button"
         className={`shop-toggle-button${shown ? " is-in-shop" : ""}`}
         aria-pressed={shown}
+        disabled={pending}
         onClick={() => save(!shown)}
       >
         {shown ? (

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import type { Locale } from "@/src/modules/localization";
 import { SHOP_INITIAL_VISIBLE } from "../domain/creator-shop";
-import type { PublicShopItem } from "../infrastructure/prisma-creator-shop-repository";
+import type { PublicShopItem } from "../domain/creator-shop";
 import {
   creatorShopCopy,
   fillShopCopy,

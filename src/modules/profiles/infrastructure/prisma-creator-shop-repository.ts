@@ -5,41 +5,18 @@ import {
   isPubliclyShown,
   isSameIdSet,
   shopAvailability,
-  type ShopAvailability,
+  type CreatorShopEditorItem,
+  type PublicShopItem,
+  type ShopCandidate,
+  type ShopWriteResult,
 } from "../domain/creator-shop";
 
-/** One row of the creator's shop as the editor shows it. */
-export interface CreatorShopEditorItem {
-  productId: string;
-  position: number;
-  visible: boolean;
-  availability: ShopAvailability;
-  title: string;
-  brandName: string;
-  imageUrl: string | null;
-  code: string | null;
-}
-
-/** One card on the public profile; only shown, available items qualify. */
-export interface PublicShopItem {
-  productId: string;
-  code: string;
-  title: string;
-  brandName: string;
-  imageUrl: string;
-}
-
-/** A product the creator may add: an eligible link, not yet in the shop. */
-export interface ShopCandidate {
-  productId: string;
-  title: string;
-  brandName: string;
-  imageUrl: string | null;
-}
-
-export type ShopWriteResult =
-  | { ok: true }
-  | { ok: false; error: "not_eligible" | "not_found" | "invalid_order" };
+export type {
+  CreatorShopEditorItem,
+  PublicShopItem,
+  ShopCandidate,
+  ShopWriteResult,
+} from "../domain/creator-shop";
 
 type ShopTransaction = Prisma.TransactionClient;
 
@@ -170,6 +147,7 @@ export async function listPublicCreatorShop(
 
 export async function listShopCandidates(
   creatorId: string,
+  now: Date = new Date(),
 ): Promise<ShopCandidate[]> {
   const links = await prisma.trackingLink.findMany({
     where: {
@@ -185,6 +163,8 @@ export async function listShopCandidates(
           id: true,
           title: true,
           imageUrls: true,
+          offerStartsAt: true,
+          offerEndsAt: true,
           brand: { select: { name: true } },
         },
       },
@@ -200,6 +180,16 @@ export async function listShopCandidates(
         title: product.title,
         brandName: product.brand.name,
         imageUrl: product.imageUrls[0] ?? null,
+        availability: shopAvailability(
+          {
+            linkActive: true,
+            productActive: true,
+            offerStartsAt: product.offerStartsAt,
+            offerEndsAt: product.offerEndsAt,
+            imageCount: product.imageUrls.length,
+          },
+          now,
+        ),
       },
     ];
   });

@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { ShopCandidate } from "../infrastructure/prisma-creator-shop-repository";
+import type { ShopCandidate } from "../domain/creator-shop";
 import { fillShopCopy, type CreatorShopCopy } from "./creator-shop-copy";
 
 /**

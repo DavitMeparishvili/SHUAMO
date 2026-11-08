@@ -2083,9 +2083,18 @@
   position: fixed;
   inset: auto;
   top: var(--menu-top, 50%);
-  left: max(16px, calc(var(--menu-left, 50%) - 240px));
+  left: var(--menu-left, 50%);
   width: 240px;
   margin: 0;
+}
+.shop-menu-actions .shop-menu-close {
+  border-top: 1px solid var(--color-slate-200);
+  color: var(--color-slate-700);
+  font-weight: 650;
+  text-align: center;
+}
+.shop-phone {
+  pointer-events: none;
 }
 .shop-menu.popover::backdrop {
   background: transparent;

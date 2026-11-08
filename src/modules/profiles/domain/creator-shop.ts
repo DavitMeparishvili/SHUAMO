@@ -11,6 +11,41 @@ export interface ShopItemFacts {
   imageCount: number;
 }
 
+/** One row of the creator's shop as the editor shows it. */
+export interface CreatorShopEditorItem {
+  productId: string;
+  position: number;
+  visible: boolean;
+  availability: ShopAvailability;
+  title: string;
+  brandName: string;
+  imageUrl: string | null;
+  code: string | null;
+}
+
+/** One card on the public profile; only shown, available items qualify. */
+export interface PublicShopItem {
+  productId: string;
+  code: string;
+  title: string;
+  brandName: string;
+  imageUrl: string;
+}
+
+/** A product the creator may add: an eligible link, not yet in the shop. */
+export interface ShopCandidate {
+  productId: string;
+  title: string;
+  brandName: string;
+  imageUrl: string | null;
+  /** Its link is usable, so this only reflects the offer window and photo. */
+  availability: ShopAvailability;
+}
+
+export type ShopWriteResult =
+  | { ok: true }
+  | { ok: false; error: "not_eligible" | "not_found" | "invalid_order" };
+
 /** How many shop items render before the "Show more" button. */
 export const SHOP_INITIAL_VISIBLE = 12;
 

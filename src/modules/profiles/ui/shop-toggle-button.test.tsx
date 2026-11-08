@@ -86,4 +86,23 @@ describe("shop toggle on the Links page", () => {
       "true",
     );
   });
+
+  it("is disabled while a save is in flight", async () => {
+    const user = userEvent.setup();
+    let resolve: (value: { ok: true }) => void = () => {};
+    toggle(false, {
+      add: vi.fn(
+        () =>
+          new Promise<{ ok: true }>((done) => {
+            resolve = done;
+          }),
+      ),
+    });
+    const button = screen.getByRole("button", { name: "Add to shop" });
+    await user.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    resolve({ ok: true });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveAttribute("aria-pressed", "true");
+  });
 });

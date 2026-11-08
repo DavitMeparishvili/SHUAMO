@@ -7,6 +7,7 @@ import {
   removeShopItem,
   reorderShopItems,
   setShopItemVisible,
+  shopOrderSchema,
   shopProductIdSchema,
   shopProductIdsSchema,
   type ShopActionResult,
@@ -74,7 +75,7 @@ export async function reorderShopItemsAction(
 ): Promise<ShopActionResult> {
   const creatorId = await creatorIdFor();
   if (creatorId === null) return { ok: false, error: "unauthenticated" };
-  const parsed = shopProductIdsSchema.safeParse(orderedProductIds);
+  const parsed = shopOrderSchema.safeParse(orderedProductIds);
   if (!isLocale(locale) || !parsed.success)
     return { ok: false, error: "invalid" };
   const result = await reorderShopItems(creatorId, parsed.data);

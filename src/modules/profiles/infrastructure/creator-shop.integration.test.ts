@@ -346,12 +346,14 @@ describe("creator shop persistence", () => {
         title: "Newer",
         brandName: "Test brand",
         imageUrl: null,
+        availability: "no-photo",
       },
       {
         productId: older.product.id,
         title: "Older",
         brandName: "Test brand",
         imageUrl: "/images/creator.webp",
+        availability: "available",
       },
     ]);
     await expect(listShopProductIds(creator.id)).resolves.toEqual([
