@@ -99,6 +99,15 @@ export default async function CreatorLinksPage({
   const inShop = new Set(shopProductIds);
   const addToShop = addShopItemsAction.bind(null, locale);
   const removeFromShop = removeShopItemAction.bind(null, locale);
+  // Ended offers never appear in the public shop, so do not offer to add them.
+  const now = new Date();
+  const endedProducts = new Set(
+    catalog.items
+      .filter(
+        ({ product }) => product.offerEndsAt && product.offerEndsAt <= now,
+      )
+      .map(({ product }) => product.id),
+  );
   const performance = await creatorLinkPerformanceSnapshots(
     allowed.value.creatorId,
     catalog.items.map((link) => link.id),
@@ -189,7 +198,7 @@ export default async function CreatorLinksPage({
         performance={performance}
         baseUrl={serverEnv().APP_URL}
         trailing={({ productId, active }) =>
-          active ? (
+          active && !endedProducts.has(productId) ? (
             <ShopToggleButton
               productId={productId}
               inShop={inShop.has(productId)}

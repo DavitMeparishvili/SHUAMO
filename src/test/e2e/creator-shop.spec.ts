@@ -219,3 +219,21 @@ test("ka locale renders the shop heading", async ({ page }) => {
     page.getByRole("heading", { name: /ჩემი რჩეული პროდუქტები/ }),
   ).toBeVisible();
 });
+
+test("links page offers Add to shop only for live offers", async ({ page }) => {
+  seed();
+  await signIn(page);
+  await page.goto("/en/creator/links?q=Shop+demo");
+  const live = page.locator("article").filter({ hasText: "Shop demo item 10" });
+  const ended = page
+    .locator("article")
+    .filter({ hasText: "Shop demo ended offer" });
+  await expect(ended).toBeVisible();
+  await expect(ended.getByRole("button", { name: /shop/i })).toHaveCount(0);
+  const toggle = live.getByRole("button", { name: "Add to shop" });
+  await toggle.click();
+  await expect(live.getByRole("button", { name: "In shop" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
